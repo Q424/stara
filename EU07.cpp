@@ -11,11 +11,13 @@ http://mozilla.org/MPL/2.0/.
     Copyright (C) 2001-2004  Marcin Wozniak, Maciej Czapkiewicz and others
 
 */
-
+#define GLEW_STATIC       // Q 241215
 #include "opengl/glew.h"
 #include "opengl/glut.h"
 #include "opengl/ARB_Multisample.h"
 
+#include <registry.hpp>  // Q 241215
+#include <filectrl.hpp>  // Q 241215
 #include "system.hpp"
 #include "classes.hpp"
 #include "Globals.h"
@@ -23,6 +25,8 @@ http://mozilla.org/MPL/2.0/.
 #include "QueryParserComp.hpp"
 #include "Mover.h"
 #include "Logs.h"
+#include "qutils.h"
+#include "modelpreview.h"
 #pragma hdrstop
 
 #include <dsound.h> //_clear87() itp.
@@ -80,6 +84,10 @@ USEUNIT("McZapkie\hamulce.pas");
 USEUNIT("Console\PoKeys55.cpp");
 USEUNIT("Forth.cpp");
 USEUNIT("Console\LPT.cpp");
+USEUNIT("qutils.cpp");
+USEUNIT("modelpreview.cpp");
+USEUNIT("freetype.cpp");
+USELIB("freetype.lib");
 //---------------------------------------------------------------------------
 #include "World.h"
 
@@ -94,26 +102,77 @@ bool fullscreen = TRUE; // fullscreen flag set to fullscreen mode by default
 int WindowWidth = 800;
 int WindowHeight = 600;
 int Bpp = 32;
+char **argv = NULL;  // zmienna trzymajaca mocne argumenty
+
+int MouseButton = -1;         // mouse button down
+static POINT mouse;
+static POINT xmouse;
+static int mx=0, my=0;
+bool replacescn = false;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); // Declaration For WndProc
 
 //#include "dbgForm.h"
 //---------------------------------------------------------------------------
 
+
+/*******************************************************************************
+WIN32 command line parser function
+*******************************************************************************/
+
+int ParseCommandline()
+{
+	int    argc, BuffSize, i;
+	WCHAR  *wcCommandLine;
+	LPWSTR *argw;
+
+
+	// Get a WCHAR version of the parsed commande line
+	wcCommandLine = GetCommandLineW();
+	argw = CommandLineToArgvW( wcCommandLine, &argc);
+
+	// Create the first dimension of the double array
+	argv = (char **)GlobalAlloc( LPTR, argc + 1 );
+
+	// convert eich line of wcCommandeLine to MultiByte and place them
+	// to the argv[] array
+	for( i=0; i < argc; i++)
+	{
+		BuffSize = WideCharToMultiByte( CP_ACP, WC_COMPOSITECHECK, argw[i], -1, NULL, 0, NULL, NULL );
+		argv[i] = (char *)GlobalAlloc( LPTR, BuffSize );
+		WideCharToMultiByte( CP_ACP, WC_COMPOSITECHECK, argw[i], BuffSize * sizeof( WCHAR ) ,argv[i], BuffSize, NULL, NULL );
+	}
+
+	// return the number of argument
+	return argc;
+}
+
+
+// *****************************************************************************
+// InitGl() - Taka se wstepna funkcja inicjalizacji OpenGL
+// *****************************************************************************
+
 int InitGL(GLvoid) // All Setup For OpenGL Goes Here
 {
     _clear87();
     _control87(MCW_EM, MCW_EM);
+    WriteLog("GLEW Init...");
     glewInit();
     // hunter-271211: przeniesione
     // AllocConsole();
     // SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),FOREGROUND_GREEN);
 
     // ShaXbee-121209: Wlaczenie obslugi tablic wierzcholkow
+ if (glGenFramebuffersEXT==NULL) WriteLog("glGenFramebuffersEXT not found!");   // Q 24.12.15: Sprawdzanie rozszerzenia
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     Global::pWorld = &World; // Ra: wskaŸnik potrzebny do usuwania pojazdów
+
+    WriteLog("World Init...");
+
+    if (replacescn) strcpy(Global::szSceneryFile, "temp.scn");
+
     return World.Init(hWnd, hDC); // true jeœli wszystko pójdzie dobrze
 }
 //---------------------------------------------------------------------------
@@ -127,8 +186,10 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // resize and initialize the
     glViewport(0, 0, width, height); // Reset The Current Viewport
     glMatrixMode(GL_PROJECTION); // select the Projection Matrix
     glLoadIdentity(); // reset the Projection Matrix
-    // calculate the aspect ratio of the window
+
+ // calculate the aspect ratio of the window
     gluPerspective(45.0f, (GLdouble)width / (GLdouble)height, 0.2f, 2500.0f);
+  //gluPerspective(45.0f, (GLdouble)width / (GLdouble)height, 2.2f, 1999950600.0f);  // Q 24.12.15: Nadpisuje
     glMatrixMode(GL_MODELVIEW); // select the Modelview Matrix
     glLoadIdentity(); // reset the Modelview Matrix
 }
@@ -283,7 +344,7 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
     if (fullscreen) // Are We Still In Fullscreen Mode?
     {
         dwExStyle = WS_EX_APPWINDOW; // Window Extended Style
-        dwStyle = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN; // Windows Style
+        dwStyle = WS_POPUP| WS_CLIPSIBLINGS | WS_CLIPCHILDREN; // Windows Style
         ShowCursor(FALSE); // Hide Mouse Pointer
     }
     else
@@ -292,17 +353,15 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
         dwStyle = WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN; // Windows Style
     }
 
-    AdjustWindowRectEx(&WindowRect, dwStyle, FALSE,
-                       dwExStyle); // Adjust Window To True Requested Size
+    AdjustWindowRectEx(&WindowRect, dwStyle, FALSE, dwExStyle); // Adjust Window To True Requested Size
 
     // Create The Window
-    if (NULL ==
-        (hWnd = CreateWindowEx(dwExStyle, // Extended Style For The Window
+    if (NULL == (hWnd = CreateWindowEx(dwExStyle, // Extended Style For The Window
                                "EU07", // Class Name
                                title, // Window Title
                                dwStyle | // Defined Window Style
-                                   WS_CLIPSIBLINGS | // Required Window Style
-                                   WS_CLIPCHILDREN, // Required Window Style
+                               WS_CLIPSIBLINGS | // Required Window Style
+                               WS_CLIPCHILDREN, // Required Window Style
                                0,
                                0, // Window Position
                                WindowRect.right - WindowRect.left, // Calculate Window Width
@@ -396,6 +455,10 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
         return FALSE; // Return FALSE
     }
 
+QGlobal::glHDC=hDC;
+QGlobal::glHGLRC=hRC;
+QGlobal::glHWND=hWnd;
+
     /*
     Now that our window is created, we want to queary what samples are available
     we call our InitMultiSample window
@@ -428,9 +491,7 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
     return TRUE; // success
 }
 
-static int mx = 0, my = 0;
-static POINT mouse;
-
+//static int mx = 0, my = 0;
 static int test = 0;
 /**/
 // ************ Globals ************
@@ -500,19 +561,44 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
         // m_x= LOWORD(lParam);
         // m_y= HIWORD(lParam);
         GetCursorPos(&mouse);
+        
+        QGlobal::iMPX = LOWORD(lParam);
+        QGlobal::iMPY = HIWORD(lParam);
+
         if (Global::bActive && ((mouse.x != mx) || (mouse.y != my)))
         {
             World.OnMouseMove(double(mouse.x - mx) * 0.005, double(mouse.y - my) * 0.01);
-            SetCursorPos(mx, my);
+          //World.OnMouseMove(double(mouse.x - mx) * 0.005, double(mouse.y - my) * 0.01,  LOWORD(lParam), HIWORD(lParam));
+
+            if (!Console::Pressed(VK_RMENU)) SetCursorPos(mx, my);
         }
         return 0; // jump back
     }
+    
+    case WM_LBUTTONDOWN :
+        {
+         ReleaseCapture();   // need them here, because if mouse moves off
+         SetCapture(hWnd);  // window and returns, it needs to reset status
+         MouseButton = 1;
+
+         GetCursorPos(&xmouse);
+
+         //Global::iMPX = LOWORD(lParam);
+         //Global::iMPY = HIWORD(lParam);
+
+         //World.LM_RetrieveObjectColor(Global::iMPX, Global::iMPY);
+
+         //World.OnMouseLclick(Global::iMPX, Global::iMPY);
+         return 0;
+        };
+
     case WM_KEYUP:
         if (Global::bActive)
         {
             World.OnKeyUp(wParam);
             return 0;
         }
+
     case WM_KEYDOWN:
         if (Global::bActive)
         {
@@ -610,33 +696,285 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 };
 
+
+// *****************************************************************************
+// POCZATEK WSZYSTKIEGO
+// *****************************************************************************
 int WINAPI WinMain(HINSTANCE hInstance, // instance
                    HINSTANCE hPrevInstance, // previous instance
                    LPSTR lpCmdLine, // command line parameters
                    int nCmdShow) // window show state
 {
-    MSG msg; // windows message structure
-    BOOL done = FALSE; // bool variable to exit loop
-    fullscreen = true;
-    DecimalSeparator = '.';
-    /* //Ra: tutaj to nie dzia³a - zwraca NULL
-     //najpierw ustalmy wersjê OpenGL
-     AnsiString glver=((char*)glGetString(GL_VERSION));
-     while (glver.LastDelimiter(".")>glver.Pos("."))
-      glver=glver.SubString(1,glver.LastDelimiter(".")-1); //obciêcie od drugiej kropki
-     try {Global::fOpenGL=glver.ToDouble();} catch (...) {Global::fOpenGL=0.0;}
-     Global::bOpenGL_1_5=(Global::fOpenGL>=1.5);
-    */
+
+ MSG msg; // windows message structure
+ WIN32_FILE_ATTRIBUTE_DATA attr;
+ SYSTEMTIME creation;
+ int sh, sv, argc;
+ char screendim[100];
+ char tolog[100];
+ char cmdline[100];
+ char appvers[100];
+ char appdate[100];
+ char apppath[100];
+ char shotdir[100];
+ char szFILE[200];
+ char szCFGFILE[200];
+ std::string line;
+ WORD vmajor, vminor, vbuild, vrev;
+ AnsiString appath, commandline, tocut, filetoopen;
+ BOOL askforfull = false;
+ BOOL getscreenb = false;
+ BOOL openlogonx = false;
+ BOOL rege3dt3d = false;
+ BOOL done = FALSE; // bool variable to exit loop
+ fullscreen = true;
+ DecimalSeparator = '.';
+ 
+ GetDesktopResolution(sh, sv);
+ SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());  // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
+
+ commandline = lpCmdLine;
+ commandline = StringReplace( commandline, "e3d", "t3d", TReplaceFlags() << rfReplaceAll );
+ commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );
+
+ //commandline = "-vm " + commandline;
+ tocut = ExtractFilePath(ParamStr(0)) + "models\\";   // USUWAM BEZWZGLEDNA SCIEZKA MODELU
+
+ //WriteLog("commandline= [" + commandline + "]");
+ //WriteLog("tocut= [" + tocut + "]");
+ int tocutlen = tocut.Length() + 0;
+
+
+ // OTWIERANIE PODGLADU MODELU GDY KLIKNIETO NA PLIK MODELU ********************
+ if (commandline != "")
+   if ((commandline.Pos("models") > 0))
+   {
+    //WriteLog("commandline= " + commandline);
+
+    filetoopen = commandline.SubString( tocutlen+1, 255); // OBCINAMY SCIEZKE KATALOGU SYMULATORA i MODELS A ZOSTAWIAMY WZGLEDNA DO MODELU
+
+    filetoopen = filetoopen.SubString(1, 255);
+
+    modelpreview(filetoopen.c_str(), "", "", "");
+
+    //commandline = "-vm " + filetoopen;
+
+    commandline = AnsiString("-vm " + filetoopen).c_str();
+    //WriteLog("commandline= [" + commandline + "]");
+
+    //WriteLog("newcommandline= " + commandline);
+    //commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );
+   
+    SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());  // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
+
+    replacescn = true;
+   }
+  else
+   {
+    //WriteLog("commandline= " + commandline);
+    commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );
+   }
+  else commandline = "";
+
+ //SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());  // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
+
+ GETCWD();   // POBIERA SCIEZKE APLIKACJI DO ZMIENNEJ GLOBALNEJ Global::asCWD
+
+ QGlobal::asAPPDIR = ExtractFilePath(ParamStr(0));
+
+ appath = GETCWD();
+
+ argc = ParseCommandline();
+
+
+// READING FILE SYTEM ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ WriteLog("READING FILE SYSTEM...");
+
+ sprintf(szFILE,"%s%s", appath.c_str() , "\\fsys.txt");
+ std::ifstream File(szFILE);
+
+ int errc = 0;
+   if (File)
+    {
+        while(getline(File,line))
+       {
+		std::string test, par1;
+                int pos1 = 0;
+		int pos2 = 0;
+		pos1 = line.find(" ");
+		pos2 = line.find(":");
+		test = line.substr(0, pos1);
+                par1 = line.substr(pos2+1, 20);
+
+		if (test == "texpath") QGlobal::asCurrentTexturePath = par1.c_str();
+		if (test == "mdlpath") QGlobal::asCurrentModelsPath = par1.c_str();
+		if (test == "scnpath") QGlobal::asCurrentSceneryPath = par1.c_str();
+	        if (test == "sndpath") QGlobal::asCurrentSoundPath = par1.c_str();
+
+                if (DirectoryExists(QGlobal::asAPPDIR + par1.c_str()))
+                WriteLog("varname: " + AnsiString(test.c_str()) + ", " + AnsiString(par1.c_str())  + ", OK");
+                else
+                {
+                 errc++;
+                 WriteLog("varname: " + AnsiString(test.c_str()) + ", " + AnsiString(par1.c_str())  + ", MISSED!");
+                }
+		//sprintf(tolog,"varname: [%s] = [%s]", test.c_str(), par1.c_str());
+
+		//MessageBox(NULL,tolog, "ERROR",MB_OK|MB_ICONEXCLAMATION);
+
+        }
+     if (errc == 0) WriteLog("FILESYS OK.");
+     if (errc > 0) WriteLog("FILESYS ERRORS. (" + IntToStr(errc) + ")");
+     WriteLog("");
+     File.close();
+
+	// TU SA TRZYMANE DEFAULTOWE SCIEZKI
+	//Global::asFSYSTEXTUREPATH = Global::asCurrentTexturePath;
+	//Global::asFSYSMODELSPATH = Global::asCurrentModelsPath;
+	//Global::asFSYSSCENERYPATH = Global::asCurrentSceneryPath;
+    }
+    else
+    {
+     WriteLog("FILE SYSTEM READ ERROR, CHECK FILE 'FSYS.TXT'.");
+     MessageBox(NULL,"FILE SYSTEM READ ERROR, CHECK FILE 'FSYS.TXT'.", "ERROR",MB_OK|MB_ICONEXCLAMATION);
+    }
+
+
+// READING CONFIG ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    WriteLog("READING CONFIG FILE...");
+    sprintf(szCFGFILE,"%s%s", appath.c_str() , "\\config.txt");
+    WriteLog(szCFGFILE);
+    std::ifstream FileCFG(szCFGFILE);
+
+    if(FileCFG)
+    {
+        while(getline(FileCFG,line))
+		{    
+		AnsiString test,par1;
+                int pos1 = 0;
+		int pos2 = 0;
+		pos1 = line.find(" ");
+		pos2 = line.find(":");
+		test = line.substr(0, pos1).c_str();
+                par1 = line.substr(pos2+1, 20).c_str();
+
+		if (test == "getscreenb") getscreenb = atoi(par1.c_str());
+	      	if (test == "screenresw") sh = StrToInt(par1.c_str());
+	     	if (test == "screenresh") sv = StrToInt(par1.c_str());
+		if (test == "fullscreen") fullscreen = atoi(par1.c_str());
+                if (test == "askforfull") askforfull = atoi(par1.c_str());
+              //if (test == "debugmode1") DebugMode1 = atoi(par1.c_str());
+	        if (test == "openlogonx") openlogonx = atoi(par1.c_str());
+          	if (test == "logfilenm1") QGlobal::logfilenm1 = par1;
+	        if (test == "exitlogons") QGlobal::logwinname = par1;
+                if (test == "scrshotext") QGlobal::asSSHOTEXT = par1;
+                if (test == "scrshotdir") QGlobal::asSSHOTDIR = par1;
+                if (test == "scrshotsub") QGlobal::asSSHOTSUB = par1;
+                if (test == "z-fightfix") QGlobal::bzfightfix = atoi(par1.c_str());
+                if (test == "reg-t3de3d") rege3dt3d = atoi(par1.c_str());
+              //if (test == "guitutopac") QGlobal::GUITUTOPAC = atof(par1.c_str());
+                if (test == "sshotexif+") QGlobal::bWRITEEXIF = atoi(par1.c_str());
+                if (test == "splashscrn") QGlobal::bSPLASHSCR = atoi(par1.c_str());
+                if (test == "exifauthor") QGlobal::asEXIFAUTHOR = par1;
+                if (test == "exifcpyrgt") QGlobal::asEXIFCOPYRIGHT = par1;
+                if (test == "rail_model") QGlobal::asRAILTYPE = UpperCase(par1);
+                if (test == "env_sky001") QGlobal::bRENDERSKY1 = atoi(par1.c_str());
+                if (test == "env_sky002") QGlobal::bRENDERSKY2 = atoi(par1.c_str());
+                if (test == "env_clouds") QGlobal::bRENDERCLDS = atoi(par1.c_str());
+                if (test == "env_rain") QGlobal::bRENDERRAIN = atoi(par1.c_str());
+                if (test == "env_sun") QGlobal::bRENDERSUN = atoi(par1.c_str());
+                if (test == "env_moon") QGlobal::bRENDERMOON = atoi(par1.c_str());
+              //if (test == "deftextext") Global::szDefaultExt = par1;
+
+
+               Global::iWindowWidth = sh;
+               Global::iWindowHeight = sv;
+               Global::bFullScreen = fullscreen;
+        }
+
+     WriteLog("CONFIG FILE OK.");
+     WriteLog("");
+     FileCFG.close();
+    }
+    else
+    {
+     WriteLog("CONFIG READ ERROR, CHECK FILE 'CONFIG.TXT'. BE APPLY DEFAULT SETS...");
+     MessageBox(NULL,"CONFIG READ ERROR, CHECK FILE 'CONFIG.TXT'. BE APPLY DEFAULT SETS...", "ERROR",MB_OK|MB_ICONEXCLAMATION);
+     //WriteLog("");
+    }
+
+
+
+ // !!! REJESTROWANIE DZIALA TYLKO W TRYBIE ZGODNOSCI NA WINDOWS 8
+ if (rege3dt3d) WriteLog("Registering model file extensions e3d/t3d...");
+ if (rege3dt3d) RegisterFileExtansion(".e3d", "maszynamodelbin", "Binarny plik modelu MaSZyna", "\\data\\icons\\e3d.ico,0" );
+ if (rege3dt3d) RegisterFileExtansion(".t3d", "maszynamodeltxt", "Tekstowy plik modelu MaSZyna", "\\data\\icons\\t3d.ico,0" );
+     WriteLog("");
+
+ //SelectComPort();
+
+ WriteLog("environment informations: ");
+
+ sprintf(cmdline, "appfile: [%s]", argv[0]);
+ WriteLog(cmdline);
+
+ sprintf(apppath, "apppath: [%s]", appath.c_str());
+ WriteLog(apppath);
+
+ sprintf(shotdir, "shotdir: [%s]", QGlobal::asSSHOTDIR.c_str());
+ WriteLog(shotdir);
+
+ sprintf(cmdline, "aparams: [%s]", commandline);
+ WriteLog(cmdline);
+
+ GetAppVersion(argv[0], &vmajor, &vminor, &vbuild, &vrev);
+ sprintf(appvers, "appvers: %i %i %i", vmajor, vminor, vbuild);
+ WriteLog(appvers);
+
+ GetFileAttributesEx(ParamStr(0).c_str(), GetFileExInfoStandard, &attr);
+ FileTimeToSystemTime(&attr.ftLastWriteTime, &creation);
+ sprintf(appdate, "appdate: %04d%02d%02d %02d%02d%02d", creation.wYear, creation.wMonth, creation.wDay, creation.wHour+2, creation.wMinute, creation.wSecond);
+ WriteLog(appdate);
+
+ //GetFileAttributesEx(ParamStr(0).c_str(), GetFileExInfoStandard, &attr);
+ //FileTimeToSystemTime(&attr.ftLastWriteTime, &creation);
+ sprintf(appdate, "%04d%02d%02d %02d%02d%02d", creation.wYear, creation.wMonth, creation.wDay, creation.wHour+2, creation.wMinute, creation.wSecond);
+
+ QGlobal::asAPPVERS = "ver. " + IntToStr(vmajor) + "." + IntToStr(vminor) + "." + IntToStr(vbuild) + "." + IntToStr(vrev) + "++, " + appdate;
+
+ sprintf(appdate, "rundate: %s", FormatDateTime("yyyymmdd hhmmss", Now()));
+ WriteLog(appdate);
+
+ sprintf(screendim, "deskdim: %ix%i", sh, sv);
+ WriteLog(screendim);
+
+ WriteLog("userpid: " + AnsiString(GetMachineID("C:\\")));
+
+
+ //WriteLog("cmpconf: windows 7 Ultimate 64, AMD FX 4170 4.2GHz 4 core, 8gb ram, GFX GF8600GT CORE 560Mhz 256MB PCIE,  BIOS VIDEO: 60.84.5E.00.00, OpenGL 3.3 driver rev 2009-01-16 6.14.11.8151 ");
+ WriteLog("");
+ WriteLog("");
+
+ HWND aHWnd;
+ aHWnd = FindWindow(NULL, QGlobal::logwinname.c_str());
+ SendMessage(aHWnd, WM_CLOSE, 0, 0);    // ZAMYKAMY OTWARTY LOG
+
+
     DeleteFile("errors.txt"); // usuniêcie starego
+    
+    WriteLog("Reading eu07.ini...");
     Global::LoadIniFile("eu07.ini"); // teraz dopiero mo¿na przejrzeæ plik z ustawieniami
     Global::InitKeys("keys.ini"); // wczytanie mapowania klawiszy - jest na sta³e
 
     // hunter-271211: ukrywanie konsoli
     if (Global::iWriteLogEnabled & 2)
     {
+        WriteLog("Creating Console...");
         AllocConsole();
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_GREEN);
     }
+
+    WriteLog("Parsing command line...");
     AnsiString str = lpCmdLine; // parametry uruchomienia
     if (!str.IsEmpty())
     { // analizowanie parametrów
@@ -668,10 +1006,18 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
                 else
                     Global::iConvertModels = -7; // z optymalizacj¹, bananami i prawid³owym Opacity
             }
+            else if (str==AnsiString("-vm"))  //Q 25.12.15: podglad modelu
+            {
+             str = Trim(Parser->GetNextSymbol().LowerCase());
+
+             str = str.SubString(1, 255);
+
+             modelpreview(str.c_str(), "", "", "");
+
+             if (replacescn) strcpy(Global::szSceneryFile, "temp.scn");
+            }
             else
-                Error(
-                    "Program usage: EU07 [-s sceneryfilepath] [-v vehiclename] [-modifytga] [-e3d]",
-                    !Global::iWriteLogEnabled);
+                Error("Program usage: EU07 [-s sceneryfilepath] [-v vehiclename] [-modifytga] [-e3d]", !Global::iWriteLogEnabled);
         }
         delete Parser; // ABu 050205: tego wczesniej nie bylo
     }
@@ -681,21 +1027,40 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
         Global::asCurrentSceneryPath=csp;
     */
 
-    fullscreen = Global::bFullScreen;
+    //fullscreen = Global::bFullScreen;
     WindowWidth = Global::iWindowWidth;
     WindowHeight = Global::iWindowHeight;
     Bpp = Global::iBpp;
     if (Bpp != 32)
         Bpp = 16;
+
+    if (getscreenb) // JEZELI OPCJA ROZDZIELCZOSCI IDENTYCZNEJ JAK PULPIT
+        {
+         GetDesktopResolution(sh, sv); // USTAW ROZDZIELCZOSC TAKA JAK PULPIT
+         WindowWidth = sh;
+         WindowHeight = sv;
+         Global::iWindowWidth = sh;
+         Global::iWindowHeight = sv;
+        }
+
+     if (askforfull)  // OKIENKO DIALOGOWE Z ZAPYTANIEM O TRYB OKNA
+        {
+         if (MessageBox(NULL,"Would You Like To Run Fullscreen Mode?", "Start FullScreen?",MB_YESNO|MB_ICONQUESTION)==IDNO)
+         Global::bFullScreen = false;
+         else Global::bFullScreen  = true;
+         fullscreen = Global::bFullScreen;
+        }
+
     // create our OpenGL window
-    if (!CreateGLWindow(Global::asHumanCtrlVehicle.c_str(), WindowWidth, WindowHeight, Bpp,
-                        fullscreen))
+    if (!CreateGLWindow(Global::asHumanCtrlVehicle.c_str(), WindowWidth, WindowHeight, Bpp, fullscreen))
         return 0; // quit if window was not created
+
     SetForegroundWindow(hWnd);
+
     // McZapkie: proba przeplukania klawiatury
     Console *pConsole = new Console(); // Ra: nie wiem, czy ma to sens, ale jakoœ zainicjowac trzeba
-    while (Console::Pressed(VK_F10))
-        Error("Keyboard buffer problem - press F10"); // na Windows 98 lubi siê to pojawiaæ
+    while (Console::Pressed(VK_F10)) Error("Keyboard buffer problem - press F10"); // na Windows 98 lubi siê to pojawiaæ
+    
     int iOldSpeed, iOldDelay;
     SystemParametersInfo(SPI_GETKEYBOARDSPEED, 0, &iOldSpeed, 0);
     SystemParametersInfo(SPI_GETKEYBOARDDELAY, 0, &iOldDelay, 0);
@@ -719,6 +1084,9 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
         // else
         //{//g³ówna pêtla programu
         Console::On(); // w³¹czenie konsoli
+
+        if ( QGlobal::bAPPDONE ) done = true;
+
         while (!done) // loop that runs while done=FALSE
         {
             if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) // is there a message waiting?
@@ -749,6 +1117,11 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
     }
     SystemParametersInfo(SPI_SETKEYBOARDSPEED, iOldSpeed, NULL, 0);
     SystemParametersInfo(SPI_SETKEYBOARDDELAY, iOldDelay, NULL, 0);
+
+ char logfile[200];
+ sprintf(logfile,"%s%s", appath.c_str() , QGlobal::logfilenm1.c_str());
+ if (openlogonx) ShellExecute(0, "open", logfile, NULL, NULL, SW_MAXIMIZE);
+
     delete pConsole; // deaktywania sterownika
     // shutdown
     KillGLWindow(); // kill the window

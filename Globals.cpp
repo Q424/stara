@@ -13,6 +13,7 @@ http://mozilla.org/MPL/2.0/.
 */
 
 #include "system.hpp"
+#include "classes.hpp"
 #pragma hdrstop
 
 #include "Globals.h"
@@ -25,6 +26,104 @@ http://mozilla.org/MPL/2.0/.
 #include "World.h"
 
 // namespace Global {
+
+// *****************************************************************************
+// Q Globals
+// *****************************************************************************
+HDC QGlobal::glHDC=NULL;
+HGLRC QGlobal::glHGLRC=NULL;
+HWND QGlobal::glHWND=NULL;
+
+AnsiString QGlobal::asCurrentSceneryPath="scenery/";
+AnsiString QGlobal::asCurrentTexturePath=AnsiString(szTexturePath);
+AnsiString QGlobal::asCurrentModelsPath="models/";
+AnsiString QGlobal::asCurrentDynamicPath="";
+AnsiString QGlobal::asCurrentSoundPath="sounds/";
+AnsiString QGlobal::asAPPDIR="";
+AnsiString QGlobal::asCWD="";
+AnsiString QGlobal::logfilenm1= "\\runlog.txt";
+AnsiString QGlobal::logwinname= "runlog - Notatnik";
+AnsiString QGlobal::asSCREENSHOTFILE= "";
+AnsiString QGlobal::asSSHOTDIR= "SCR\\";
+AnsiString QGlobal::asSSHOTSUB= "2014\\";
+AnsiString QGlobal::asSSHOTEXT= ".jpg";
+AnsiString QGlobal::asAPPVERS= "0.0.0.0";
+AnsiString QGlobal::asAPPDATE= "00.00.00";
+AnsiString QGlobal::asAPPSIZE= "0";
+AnsiString QGlobal::asAPPDAT2= "00:00:00";
+AnsiString QGlobal::asAPPCOMP= "00:00:00";
+AnsiString QGlobal::asGTIME= "00:00:00";
+AnsiString QGlobal::asLOKTUTFILE = "";
+AnsiString QGlobal::asLOKKBDFILE = "";
+AnsiString QGlobal::asEXIFAUTHOR = "undefined";
+AnsiString QGlobal::asEXIFCOPYRIGHT = "undefined";
+AnsiString QGlobal::asEXIFCAMERASET = "";
+AnsiString QGlobal::asNODERENDERED = "";
+AnsiString QGlobal::asNODENAME = "";
+AnsiString QGlobal::asRAILTYPE = "S49";
+AnsiString QGlobal::objectidinfo = "none";
+AnsiString QGlobal::globalstr = "?";
+
+TStringList *QGlobal::SLTEMP;
+TStringList *QGlobal::CONFIG;
+TStringList *QGlobal::LOKTUT;
+TStringList *QGlobal::LOKKBD;
+
+GLblendstate QGlobal::GLBLENDSTATE;
+
+bool QGlobal::isshift = false;
+bool QGlobal::camerasaved = false;
+bool QGlobal::mousemode = false;
+bool QGlobal::showelementdescatpointer = true;
+bool QGlobal::bmodelpreview = false;
+bool QGlobal::bGRIDPROAAA = true;
+bool QGlobal::bzfightfix = false;
+bool QGlobal::bloaderbriefing = false;
+bool QGlobal::SCNLOADED = false;
+bool QGlobal::bQueuedAdvLog = false;
+bool QGlobal::bscrfilter = false;
+bool QGlobal::bscrnoise = false;
+bool QGlobal::bfirstloadingscn = false;
+bool QGlobal::bpanview = false;
+bool QGlobal::bTUTORIAL = false;
+bool QGlobal::bKEYBOARD = false;
+bool QGlobal::bSHOWBRIEFING = true;
+bool QGlobal::bSCNLOADED = false;
+bool QGlobal::bAPPDONE = false;
+bool QGlobal::bFADEOFFP = false;
+bool QGlobal::bRENDERSKY1 = true;
+bool QGlobal::bRENDERSKY2 = true;
+bool QGlobal::bRENDERRAIN = true;
+bool QGlobal::bRENDERSNOW = true;
+bool QGlobal::bRENDERCLDS = true;
+bool QGlobal::bRENDERSUN = true;
+bool QGlobal::bRENDERMOON = true;
+bool QGlobal::bGRAYSCALE = false;
+bool QGlobal::bSPLASHSCR = false;
+bool QGlobal::bWRITEEXIF = false;
+bool QGlobal::MIRROR_R_ACTIVE = false;
+bool QGlobal::MIRROR_L_ACTIVE = false;
+bool QGlobal::bISLAMP = false;
+bool QGlobal::bADVDEBUG1 = false;
+bool QGlobal::bRENDERGUI = false;
+
+
+int QGlobal::objectid = 0;
+int QGlobal::cabelementid = 0;
+int QGlobal::iMPX = 0;
+int QGlobal::iMPY = 0;
+int QGlobal::iHLBLENDTYPE = 0;
+int QGlobal::iMIRRORSUPDBY = 2;
+int QGlobal::iRANDTABPOS = 0;
+int QGlobal::iNODES = 100000;
+int QGlobal::iPARSERBYTESPASSED = 0;
+int QGlobal::iPARSERBYTESTOTAL = 0;
+int QGlobal::postep = 1;
+int QGlobal::infotype=0;
+int QGlobal::aspectratio = 43;
+int QGlobal::loaderrefresh = 5;
+
+
 
 // parametry do u¿ytku wewnêtrznego
 // double Global::tSinceStart=0;

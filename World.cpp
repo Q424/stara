@@ -31,6 +31,7 @@ http://mozilla.org/MPL/2.0/.
 #include "Train.h"
 #include "Driver.h"
 #include "Console.h"
+#include "qutils.h"
 
 #define TEXTURE_FILTER_CONTROL_EXT 0x8500
 #define TEXTURE_LOD_BIAS_EXT 0x8501
@@ -181,7 +182,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 #endif
     WriteLog("Online documentation and additional files on http://eu07.pl");
     WriteLog("Authors: Marcin_EU, McZapkie, ABu, Winger, Tolaris, nbmx_EU, OLO_EU, Bart, Quark-t, "
-             "ShaXbee, Oli_EU, youBy, KURS90, Ra, hunter and others");
+             "ShaXbee, Oli_EU, youBy, KURS90, Ra, hunter, Q and others");
     WriteLog("Renderer:");
     WriteLog((char *)glGetString(GL_RENDERER));
     WriteLog("Vendor:");
@@ -617,7 +618,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
         }
         else
         {
-            Error("Player train init failed!");
+            Error("Player train init failed!", false);
             FreeFlyModeFlag = true; // Ra: automatycznie w³¹czone latanie
             if (Global::detonatoryOK)
             {
@@ -634,7 +635,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     {
         if (Global::asHumanCtrlVehicle != "ghostview")
         {
-            Error("Player train not exist!");
+            Error("Player train not exist!", false);
             if (Global::detonatoryOK)
             {
                 glRasterPos2f(-0.25f, -0.20f);
@@ -662,17 +663,34 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
         KeyEvents[8] = Ground.FindEvent("keyctrl08");
         KeyEvents[9] = Ground.FindEvent("keyctrl09");
     }
-    // glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);  //{Texture blends with object
-    // background}
+    // glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);  //{Texture blends with object background}
     light = TTexturesManager::GetTextureID(szTexturePath, szSceneryPath, "smuga.tga");
     // Camera.Reset();
     ResetTimers();
-    WriteLog("Load time: " + FloatToStrF((86400.0 * ((double)Now() - time)), ffFixed, 7, 1) +
-             " seconds");
+    WriteLog("Load time: " + FloatToStrF((86400.0 * ((double)Now() - time)), ffFixed, 7, 1) + " seconds");
+
+
+
+
+
     if (DebugModeFlag) // w Debugmode automatyczne w³¹czenie AI
         if (Train)
             if (Train->Dynamic()->Mechanik)
                 Train->Dynamic()->Mechanik->TakeControl(true);
+
+
+    if (QGlobal::bmodelpreview)
+       {
+        Global::SetCameraPosition(Global::pFreeCameraInit[1]); //nowa pozycja dla generowania obiektów
+        Ground.Silence(Camera.Pos); //wyciszenie wszystkiego z poprzedniej pozycji
+        Camera.Init(Global::pFreeCameraInit[1], Global::pFreeCameraInitAngle[1]); //przestawienie
+
+        Camera.Reset(); // likwidacja obrotów - patrzy horyzontalnie na po³udnie
+
+        //Camera.LookAt = vector3(0,0,0);
+        
+        if (FreeFlyModeFlag) Camera.RaLook(); // jednorazowe przestawienie kamery
+       }
     return true;
 };
 
@@ -1265,12 +1283,14 @@ bool TWorld::Update()
     { // obs³uga ruchu kamery tylko gdy okno jest aktywne
         if (Console::Pressed(VK_LBUTTON))
         {
+            //WriteLog("VK_LBUTTON");
             Camera.Reset(); // likwidacja obrotów - patrzy horyzontalnie na po³udnie
             // if (!FreeFlyModeFlag) //jeœli wewn¹trz - patrzymy do ty³u
             // Camera.LookAt=Train->pMechPosition-Normalize(Train->GetDirection())*10;
-            if (Controlled ? LengthSquared3(Controlled->GetPosition() - Camera.Pos) < 2250000 :
-                             false) // gdy bli¿ej ni¿ 1.5km
+            if (Controlled ? LengthSquared3(Controlled->GetPosition() - Camera.Pos) < 2250000 : false) // gdy bli¿ej ni¿ 1.5km
+              {
                 Camera.LookAt = Controlled->GetPosition();
+                }
             else
             {
                 TDynamicObject *d =
@@ -2522,6 +2542,10 @@ bool TWorld::Render()
         Clouds.Render();
         glEnable(GL_FOG);
     }
+
+    if (QGlobal::bmodelpreview) DRAW_XYGRID();
+    if (QGlobal::bmodelpreview) Draw_SCENE000(0, 0, 0);
+
     if (Global::bUseVBO)
     { // renderowanie przez VBO
         if (!Ground.RenderVBO(Camera.Pos))

@@ -25,6 +25,8 @@ http://mozilla.org/MPL/2.0/.
 class cParser : public std::stringstream
 {
   public:
+  std::string incfile;
+  std::string inctype;
     // parameters:
     enum buffertype
     {

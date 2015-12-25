@@ -174,6 +174,42 @@ std::string cParser::readToken(bool ToLower, const char *Break)
                 token = readToken(ToLower);
         token = readToken(ToLower, Break);
     }
+
+
+// **********************************************************************************************************
+// Q: 24.12.15 - Dodaje nowy znacznik wpisu include potrzebny do wprowadzenia includeow z nowym podstawowym
+//               parametrem jakim bedzie typ obiektu
+// **********************************************************************************************************
+    if ((token.compare("incfile") == 0) ||
+        (token.compare("addfile") == 0) ||
+        (token.compare("attachf") == 0))
+    { // obs³uga include typowanego
+        std::string includetype = readToken(ToLower); // typ obiektu
+        std::string includefile = readToken(ToLower); // nazwa pliku
+        inctype = includetype;
+        incfile = includefile; // coby bylo globalnie widoczne
+        WriteLog(AnsiString("INC " + AnsiString(includetype.c_str()) + ", " + includefile.c_str()).c_str());
+
+
+        if (LoadTraction ? true : ((includefile.find("tr/") == std::string::npos) &&
+                                   (includefile.find("tra/") == std::string::npos)))
+        {
+            std::string parameter = readToken(false); // w parametrach nie zmniejszamy
+            while (parameter.compare("end") != 0)
+            {
+                parameters.push_back(parameter);
+                parameter = readToken(ToLower);
+            }
+            // if (trtest2.find("tr/")!=0)
+            mIncludeParser = new cParser(includefile, buffer_FILE, mPath, LoadTraction);
+            if (mIncludeParser->mSize <= 0)
+                ErrorLog("Missed include: " + AnsiString(includefile.c_str()));
+        }
+        else
+            while (token.compare("end") != 0)
+                token = readToken(ToLower);
+        token = readToken(ToLower, Break);
+    }
     return token;
 }
 

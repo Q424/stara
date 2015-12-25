@@ -3,7 +3,7 @@
 <PROJECT>
   <MACROS>
     <VERSION value="BCB.05.03"/>
-    <PROJECT value="E:\Gry\MaSzyna_15_04\EU07.exe"/>
+    <PROJECT value="EU07.exe"/>
     <OBJFILES value="QueryParserComp.obj McZapkie\mtable.obj McZapkie\_mover.obj 
       McZapkie\hamulce.obj EU07.obj dumb3d.obj Camera.obj Texture.obj World.obj 
       Model3d.obj MdlMngr.obj Train.obj wavread.obj Timer.obj Event.obj 
@@ -13,13 +13,14 @@
       TractionPower.obj parser.obj sky.obj AirCoupler.obj opengl\glew.obj 
       ResourceManager.obj VBO.obj TextureDDS.obj opengl\ARB_Multisample.obj 
       Float3d.obj Classes.obj Driver.obj Names.obj Console.obj Mover.obj 
-      Console\PoKeys55.obj Forth.obj Console\LPT.obj"/>
+      Console\PoKeys55.obj Forth.obj Console\LPT.obj qutils.obj modelpreview.obj 
+      freetype.obj"/>
     <RESFILES value="EU07.res"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES)"/>
-    <LIBFILES value="opengl\glut32.lib DirectX\Dsound.lib"/>
+    <LIBFILES value="opengl\glut32.lib DirectX\Dsound.lib freetype.lib"/>
     <LIBRARIES value="dclocx50.bpi bcbsmp50.bpi VCLX50.lib bcbsmp50.lib Vcl50.lib"/>
     <SPARELIBS value="Vcl50.lib bcbsmp50.lib VCLX50.lib bcbsmp50.bpi dclocx50.bpi"/>
     <PACKAGES value="Vcl50.bpi Vclx50.bpi"/>
@@ -33,8 +34,8 @@
     <USERDEFINES value="GLEW_STATIC;_DEBUG"/>
     <SYSDEFINES value="NO_STRICT;_RTLDLL"/>
     <MAINSOURCE value="EU07.cpp"/>
-    <INCLUDEPATH value="Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl"/>
-    <LIBPATH value="Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects&quot;;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl"/>
+    <LIBPATH value="&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects&quot;;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
   </MACROS>
   <OPTIONS>
@@ -105,10 +106,11 @@ Item6=GLEW_STATIC;_DEBUG;USE_VERTEX_ARRAYS
 Item7=_DEBUG
 
 [HistoryLists\hlFinalOutputDir]
-Count=3
-Item0=E:\Gry\MaSzyna_15_04
-Item1=D:\EU07\
-Item2=E:\EU07\
+Count=4
+Item0=E:\Gry\MaSzyna_15_04\
+Item1=E:\Gry\MaSzyna_15_04
+Item2=D:\EU07\
+Item3=E:\EU07\
 
 [Debugging]
 DebugSourceDirs=McZapkie\

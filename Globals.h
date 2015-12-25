@@ -10,11 +10,25 @@ http://mozilla.org/MPL/2.0/.
 #ifndef GlobalsH
 #define GlobalsH
 
+#include <wininet.h>
+#pragma comment(lib, "wininet.lib")
+
+#include <Classes.hpp> // TStringList
 #include <string>
 #include "system.hpp"
 #include "opengl/glew.h"
 #include "dumb3d.h"
-//#include "Classes.h"
+#include "Logs.h"
+
+#define PI 3.1415926535897f
+#define DTOR (PI/180.0f)
+#define SQR(x) (x*x)
+
+typedef struct {
+	GLboolean blendEnabled;
+	GLint blendSrc;
+	GLint blendDst;
+} GLblendstate;
 
 using namespace Math3D;
 
@@ -153,6 +167,112 @@ class TTranscripts
     void Add(char *txt, float len,
              bool backgorund = false); // dodanie tekstów, d³ugoœæ dŸwiêku, czy istotne
     void Update(); // usuwanie niepotrzebnych (ok. 10 razy na sekundê)
+};
+
+
+// ********************************************************************************************************************
+// 24.12.15 Q: Swoje zmienne globalne daje do osobnej klasy, bo z doswiadczenia wiem, ze gdy uzbiera sie multum
+//             zmiennych w jednej klasie to zaczynaja sie dziac cyrki. Docelowo zmienne konfiguracyjne z Global
+//             mozna by przeniesc do oddzielnej klasy CFG
+// ********************************************************************************************************************
+class QGlobal
+{
+ public:
+ static HDC glHDC;
+ static HGLRC glHGLRC;
+ static HWND glHWND;
+
+// TFtpClient *FTP;
+ 
+ static TStringList *SLTEMP;
+ static TStringList *CONFIG;
+ static TStringList *LOKTUT;
+ static TStringList *LOKKBD;
+
+
+ static AnsiString asCurrentSceneryPath;
+ static AnsiString asCurrentTexturePath;
+ static AnsiString asCurrentDynamicPath;
+ static AnsiString asCurrentModelsPath;
+ static AnsiString asCurrentSoundPath;
+ static AnsiString asAPPDIR;
+ static AnsiString asCWD;
+ static AnsiString logfilenm1;
+ static AnsiString logwinname;
+ static AnsiString asSCREENSHOTFILE;
+ static AnsiString asSSHOTDIR;
+ static AnsiString asSSHOTSUB;
+ static AnsiString asSSHOTEXT;
+ static AnsiString asAPPVERS;
+ static AnsiString asAPPDATE;
+ static AnsiString asAPPSIZE;
+ static AnsiString asAPPDAT2;
+ static AnsiString asAPPCOMP;
+ static AnsiString asGTIME;
+ static AnsiString asLOKTUTFILE;
+ static AnsiString asLOKKBDFILE;
+ static AnsiString asEXIFAUTHOR;
+ static AnsiString asEXIFCOPYRIGHT;
+ static AnsiString asEXIFCAMERASET;
+ static AnsiString asNODERENDERED;
+ static AnsiString asNODENAME;
+ static AnsiString asRAILTYPE;
+ static AnsiString objectidinfo;
+ static AnsiString globalstr;
+
+
+ static GLblendstate GLBLENDSTATE;
+ 
+ static bool isshift;
+ static bool camerasaved;
+ static bool mousemode;
+ static bool showelementdescatpointer;
+ static bool bmodelpreview;
+ static bool bGRIDPROAAA;
+ static bool bzfightfix;
+ static bool bloaderbriefing;
+ static bool SCNLOADED;
+ static bool bQueuedAdvLog;
+ static bool bscrfilter;
+ static bool bscrnoise;
+ static bool bfirstloadingscn;
+ static bool bpanview;
+ static bool bTUTORIAL;
+ static bool bKEYBOARD;
+ static bool bSHOWBRIEFING;
+ static bool bSCNLOADED;
+ static bool bAPPDONE;
+ static bool bFADEOFFP;
+ static bool bRENDERSKY1;
+ static bool bRENDERSKY2;
+ static bool bRENDERRAIN;
+ static bool bRENDERSNOW;
+ static bool bRENDERCLDS;
+ static bool bRENDERSUN;
+ static bool bRENDERMOON;
+ static bool bGRAYSCALE;
+ static bool bSPLASHSCR;
+ static bool bWRITEEXIF;
+ static bool MIRROR_R_ACTIVE;
+ static bool MIRROR_L_ACTIVE;
+ static bool bISLAMP;
+ static bool bADVDEBUG1;
+ static bool bRENDERGUI;
+
+ static int objectid;
+ static int cabelementid;
+ static int iMPX;
+ static int iMPY;
+ static int iHLBLENDTYPE;
+ static int iMIRRORSUPDBY;
+ static int iRANDTABPOS;
+ static int iNODES;
+ static int iPARSERBYTESPASSED;
+ static int iPARSERBYTESTOTAL;
+ static int postep;
+ static int infotype;
+ static int aspectratio;
+ static int loaderrefresh;
 };
 
 class Global
