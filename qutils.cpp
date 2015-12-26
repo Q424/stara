@@ -544,6 +544,10 @@ bool LOADPROGRESSBARFILE(AnsiString SCNFILE)
 
 }
 
+
+// *****************************************************************************
+// Listowanie rozszerzen OpenGL w logu
+// *****************************************************************************
 bool LISTGLEXTENSIONS()
 {
 

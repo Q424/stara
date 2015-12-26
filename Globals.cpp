@@ -126,6 +126,9 @@ int QGlobal::infotype=0;
 int QGlobal::aspectratio = 43;
 int QGlobal::loaderrefresh = 5;
 
+double QGlobal::fMoveLightS = -1.0f;
+double QGlobal::fps = 1.0f;
+float QGlobal::ffov = 45.0f;
 
 
 // parametry do u¿ytku wewnêtrznego

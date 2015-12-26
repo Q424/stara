@@ -30,6 +30,7 @@ http://mozilla.org/MPL/2.0/.
 #include "qutils.h"
 #include "modelpreview.h"
 #include "frm_debugger.h"
+#include "screen.h"
 #pragma hdrstop
 
 #include <dsound.h> //_clear87() itp.
@@ -90,6 +91,7 @@ USEUNIT("Console\LPT.cpp");
 USEUNIT("qutils.cpp");
 USEUNIT("modelpreview.cpp");
 USEUNIT("freetype.cpp");
+USEUNIT("screen.cpp");
 USELIB("freetype.lib");
 USEFORM("frm_debugger.cpp", DEBUGGER);
 //---------------------------------------------------------------------------
@@ -936,7 +938,6 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  sprintf(appvers, "appvers: %i %i %i %i", vmajor, vminor, vbuild, vrev);
  WriteLog(appvers);
 
-
  GetFileAttributesEx(ParamStr(0).c_str(), GetFileExInfoStandard, &attr);
  FileTimeToSystemTime(&attr.ftLastWriteTime, &creation);
  sprintf(appdate, "appdate: %04d%02d%02d %02d%02d%02d", creation.wYear, creation.wMonth, creation.wDay, creation.wHour+2, creation.wMinute, creation.wSecond);
@@ -1170,7 +1171,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  char logfile[200];
  sprintf(logfile,"%s%s", appath.c_str() , QGlobal::logfilenm1.c_str());
  if (openlogonx) ShellExecute(0, "open", logfile, NULL, NULL, SW_MAXIMIZE);
-
+ DeleteFile("templog.txt"); // usuniêcie starego
 
     delete pConsole; // deaktywania sterownika
     // shutdown

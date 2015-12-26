@@ -18,7 +18,7 @@ http://mozilla.org/MPL/2.0/.
 #include "MdlMngr.h"
 #include "Globals.h"
 #include "sky.h"
-
+#include "screen.h"
 
 //#include <winuser.h>
 
@@ -41,6 +41,7 @@ class TWorld
     void TrainDelete(TDynamicObject *d = NULL);
     TWorld();
     ~TWorld();
+    TSCREEN *SCR;
     // double Aspect;
   private:
     AnsiString OutText1; // teksty na ekranie

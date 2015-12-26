@@ -32,6 +32,7 @@ http://mozilla.org/MPL/2.0/.
 #include "Driver.h"
 #include "Console.h"
 #include "qutils.h"
+#include "screen.h"
 
 #define TEXTURE_FILTER_CONTROL_EXT 0x8500
 #define TEXTURE_LOD_BIAS_EXT 0x8501
@@ -66,6 +67,8 @@ TWorld::TWorld()
     fTimeBuffer = 0.0; // bufor czasu aktualizacji dla sta³ego kroku fizyki
     fMaxDt = 0.01; //[s] pocz¹tkowy krok czasowy fizyki
     fTime50Hz = 0.0; // bufor czasu dla komunikacji z PoKeys
+
+    QGlobal::SLTEMP = new TStringList;
 }
 
 TWorld::~TWorld()
@@ -170,6 +173,15 @@ BOOL GetDisplayMonitorInfo(int nDeviceIndex, LPSTR lpszMonitorInfo)
 
 bool TWorld::Init(HWND NhWnd, HDC hDC)
 {
+ //WriteLog("USTAWIANIE KATALOGU DLA ZRZUTOW EKRANU...");
+    CreateDir(QGlobal::asAPPDIR + QGlobal::asSSHOTDIR);
+    CreateDir(QGlobal::asAPPDIR + QGlobal::asSSHOTDIR + QGlobal::asSSHOTSUB);         // SCREENSHOTS DIRECTORY CONTAINER
+    CreateDir(QGlobal::asAPPDIR + "data\\");
+    CreateDir(QGlobal::asAPPDIR + "data\\logs\\");
+
+    WriteLog("");
+    WriteLog("");
+
     double time = (double)Now();
     Global::hWnd = NhWnd; // do WM_COPYDATA
     Global::pCamera = &Camera; // Ra: wskaŸnik potrzebny do likwidacji drgañ
@@ -181,16 +193,16 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     return false;
 #endif
     WriteLog("Online documentation and additional files on http://eu07.pl");
-    WriteLog("Authors: Marcin_EU, McZapkie, ABu, Winger, Tolaris, nbmx_EU, OLO_EU, Bart, Quark-t, "
-             "ShaXbee, Oli_EU, youBy, KURS90, Ra, hunter, Q and others");
-    WriteLog("Renderer:");
-    WriteLog((char *)glGetString(GL_RENDERER));
-    WriteLog("Vendor:");
-    // Winger030405: sprawdzanie sterownikow
-    WriteLog((char *)glGetString(GL_VENDOR));
-    AnsiString glver = ((char *)glGetString(GL_VERSION));
-    WriteLog("OpenGL Version:");
-    WriteLog(glver);
+    WriteLog("Authors: Marcin_EU, McZapkie, ABu, Winger, Tolaris, nbmx_EU, OLO_EU, Bart, Quark-t, " "ShaXbee, Oli_EU, youBy, KURS90, Ra, hunter, Q and others");
+    WriteLog("");
+    WriteLog("Renderer: " + AnsiString((char*) glGetString(GL_RENDERER)));
+    WriteLog("Vendor: " + AnsiString((char*) glGetString(GL_VENDOR)));
+ 
+//Winger030405: sprawdzanie sterownikow
+    AnsiString glver=((char*)glGetString(GL_VERSION));
+    WriteLog("OpenGL Version: " + AnsiString((char*)glGetString(GL_VERSION)));
+    WriteLog("");
+
     if ((glver == "1.5.1") || (glver == "1.5.2"))
     {
         Error("Niekompatybilna wersja openGL - dwuwymiarowy tekst nie bedzie wyswietlany!");
@@ -223,7 +235,41 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     Global::bOpenGL_1_5 = (Global::fOpenGL >= 1.5); // s¹ fragmentaryczne animacje VBO
 
     WriteLog("Supported extensions:");
-    WriteLog((char *)glGetString(GL_EXTENSIONS));
+    LISTGLEXTENSIONS(); // Q 261215: W QUTILS.CPP
+
+    glMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC) wglGetProcAddress("glMultiTexCoord2fARB");
+    glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC) wglGetProcAddress("glActiveTextureARB");
+
+    WriteLog(" ");
+
+    WriteLog("CHECKING NEEDED EXTENSIONS...");
+
+    if (!GL_ARB_shader_objects || !GLEW_ARB_vertex_shader || !GL_ARB_fragment_shader || !GLEW_ARB_shading_language_100)
+     {
+      WriteLog("No GLSL support (GL_ARB_shader_objects, GL_ARB_vertex_shader, GL_ARB_fragment_shader, GL_ARB_shading_language_100)");
+     }
+     else WriteLog("Shader language 100 supported");
+
+    if(!GLEW_ARB_texture_non_power_of_two)
+     {
+      WriteLog("GL_ARB_texture_non_power_of_two not supported!");
+     }
+
+    if(!GLEW_ARB_depth_texture)
+     {
+      WriteLog("GLEW_ARB_depth_texture not supported!");
+     }
+
+    if(!GLEW_ARB_framebuffer_object)
+     {
+      WriteLog("GLEW_ARB_framebuffer_object not supported!");
+     }
+
+    if(!glMultiTexCoord2fARB && !glActiveTextureARB)
+     {
+      WriteLog("MultiTexturing is not supported by your hardware");
+     }
+
     if (glewGetExtension("GL_ARB_vertex_buffer_object")) // czy jest VBO w karcie graficznej
     {
         if (AnsiString((char *)glGetString(GL_VENDOR))
@@ -669,7 +715,8 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     ResetTimers();
     WriteLog("Load time: " + FloatToStrF((86400.0 * ((double)Now() - time)), ffFixed, 7, 1) + " seconds");
 
-
+    AnsiString logdate = FormatDateTime("yymmdd hhmmss", Now());
+    CopyFile("log.txt", "data\\logs\\" + logdate + ".txt", false);
 
     if (DebugModeFlag) // w Debugmode automatyczne w³¹czenie AI
         if (Train)
@@ -692,6 +739,10 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     return true;
 };
 
+
+// *****************************************************************************
+// OBSLUGA WCISNIECIA KLAWISZY W ROZNYCH KOMBINACJACH
+// *****************************************************************************
 void TWorld::OnKeyDown(int cKey)
 { //(cKey) to kod klawisza, cyfrowe i literowe siê zgadzaj¹
     // Ra 2014-09: tu by mo¿na dodaæ tabelê konwersji: 256 wirtualnych kodów w kontekœcie dwóch
@@ -699,6 +750,11 @@ void TWorld::OnKeyDown(int cKey)
     // na ka¿dy kod wirtualny niech przypadaj¹ 4 bajty: 2 dla naciœniêcia i 2 dla zwolnienia
     // powtórzone 256 razy da 1kB na ka¿dy stan prze³¹czników, ³¹cznie bêdzie 4kB pierwszej tabeli
     // przekodowania
+
+    if (GetAsyncKeyState(VK_SNAPSHOT) < 0) SCR->SaveScreen_xxx();
+
+    if (!Console::Pressed(VK_SHIFT) && cKey == VK_F11) SCR->SaveScreen_xxx();     // Q 261215: zrut ekranu do jpg, tga lub bmp w zaleznosci od opcji w config.txt
+
     if (!Global::iPause)
     { // podczas pauzy klawisze nie dzia³aj¹
         AnsiString info = "Key pressed: [";
@@ -1117,6 +1173,8 @@ bool TWorld::Update()
         --iCheckFPS;
     else
     { // jak dosz³o do zera, to sprawdzamy wydajnoœæ
+     QGlobal::fps = GetFPS();
+
         if (GetFPS() < Global::fFpsMin)
         {
             Global::iSegmentsRendered -=

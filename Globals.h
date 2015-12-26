@@ -277,6 +277,10 @@ class QGlobal
  static int infotype;
  static int aspectratio;
  static int loaderrefresh;
+
+ static double fMoveLightS;
+ static double fps;
+ static float ffov;
 };
 
 class Global
