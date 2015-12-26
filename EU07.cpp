@@ -22,6 +22,9 @@ http://mozilla.org/MPL/2.0/.
 #include <filectrl.hpp>  // Q 241215
 #include "system.hpp"
 #include "classes.hpp"
+#include "windows.h"
+#include "winuser.h"
+
 #include "Globals.h"
 #include "Console.h"
 #include "QueryParserComp.hpp"
@@ -503,7 +506,7 @@ QGlobal::glHWND=hWnd;
     return TRUE; // success
 }
 
-
+BOOL fEatKeystroke = FALSE;
 static int test = 0;
 /**/
 // ************ Globals ************
@@ -511,6 +514,41 @@ static int test = 0;
 #define MYDISPLAY 1
 
 PCOPYDATASTRUCT pDane;
+
+
+// *****************************************************************************
+// TAKIE CIEZKIE KODZENIE DLA OBSLUGI PrtScrn (VK_SNAPSHOT), TRZEBA WYKRYWAC NA NISKIM POZIOMIE
+// TEN KLAWISZ. CO ZA OKRUTNE JEST ZYCIE Q: 261215
+// *****************************************************************************
+LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+  BOOL fEatKeystroke = FALSE;
+ 
+  if (nCode == HC_ACTION) 
+  {
+     switch (wParam) 
+     {
+       // case WM_KEYDOWN:
+       // case WM_SYSKEYDOWN:
+        case WM_KEYUP:    
+       // case WM_SYSKEYUP:
+            {
+                PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT) lParam;
+                fEatKeystroke=(p->vkCode == VK_SNAPSHOT);
+                if (fEatKeystroke)
+                {
+                   Sleep(100);
+                   WriteLog("VK_SNAPSHOT");//Here goes your printkey code
+                   World.SCR->SaveScreen_xxx();
+                }
+                break;
+            }
+     }
+  }
+ 
+  return(fEatKeystroke ? 1 : CallNextHookEx(NULL, nCode, wParam, lParam));
+}
+
 
 LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
                          UINT uMsg, // message for this window
@@ -520,6 +558,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
     TRect rect;
     switch (uMsg) // check for windows messages
     {
+     case WM_HOTKEY:
+    {
+        WinExec(" The Java Application ", SW_SHOWNORMAL);
+    }
+
     case WM_PASTE: //[Ctrl]+[V] potrzebujemy do innych celów
         return 0;
     case WM_COPYDATA: // obs³uga danych przes³anych przez program steruj¹cy
@@ -718,6 +761,8 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
                    LPSTR lpCmdLine, // command line parameters
                    int nCmdShow) // window show state
 {
+  // Install the low-level keyboard & mouse hooks
+ HHOOK hhkLowLevelKybd  = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC) &LowLevelKeyboardProc, hInstance, 0); //Q 261215: niskopoziomowe przechwytywanie klawiary specjalnie dla klawisza PrntScr :)
 
  MSG msg; // windows message structure
  WIN32_FILE_ATTRIBUTE_DATA attr;
@@ -745,6 +790,10 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  DecimalSeparator = '.';
 
  DEBUGGER = new TDEBUGGER(NULL);   // UTWORZENIE FORMY DEBUGGERA
+
+// RegisterHotKey(NULL, 1, MOD_ALT, VK_SNAPSHOT);
+
+
 
  GetDesktopResolution(sh, sv);
  SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());  // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY

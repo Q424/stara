@@ -49,10 +49,12 @@ using namespace Timer;
 
 const double fTimeMax = 1.00; //[s] maksymalny czas aktualizacji w jednek klatce
 
+
+// *****************************************************************************
+// Konstruktor klasy TWorld
+// *****************************************************************************
 TWorld::TWorld()
 {
-    // randomize();
-    // Randomize();
     Train = NULL;
     // Aspect=1;
     for (int i = 0; i < 10; ++i)
@@ -71,6 +73,10 @@ TWorld::TWorld()
     QGlobal::SLTEMP = new TStringList;
 }
 
+
+// *****************************************************************************
+// Destruktor klasy TWorld
+// *****************************************************************************
 TWorld::~TWorld()
 {
     Global::bManageNodes = false; // Ra: wy³¹czenie wyrejestrowania, bo siê sypie
@@ -84,6 +90,10 @@ TWorld::~TWorld()
         FreeLibrary(hinstGLUT32);
 }
 
+
+// *****************************************************************************
+// USUWANIE POJAZDU
+// *****************************************************************************
 void TWorld::TrainDelete(TDynamicObject *d)
 { // usuniêcie pojazdu prowadzonego przez u¿ytkownika
     if (d)
@@ -97,6 +107,10 @@ void TWorld::TrainDelete(TDynamicObject *d)
     Global::pUserDynamic = NULL; // tego te¿ nie ma
 };
 
+
+// *****************************************************************************
+// FUNKCJA DO WYPISYWANIA ROZNYCH INFORMACJI W 2D
+// *****************************************************************************
 GLvoid TWorld::glPrint(const char *txt) // custom GL "Print" routine
 { // wypisywanie tekstu 2D na ekranie
     if (!txt)
@@ -171,6 +185,10 @@ BOOL GetDisplayMonitorInfo(int nDeviceIndex, LPSTR lpszMonitorInfo)
 }
 */
 
+
+// **********************************************************************************************************
+// INICJALIZACJA USTAWIEN OpenGL, WCZYTYWANIE SCENERII - FUNKCJA WYWOLYWANA W EU07.CPP W int InitGL(GLvoid)
+// **********************************************************************************************************
 bool TWorld::Init(HWND NhWnd, HDC hDC)
 {
  //WriteLog("USTAWIANIE KATALOGU DLA ZRZUTOW EKRANU...");
@@ -716,7 +734,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     WriteLog("Load time: " + FloatToStrF((86400.0 * ((double)Now() - time)), ffFixed, 7, 1) + " seconds");
 
     AnsiString logdate = FormatDateTime("yymmdd hhmmss", Now());
-    CopyFile("log.txt", "data\\logs\\" + logdate + ".txt", false);
+    CopyFile("log.txt", AnsiString("data\\logs\\" + logdate + ".txt").c_str(), false);
 
     if (DebugModeFlag) // w Debugmode automatyczne w³¹czenie AI
         if (Train)
@@ -751,7 +769,8 @@ void TWorld::OnKeyDown(int cKey)
     // powtórzone 256 razy da 1kB na ka¿dy stan prze³¹czników, ³¹cznie bêdzie 4kB pierwszej tabeli
     // przekodowania
 
-    if (GetAsyncKeyState(VK_SNAPSHOT) < 0) SCR->SaveScreen_xxx();
+
+    //if (!Console::Pressed(VK_SHIFT) && cKey == VK_SNAPSHOT) SCR->SaveScreen_xxx();
 
     if (!Console::Pressed(VK_SHIFT) && cKey == VK_F11) SCR->SaveScreen_xxx();     // Q 261215: zrut ekranu do jpg, tga lub bmp w zaleznosci od opcji w config.txt
 
@@ -1037,6 +1056,10 @@ void TWorld::OnKeyDown(int cKey)
     //}
 }
 
+
+// *****************************************************************************
+// OBSLUGA PUSZCZENIA KLAWISZA
+// *****************************************************************************
 void TWorld::OnKeyUp(int cKey)
 { // zwolnienie klawisza; (cKey) to kod klawisza, cyfrowe i literowe siê zgadzaj¹
     if (!Global::iPause) // podczas pauzy sterownaie nie dzia³a
@@ -1046,11 +1069,19 @@ void TWorld::OnKeyUp(int cKey)
                     Train->OnKeyUp(cKey); // przekazanie zwolnienia klawisza do kabiny
 };
 
+
+// *****************************************************************************
+// OBSLUGA PORUSZANIA MYSZA
+// *****************************************************************************
 void TWorld::OnMouseMove(double x, double y)
 { // McZapkie:060503-definicja obracania myszy
     Camera.OnCursorMove(x * Global::fMouseXScale, -y * Global::fMouseYScale);
 }
 
+
+// *****************************************************************************
+// OBSLUGA WEJSCIA/WYJSCIA DO/Z KABINY
+// *****************************************************************************
 void TWorld::InOutKey()
 { // prze³¹czenie widoku z kabiny na zewnêtrzny i odwrotnie
     FreeFlyModeFlag = !FreeFlyModeFlag; // zmiana widoku
@@ -1081,6 +1112,10 @@ void TWorld::InOutKey()
     }
 };
 
+
+// *****************************************************************************
+// TAKI SE WIDOK Z DYSTANSU NA POJAZDY
+// *****************************************************************************
 void TWorld::DistantView()
 { // ustawienie widoku pojazdu z zewn¹trz
     if (Controlled) // jest pojazd do prowadzenia?
@@ -1103,6 +1138,10 @@ void TWorld::DistantView()
     }
 };
 
+
+// *****************************************************************************
+// SLEDZENIE POJAZDU
+// *****************************************************************************
 void TWorld::FollowView(bool wycisz)
 { // ustawienie œledzenia pojazdu
     // ABu 180404 powrot mechanika na siedzenie albo w okolicê pojazdu
@@ -1155,6 +1194,10 @@ void TWorld::FollowView(bool wycisz)
         DistantView();
 };
 
+
+// *****************************************************************************
+// FUNKCJA AKTUALIZUJACA, FIZYKE, RUCH MODELI I NA KONIEC WYWOLANIE RENDERINGU
+// *****************************************************************************
 bool TWorld::Update()
 {
 #ifdef USE_SCENERY_MOVING
@@ -2582,6 +2625,10 @@ bool TWorld::Update()
     return (true);
 };
 
+
+// *****************************************************************************
+// PIERWSZA FUNKCJA NA DRODZE RENDERINGU SCENY - Wywolywana z TWorld::Update()
+// *****************************************************************************
 bool TWorld::Render()
 {
     glColor3b(255, 255, 255);
@@ -2629,6 +2676,10 @@ bool TWorld::Render()
     return true;
 };
 
+
+// *****************************************************************************
+// TAKI SE TUTORIAL DLA POCZATKUJACYCH
+// *****************************************************************************
 void TWorld::ShowHints(void)
 { // Ra: nie u¿ywaæ tego, bo Ÿle dzia³a
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -2765,7 +2816,9 @@ void TWorld::ShowHints(void)
     }
 };
 
-//---------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void TWorld::OnCommandGet(DaneRozkaz *pRozkaz)
 { // odebranie komunikatu z serwera
     if (pRozkaz->iSygn == 'EU07')
@@ -2874,7 +2927,8 @@ void TWorld::OnCommandGet(DaneRozkaz *pRozkaz)
         }
 };
 
-//---------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 void TWorld::ModifyTGA(const AnsiString &dir)
 { // rekurencyjna modyfikacje plików TGA
     TSearchRec sr;
@@ -2891,6 +2945,8 @@ void TWorld::ModifyTGA(const AnsiString &dir)
         FindClose(sr);
     }
 };
+
+
 //---------------------------------------------------------------------------
 AnsiString last; // zmienne u¿ywane w rekurencji
 double shift = 0;
