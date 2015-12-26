@@ -18,6 +18,8 @@ http://mozilla.org/MPL/2.0/.
 #include "MdlMngr.h"
 #include "Globals.h"
 #include "sky.h"
+
+
 //#include <winuser.h>
 
 class TWorld

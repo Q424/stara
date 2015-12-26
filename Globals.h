@@ -20,6 +20,7 @@ http://mozilla.org/MPL/2.0/.
 #include "dumb3d.h"
 #include "Logs.h"
 
+
 #define PI 3.1415926535897f
 #define DTOR (PI/180.0f)
 #define SQR(x) (x*x)
@@ -190,6 +191,7 @@ class QGlobal
  static TStringList *LOKKBD;
 
 
+ static AnsiString USERPID;
  static AnsiString asCurrentSceneryPath;
  static AnsiString asCurrentTexturePath;
  static AnsiString asCurrentDynamicPath;
@@ -208,6 +210,7 @@ class QGlobal
  static AnsiString asAPPSIZE;
  static AnsiString asAPPDAT2;
  static AnsiString asAPPCOMP;
+ static AnsiString asAPPRLSE;
  static AnsiString asGTIME;
  static AnsiString asLOKTUTFILE;
  static AnsiString asLOKKBDFILE;
@@ -258,6 +261,7 @@ class QGlobal
  static bool bISLAMP;
  static bool bADVDEBUG1;
  static bool bRENDERGUI;
+ static bool bSENDLOGFTP;
 
  static int objectid;
  static int cabelementid;

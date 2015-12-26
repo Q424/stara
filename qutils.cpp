@@ -23,6 +23,65 @@
 
 
 // *****************************************************************************
+//
+// *****************************************************************************
+std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems)
+{
+  std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+    return elems;
+}
+
+std::vector<std::string> split(const std::string &s, char delim)
+{
+    std::vector<std::string> elems;
+    split(s, delim, elems);
+    return elems;
+}
+
+
+// *****************************************************************************
+// Pobieranie numeru wersji systemu, nazwy i info o service packu
+// *****************************************************************************
+void GetOSVersionVCL(TStringList *lines)
+{
+  int buildNumber = Win32BuildNumber;
+  if (Win32Platform == VER_PLATFORM_WIN32_WINDOWS)
+    buildNumber = LOWORD(buildNumber);
+ // lines->Add("Build Number:   " +String(buildNumber));
+
+   lines->Add("sysvers: " +
+    String(Win32MajorVersion) + "." + String(Win32MinorVersion) + "." + String(buildNumber));
+
+
+  String platform = "Unknown";
+  if (Win32Platform == VER_PLATFORM_WIN32s)
+    platform = "Win32s";
+  else if (Win32Platform == 
+             VER_PLATFORM_WIN32_WINDOWS)
+  {
+    if ((Win32MajorVersion > 4) || 
+         ((Win32MajorVersion == 4) && 
+         (Win32MinorVersion > 0)))
+      platform = "Windows 98";
+    else
+      platform = "windows 95";
+  }
+  else if (Win32Platform == VER_PLATFORM_WIN32_NT) platform = "Windows NT";
+
+  lines->Add("sysname: " + platform);
+
+  if (Win32CSDVersion.IsEmpty() && Win32Platform == VER_PLATFORM_WIN32_NT)
+    lines->Add("servpak: ""No Service Pack Installed");
+  else
+    lines->Add("servpak: " + Win32CSDVersion);
+}
+
+
+// *****************************************************************************
 // Funkcja pobierajaca numer seryjny dysku do uzytku jako user personal ID
 // w przyszlosci moze sie przydac do banowania nieogarnietych na multi ]:-)
 // *****************************************************************************

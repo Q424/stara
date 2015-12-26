@@ -15,7 +15,9 @@
 #include <stdio.h>         // sprintf()
 #include <windows.h>
 
-
+std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
+std::vector<std::string> split(const std::string &s, char delim);
+void GetOSVersionVCL(TStringList *lines);
 AnsiString GetMachineID(LPCTSTR HDD);
 bool StrToBool(AnsiString str);
 AnsiString BoolToStr(bool value);

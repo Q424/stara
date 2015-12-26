@@ -16,6 +16,8 @@ http://mozilla.org/MPL/2.0/.
 #include "opengl/glut.h"
 #include "opengl/ARB_Multisample.h"
 
+#include <vector>
+#include <vcl.h>
 #include <registry.hpp>  // Q 241215
 #include <filectrl.hpp>  // Q 241215
 #include "system.hpp"
@@ -27,6 +29,7 @@ http://mozilla.org/MPL/2.0/.
 #include "Logs.h"
 #include "qutils.h"
 #include "modelpreview.h"
+#include "frm_debugger.h"
 #pragma hdrstop
 
 #include <dsound.h> //_clear87() itp.
@@ -88,6 +91,7 @@ USEUNIT("qutils.cpp");
 USEUNIT("modelpreview.cpp");
 USEUNIT("freetype.cpp");
 USELIB("freetype.lib");
+USEFORM("frm_debugger.cpp", DEBUGGER);
 //---------------------------------------------------------------------------
 #include "World.h"
 
@@ -109,11 +113,15 @@ static POINT mouse;
 static POINT xmouse;
 static int mx=0, my=0;
 bool replacescn = false;
+int tocutlen;
+AnsiString appath, commandline, tocut, filetoopen;
+TStringList *ss;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); // Declaration For WndProc
 
 //#include "dbgForm.h"
 //---------------------------------------------------------------------------
+
 
 
 /*******************************************************************************
@@ -238,6 +246,8 @@ GLvoid KillGLWindow(GLvoid) // properly kill the window
     //    KillFont();
 }
 
+
+// *****************************************************************************
 /*	This code creates our OpenGL Window.  Parameters are:			*
  *	title			- title to appear at the top of the window	*
  *	width			- width of the GL Window or fullscreen mode	*
@@ -491,7 +501,7 @@ QGlobal::glHWND=hWnd;
     return TRUE; // success
 }
 
-//static int mx = 0, my = 0;
+
 static int test = 0;
 /**/
 // ************ Globals ************
@@ -697,6 +707,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
 };
 
 
+
 // *****************************************************************************
 // POCZATEK WSZYSTKIEGO
 // *****************************************************************************
@@ -720,8 +731,9 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  char szFILE[200];
  char szCFGFILE[200];
  std::string line;
+ AnsiString FDT;
  WORD vmajor, vminor, vbuild, vrev;
- AnsiString appath, commandline, tocut, filetoopen;
+
  BOOL askforfull = false;
  BOOL getscreenb = false;
  BOOL openlogonx = false;
@@ -729,7 +741,9 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  BOOL done = FALSE; // bool variable to exit loop
  fullscreen = true;
  DecimalSeparator = '.';
- 
+
+ DEBUGGER = new TDEBUGGER(NULL);   // UTWORZENIE FORMY DEBUGGERA
+
  GetDesktopResolution(sh, sv);
  SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());  // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
 
@@ -737,52 +751,43 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  commandline = StringReplace( commandline, "e3d", "t3d", TReplaceFlags() << rfReplaceAll );
  commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );
 
- //commandline = "-vm " + commandline;
- tocut = ExtractFilePath(ParamStr(0)) + "models\\";   // USUWAM BEZWZGLEDNA SCIEZKA MODELU
-
- //WriteLog("commandline= [" + commandline + "]");
- //WriteLog("tocut= [" + tocut + "]");
- int tocutlen = tocut.Length() + 0;
+ //WriteLog("CM= [" + commandline + "]"); // C:/MaSzyna_15_04/models/ip/wloclawek/wwek_przychodniak.t3d
+ tocut = ExtractFilePath(ParamStr(0)) + "models\\";   
+ tocutlen = tocut.Length();
 
 
  // OTWIERANIE PODGLADU MODELU GDY KLIKNIETO NA PLIK MODELU ********************
  if (commandline != "")
    if ((commandline.Pos("models") > 0))
    {
-    //WriteLog("commandline= " + commandline);
+    filetoopen = commandline.Delete( 1, tocutlen);  // usuwa sciezke aplikacji + models/ zostaje ip/wloclawek/wwek_przychodniak.t3d
 
-    filetoopen = commandline.SubString( tocutlen+1, 255); // OBCINAMY SCIEZKE KATALOGU SYMULATORA i MODELS A ZOSTAWIAMY WZGLEDNA DO MODELU
+    //WriteLog("FO=" + filetoopen);
 
-    filetoopen = filetoopen.SubString(1, 255);
+    //std::vector<std::string> x = split(commandline.c_str(), ' ');
 
     modelpreview(filetoopen.c_str(), "", "", "");
 
-    //commandline = "-vm " + filetoopen;
-
     commandline = AnsiString("-vm " + filetoopen).c_str();
-    //WriteLog("commandline= [" + commandline + "]");
-
-    //WriteLog("newcommandline= " + commandline);
-    //commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );
-   
-    SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());  // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
 
     replacescn = true;
    }
   else
    {
-    //WriteLog("commandline= " + commandline);
     commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );
    }
-  else commandline = "";
+ // else commandline = "";
 
- //SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());  // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
 
  GETCWD();   // POBIERA SCIEZKE APLIKACJI DO ZMIENNEJ GLOBALNEJ Global::asCWD
 
  QGlobal::asAPPDIR = ExtractFilePath(ParamStr(0));
 
  appath = GETCWD();
+
+ QGlobal::USERPID =  AnsiString(GetMachineID("C:\\"));
+ 
+ FDT = FormatDateTime("ddmmyy-hhmmss", Now());
 
  argc = ParseCommandline();
 
@@ -867,6 +872,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 	        if (test == "openlogonx") openlogonx = atoi(par1.c_str());
           	if (test == "logfilenm1") QGlobal::logfilenm1 = par1;
 	        if (test == "exitlogons") QGlobal::logwinname = par1;
+                if (test == "sendlogftp") QGlobal::bSENDLOGFTP = atoi(par1.c_str());
                 if (test == "scrshotext") QGlobal::asSSHOTEXT = par1;
                 if (test == "scrshotdir") QGlobal::asSSHOTDIR = par1;
                 if (test == "scrshotsub") QGlobal::asSSHOTSUB = par1;
@@ -911,7 +917,6 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  if (rege3dt3d) RegisterFileExtansion(".t3d", "maszynamodeltxt", "Tekstowy plik modelu MaSZyna", "\\data\\icons\\t3d.ico,0" );
      WriteLog("");
 
- //SelectComPort();
 
  WriteLog("environment informations: ");
 
@@ -928,13 +933,20 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  WriteLog(cmdline);
 
  GetAppVersion(argv[0], &vmajor, &vminor, &vbuild, &vrev);
- sprintf(appvers, "appvers: %i %i %i", vmajor, vminor, vbuild);
+ sprintf(appvers, "appvers: %i %i %i %i", vmajor, vminor, vbuild, vrev);
  WriteLog(appvers);
+
 
  GetFileAttributesEx(ParamStr(0).c_str(), GetFileExInfoStandard, &attr);
  FileTimeToSystemTime(&attr.ftLastWriteTime, &creation);
  sprintf(appdate, "appdate: %04d%02d%02d %02d%02d%02d", creation.wYear, creation.wMonth, creation.wDay, creation.wHour+2, creation.wMinute, creation.wSecond);
  WriteLog(appdate);
+
+ sprintf(appvers, "%i.%i.%i.%i", vmajor, vminor, vbuild, vrev);
+ sprintf(appdate, "%04d%02d%02d %02d%02d%02d", creation.wYear, creation.wMonth, creation.wDay, creation.wHour+2, creation.wMinute, creation.wSecond);
+
+ QGlobal::asAPPCOMP = "release: " + AnsiString(appdate) + ", " + appvers;
+ WriteLog(QGlobal::asAPPCOMP);
 
  //GetFileAttributesEx(ParamStr(0).c_str(), GetFileExInfoStandard, &attr);
  //FileTimeToSystemTime(&attr.ftLastWriteTime, &creation);
@@ -948,19 +960,40 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  sprintf(screendim, "deskdim: %ix%i", sh, sv);
  WriteLog(screendim);
 
- WriteLog("userpid: " + AnsiString(GetMachineID("C:\\")));
+ QGlobal::USERPID =  AnsiString(GetMachineID("C:\\"));
+ WriteLog("userpid: " + QGlobal::USERPID);
 
+ ss = new TStringList();
+ GetOSVersionVCL(ss);
+
+ for (int l = 0; l < ss->Count; l++) WriteLog(ss->Strings[l]);
 
  //WriteLog("cmpconf: windows 7 Ultimate 64, AMD FX 4170 4.2GHz 4 core, 8gb ram, GFX GF8600GT CORE 560Mhz 256MB PCIE,  BIOS VIDEO: 60.84.5E.00.00, OpenGL 3.3 driver rev 2009-01-16 6.14.11.8151 ");
  WriteLog("");
  WriteLog("");
 
- HWND aHWnd;
- aHWnd = FindWindow(NULL, QGlobal::logwinname.c_str());
- SendMessage(aHWnd, WM_CLOSE, 0, 0);    // ZAMYKAMY OTWARTY LOG
+      
+   if (QGlobal::bSENDLOGFTP)  // Jezeli wysylanie logu na ftp wlaczone to pokaz okienko debuggera i polacz z serwerem FTP
+    {
+     DEBUGGER->Left = 0;
+     DEBUGGER->Width = Screen->Width;
+     DEBUGGER->Show();
+     DEBUGGER->FTP->Port = 21;
+     DEBUGGER->FTP->HostName = "lisek.org.pl";
+     DEBUGGER->FTP->UserName = "queued_q";
+     DEBUGGER->FTP->PassWord = "q15002900";
+     DEBUGGER->FTP->Binary          = true;
+     DEBUGGER->FTP->DisplayFileFlag = true;
+     DEBUGGER->FTP->Connect();
+    }
+
+    HWND aHWnd;
+    aHWnd = FindWindow(NULL, QGlobal::logwinname.c_str()); // Szukanie okna z otwartm logiem znajac etykiete
+    SendMessage(aHWnd, WM_CLOSE, 0, 0);    // ZAMYKAMY OTWARTY LOG
 
 
     DeleteFile("errors.txt"); // usuniêcie starego
+    DeleteFile("templog.txt"); // usuniêcie starego
     
     WriteLog("Reading eu07.ini...");
     Global::LoadIniFile("eu07.ini"); // teraz dopiero mo¿na przejrzeæ plik z ustawieniami
@@ -1087,7 +1120,23 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
         if ( QGlobal::bAPPDONE ) done = true;
 
-        while (!done) // loop that runs while done=FALSE
+
+ if (QGlobal::bSENDLOGFTP >0)
+   {
+    CopyFile("log.txt", "templog.txt", false);
+
+    Application->ProcessMessages();
+
+    DEBUGGER->FTP->LocalFileName = appath + "templog.txt";
+    DEBUGGER->FTP->HostDirName = QGlobal::USERPID;
+    DEBUGGER->FTP->HostFileName = QGlobal::USERPID;  // nazwa katalogu
+    DEBUGGER->FTP->Mkd(); // uteorzenie katalogu
+    DEBUGGER->FTP->Cwd(); // ustawienie jako roboczy
+    DEBUGGER->FTP->HostFileName = "log-" + FDT + ".txt";  // nazwa pliku logu
+    DEBUGGER->FTP->Put();      // wrzucamy plik do wczesniej wybranego
+   }
+
+       while (!done) // loop that runs while done=FALSE
         {
             if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) // is there a message waiting?
             {
@@ -1121,6 +1170,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  char logfile[200];
  sprintf(logfile,"%s%s", appath.c_str() , QGlobal::logfilenm1.c_str());
  if (openlogonx) ShellExecute(0, "open", logfile, NULL, NULL, SW_MAXIMIZE);
+
 
     delete pConsole; // deaktywania sterownika
     // shutdown

@@ -671,8 +671,6 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 
 
 
-
-
     if (DebugModeFlag) // w Debugmode automatyczne w³¹czenie AI
         if (Train)
             if (Train->Dynamic()->Mechanik)

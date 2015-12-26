@@ -34,6 +34,7 @@ HDC QGlobal::glHDC=NULL;
 HGLRC QGlobal::glHGLRC=NULL;
 HWND QGlobal::glHWND=NULL;
 
+AnsiString QGlobal::USERPID="unknown";
 AnsiString QGlobal::asCurrentSceneryPath="scenery/";
 AnsiString QGlobal::asCurrentTexturePath=AnsiString(szTexturePath);
 AnsiString QGlobal::asCurrentModelsPath="models/";
@@ -52,6 +53,7 @@ AnsiString QGlobal::asAPPDATE= "00.00.00";
 AnsiString QGlobal::asAPPSIZE= "0";
 AnsiString QGlobal::asAPPDAT2= "00:00:00";
 AnsiString QGlobal::asAPPCOMP= "00:00:00";
+AnsiString QGlobal::asAPPRLSE= "00:00:00";
 AnsiString QGlobal::asGTIME= "00:00:00";
 AnsiString QGlobal::asLOKTUTFILE = "";
 AnsiString QGlobal::asLOKKBDFILE = "";
@@ -106,6 +108,7 @@ bool QGlobal::MIRROR_L_ACTIVE = false;
 bool QGlobal::bISLAMP = false;
 bool QGlobal::bADVDEBUG1 = false;
 bool QGlobal::bRENDERGUI = false;
+bool QGlobal::bSENDLOGFTP = false;
 
 
 int QGlobal::objectid = 0;
