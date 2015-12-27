@@ -636,16 +636,55 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
          SetCapture(hWnd);  // window and returns, it needs to reset status
          MouseButton = 1;
 
-         GetCursorPos(&xmouse);
+         //GetCursorPos(&xmouse);
 
-         //Global::iMPX = LOWORD(lParam);
-         //Global::iMPY = HIWORD(lParam);
+         QGlobal::iMPX = LOWORD(lParam);
+         QGlobal::iMPY = HIWORD(lParam);
 
          //World.LM_RetrieveObjectColor(Global::iMPX, Global::iMPY);
 
-         //World.OnMouseLclick(Global::iMPX, Global::iMPY);
+         World.OnMouseLpush(QGlobal::iMPX, QGlobal::iMPY);
          return 0;
         };
+    case WM_RBUTTONDOWN :
+        {
+         ReleaseCapture();   // need them here, because if mouse moves off
+         SetCapture(hWnd);  // window and returns, it needs to reset status
+         MouseButton = 1;
+
+         //GetCursorPos(&xmouse);
+
+         QGlobal::iMPX = LOWORD(lParam);
+         QGlobal::iMPY = HIWORD(lParam);
+
+         //World.LM_RetrieveObjectColor(Global::iMPX, Global::iMPY);
+
+         World.OnMouseRpush(QGlobal::iMPX, QGlobal::iMPY);
+         return 0;
+        };
+    case WM_MBUTTONDOWN :
+        {
+         ReleaseCapture();   // need them here, because if mouse moves off
+         SetCapture(hWnd);  // window and returns, it needs to reset status
+         MouseButton = 1;
+
+         //GetCursorPos(&xmouse);
+
+         QGlobal::iMPX = LOWORD(lParam);
+         QGlobal::iMPY = HIWORD(lParam);
+
+         //World.LM_RetrieveObjectColor(Global::iMPX, Global::iMPY);
+
+         World.OnMouseMpush(QGlobal::iMPX, QGlobal::iMPY);
+         return 0;
+        };
+    case WM_MOUSEWHEEL:
+        {
+         int zDelta = ((short) HIWORD(wParam));
+         World.OnMouseWheel(zDelta);
+         return 0;
+        };
+
 
     case WM_KEYUP:
         if (Global::bActive)

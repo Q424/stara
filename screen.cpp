@@ -137,7 +137,7 @@ void __fastcall TSCREEN::FOVADD()
 {
        ADJSCR = true;
        ADJFOV = true;
-       if (QGlobal::ffov < 55.0) QGlobal::ffov += 0.10;
+       if (QGlobal::ffov < 45.0) QGlobal::ffov += 0.10;
        TSCREEN::CFOV = QGlobal::ffov;
        ReSizeGLSceneEx(QGlobal::ffov, Global::iWindowWidth, Global::iWindowHeight);
 }
@@ -146,7 +146,7 @@ void __fastcall TSCREEN::FOVADDF()
 {
        ADJSCR = true;
        ADJFOV = true;
-       if (QGlobal::ffov < 46.0) QGlobal::ffov += 2.0;
+       if (QGlobal::ffov < 45.0) QGlobal::ffov += 2.0;
        TSCREEN::CFOV = QGlobal::ffov;
        ReSizeGLSceneEx(QGlobal::ffov, Global::iWindowWidth, Global::iWindowHeight);
 }
@@ -159,7 +159,7 @@ void __fastcall TSCREEN::FOVREM()
 {
        ADJSCR = true;
        ADJFOV = true;
-       if (QGlobal::ffov > 11.0) QGlobal::ffov -= 0.10;
+       if (QGlobal::ffov > 20.0) QGlobal::ffov -= 0.10;
        TSCREEN::CFOV = QGlobal::ffov;
        ReSizeGLSceneEx(QGlobal::ffov, Global::iWindowWidth, Global::iWindowHeight);
 }

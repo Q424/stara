@@ -769,11 +769,38 @@ void TWorld::OnKeyDown(int cKey)
     // powtórzone 256 razy da 1kB na ka¿dy stan prze³¹czników, ³¹cznie bêdzie 4kB pierwszej tabeli
     // przekodowania
 
+ bool isshift = false;
 
-    //if (!Console::Pressed(VK_SHIFT) && cKey == VK_SNAPSHOT) SCR->SaveScreen_xxx();
+ QGlobal::isshift = false;
 
     if (!Console::Pressed(VK_SHIFT) && cKey == VK_F11) SCR->SaveScreen_xxx();     // Q 261215: zrut ekranu do jpg, tga lub bmp w zaleznosci od opcji w config.txt
 
+    if (GetAsyncKeyState(VK_SHIFT) < 0) { QGlobal::isshift = isshift = true; }      // USUNALEM SPRAWDZANIE W TTrain::OnKeyDown() zastepujac parametrem funkcji;
+
+    if (!Global::iPause && cKey == VK_F10)
+        {
+         //if (Global::iTextMode==cKey)
+         // Global::iTextMode=(Global::iPause&&(cKey!=VK_F1)?VK_F1:0); //wy³¹czenie napisów, chyba ¿e pauza
+         //else
+         Global::iPause = true;
+         Global::iTextMode = cKey;
+        }
+
+    if (Global::iPause && Global::iTextMode==VK_F10) if (Console::Pressed(VkKeyScan('n')))   // Jezeli pauza po wcisnieciu F10 i wcisnie sie n ...
+        {
+         Global::iPause = false;    // koniec pauzy
+         Global::iTextMode = -999;  // resetuj flage textmode
+        }
+
+ if (Global::iPause && Global::iTextMode==VK_F10) if (Console::Pressed(VkKeyScan('y')) || Console::Pressed(VkKeyScan('n')))
+      {
+       //--Global::bAPPDONE = true;
+       Global::iPause = false;
+       Global::iTextMode = 0;
+       Global::iTextMode=(cKey=='Y')?-1:0; //flaga wyjœcia z programu
+       return; //nie przekazujemy do poci¹gu
+      }
+      
     if (!Global::iPause)
     { // podczas pauzy klawisze nie dzia³aj¹
         AnsiString info = "Key pressed: [";
@@ -819,39 +846,33 @@ void TWorld::OnKeyDown(int cKey)
         }
         else // zapamiêtywanie kamery mo¿e dzia³aæ podczas pauzy
             if (FreeFlyModeFlag) // w trybie latania mo¿na przeskakiwaæ do ustawionych kamer
-            if ((Global::iTextMode != VK_F12) &&
-                (Global::iTextMode != VK_F3)) // ograniczamy u¿ycie kamer
+            if ((Global::iTextMode != VK_F12) && (Global::iTextMode != VK_F3)) // ograniczamy u¿ycie kamer
             {
-                if ((!Global::pFreeCameraInit[i].x && !Global::pFreeCameraInit[i].y &&
-                     !Global::pFreeCameraInit[i].z))
+                if ((!Global::pFreeCameraInit[i].x && !Global::pFreeCameraInit[i].y && !Global::pFreeCameraInit[i].z))
                 { // jeœli kamera jest w punkcie zerowym, zapamiêtanie wspó³rzêdnych i k¹tów
                     Global::pFreeCameraInit[i] = Camera.Pos;
                     Global::pFreeCameraInitAngle[i].x = Camera.Pitch;
                     Global::pFreeCameraInitAngle[i].y = Camera.Yaw;
                     Global::pFreeCameraInitAngle[i].z = Camera.Roll;
                     // logowanie, ¿eby mo¿na by³o do scenerii przepisaæ
-                    WriteLog(
-                        "camera " + FloatToStrF(Global::pFreeCameraInit[i].x, ffFixed, 7, 3) + " " +
-                        FloatToStrF(Global::pFreeCameraInit[i].y, ffFixed, 7, 3) + " " +
-                        FloatToStrF(Global::pFreeCameraInit[i].z, ffFixed, 7, 3) + " " +
-                        FloatToStrF(RadToDeg(Global::pFreeCameraInitAngle[i].x), ffFixed, 7, 3) +
-                        " " +
-                        FloatToStrF(RadToDeg(Global::pFreeCameraInitAngle[i].y), ffFixed, 7, 3) +
-                        " " +
-                        FloatToStrF(RadToDeg(Global::pFreeCameraInitAngle[i].z), ffFixed, 7, 3) +
-                        " " + AnsiString(i) + " endcamera");
+                    WriteLog("camera " + FloatToStrF(Global::pFreeCameraInit[i].x, ffFixed, 7, 3) + " " +
+                                         FloatToStrF(Global::pFreeCameraInit[i].y, ffFixed, 7, 3) + " " +
+                                         FloatToStrF(Global::pFreeCameraInit[i].z, ffFixed, 7, 3) + " " +
+                                         FloatToStrF(RadToDeg(Global::pFreeCameraInitAngle[i].x), ffFixed, 7, 3) + " " +
+                                         FloatToStrF(RadToDeg(Global::pFreeCameraInitAngle[i].y), ffFixed, 7, 3) + " " +
+                                         FloatToStrF(RadToDeg(Global::pFreeCameraInitAngle[i].z), ffFixed, 7, 3) + " " + AnsiString(i) + " endcamera");
                 }
                 else // równie¿ przeskakiwanie
                 { // Ra: to z t¹ kamer¹ (Camera.Pos i Global::pCameraPosition) jest trochê bez sensu
-                    Global::SetCameraPosition(
-                        Global::pFreeCameraInit[i]); // nowa pozycja dla generowania obiektów
+                    Global::SetCameraPosition(Global::pFreeCameraInit[i]); // nowa pozycja dla generowania obiektów
                     Ground.Silence(Camera.Pos); // wyciszenie wszystkiego z poprzedniej pozycji
-                    Camera.Init(Global::pFreeCameraInit[i],
-                                Global::pFreeCameraInitAngle[i]); // przestawienie
+                    Camera.Init(Global::pFreeCameraInit[i], Global::pFreeCameraInitAngle[i]); // przestawienie
                 }
-            }
+            }  // Z SHIFTEM
         // bêdzie jeszcze za³¹czanie sprzêgów z [Ctrl]
-    }
+    } //if ((cKey<='9')?(cKey>='0'):false)
+
+// KLAWISZE FUNKCYJNE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     else if ((cKey >= VK_F1) ? (cKey <= VK_F12) : false)
     {
         switch (cKey)
@@ -910,7 +931,12 @@ void TWorld::OnKeyDown(int cKey)
         }
         // if (cKey!=VK_F4)
         return; // nie s¹ przekazywane do pojazdu wcale
-    }
+    }  // if ((cKey>=VK_F1)?(cKey<=VK_F12):false)
+
+// klawisze queueda
+  if ((Console::Pressed(VK_CONTROL)) && (Console::Pressed(VkKeyScan('z'))) ) SCR->FOVREM();
+  if ((Console::Pressed(VK_CONTROL)) && (Console::Pressed(VkKeyScan('x'))) ) SCR->FOVADD();
+
     if (Global::iTextMode == VK_F10) // wyœwietlone napisy klawiszem F10
     { // i potwierdzenie
         Global::iTextMode = (cKey == 'Y') ? -1 : 0; // flaga wyjœcia z programu
@@ -1076,6 +1102,27 @@ void TWorld::OnKeyUp(int cKey)
 void TWorld::OnMouseMove(double x, double y)
 { // McZapkie:060503-definicja obracania myszy
     Camera.OnCursorMove(x * Global::fMouseXScale, -y * Global::fMouseYScale);
+}
+
+void TWorld::OnMouseLpush(double x, double y)
+{
+// if ( Console::Pressed(VK_SHIFT)) SCR->FOVADD();
+}
+
+void TWorld::OnMouseRpush(double x, double y)
+{
+// if (Console::Pressed(VK_SHIFT)) SCR->FOVREM();
+}
+
+void TWorld::OnMouseMpush(double x, double y)
+{
+// WriteLog("MOUSE M DOWN");
+}
+
+void TWorld::OnMouseWheel(int zDelta)
+{
+ if (zDelta > 0) SCR->FOVADD();
+ if (zDelta < 0) SCR->FOVREM();
 }
 
 
@@ -1380,7 +1427,20 @@ bool TWorld::Update()
     // Console::Update(); //tu jest zale¿ne od FPS, co nie jest korzystne
     if (Global::bActive)
     { // obs³uga ruchu kamery tylko gdy okno jest aktywne
+
         if (Console::Pressed(VK_LBUTTON))
+        {
+        //if (!Console::Pressed(VK_CONTROL) ) Global::ffov = 45.0;
+         //if ( Console::Pressed(VK_SHIFT)) SCR->ReSizeGLSceneEx(Global::ffov, Global::iWindowWidth, Global::iWindowHeight);
+         if ( Console::Pressed(VK_SHIFT)) SCR->FOVADD();
+        }
+
+        if (Console::Pressed(VK_RBUTTON))
+        {
+         if (Console::Pressed(VK_SHIFT)) SCR->FOVREM();
+        }
+        
+        if (Console::Pressed(VK_MBUTTON))
         {
             //WriteLog("VK_LBUTTON");
             Camera.Reset(); // likwidacja obrotów - patrzy horyzontalnie na po³udnie
@@ -1392,11 +1452,9 @@ bool TWorld::Update()
                 }
             else
             {
-                TDynamicObject *d =
-                    Ground.DynamicNearest(Camera.Pos, 300); // szukaj w promieniu 300m
+                TDynamicObject *d = Ground.DynamicNearest(Camera.Pos, 300); // szukaj w promieniu 300m
                 if (!d)
-                    d = Ground.DynamicNearest(Camera.Pos,
-                                              1000); // dalej szukanie, jesli bli¿ej nie ma
+                    d = Ground.DynamicNearest(Camera.Pos, 1000); // dalej szukanie, jesli bli¿ej nie ma
                 if (d && pDynamicNearest) // jeœli jakiœ jest znaleziony wczeœniej
                     if (100.0 * LengthSquared3(d->GetPosition() - Camera.Pos) >
                         LengthSquared3(pDynamicNearest->GetPosition() - Camera.Pos))
@@ -1410,7 +1468,7 @@ bool TWorld::Update()
             if (FreeFlyModeFlag)
                 Camera.RaLook(); // jednorazowe przestawienie kamery
         }
-        else if (Console::Pressed(VK_RBUTTON)) //||Console::Pressed(VK_F4))
+        else if (Console::Pressed(VK_MBUTTON)) //||Console::Pressed(VK_F4))
             FollowView(false); // bez wyciszania dŸwiêków
         else if (Global::iTextMode == -1)
         { // tu mozna dodac dopisywanie do logu przebiegu lokomotywy
@@ -2632,10 +2690,20 @@ bool TWorld::Update()
 bool TWorld::Render()
 {
     glColor3b(255, 255, 255);
-    // glColor3b(255, 0, 255);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glMatrixMode(GL_MODELVIEW); // Select The Modelview Matrix
+
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    glMatrixMode(GL_MODELVIEW); // Select The Modelview Matrix
+//    glLoadIdentity();
+
+    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    gluPerspective(TSCREEN::CFOV, (GLdouble)Global::iWindowWidth/(GLdouble)Global::iWindowHeight, 0.1f, 19961.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glViewport(0, 0, Global::iWindowWidth, Global::iWindowHeight);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+
     Camera.SetMatrix(); // ustawienie macierzy kamery wzglêdem pocz¹tku scenerii
     glLightfv(GL_LIGHT0, GL_POSITION, Global::lightPos);
 

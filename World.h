@@ -36,6 +36,10 @@ class TWorld
     void OnKeyUp(int cKey);
     // void UpdateWindow();
     void OnMouseMove(double x, double y);
+    void OnMouseWheel(int zDelta);
+    void OnMouseLpush(double x, double y);
+    void OnMouseRpush(double x, double y);
+    void OnMouseMpush(double x, double y);
     void OnCommandGet(DaneRozkaz *pRozkaz);
     bool Update();
     void TrainDelete(TDynamicObject *d = NULL);
