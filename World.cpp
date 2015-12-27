@@ -33,6 +33,7 @@ http://mozilla.org/MPL/2.0/.
 #include "Console.h"
 #include "qutils.h"
 #include "screen.h"
+#include "freetype.h"		// Header for our little font library.
 
 #define TEXTURE_FILTER_CONTROL_EXT 0x8500
 #define TEXTURE_LOD_BIAS_EXT 0x8501
@@ -43,11 +44,17 @@ typedef void(APIENTRY *FglutBitmapCharacter)(void *font, int character); // typ 
 FglutBitmapCharacter glutBitmapCharacterDLL = NULL; // deklaracja zmiennej
 HINSTANCE hinstGLUT32 = NULL; // wskaŸnik do GLUT32.DLL
 // GLUTAPI void APIENTRY glutBitmapCharacterDLL(void *font, int character);
-TDynamicObject *Controlled = NULL; // pojazd, który prowadzimy
+//TDynamicObject *Controlled = NULL; // pojazd, który prowadzimy     // Q: przenosze do klasy TWorld
 
 using namespace Timer;
 
 const double fTimeMax = 1.00; //[s] maksymalny czas aktualizacji w jednek klatce
+
+GLuint TWorld::loaderbackg;
+GLuint TWorld::loaderbrief;
+GLuint TWorld::loaderlogo;
+GLuint TWorld::bfonttex;
+GLuint TWorld::consolebackg;
 
 
 // *****************************************************************************
@@ -71,6 +78,15 @@ TWorld::TWorld()
     fTime50Hz = 0.0; // bufor czasu dla komunikacji z PoKeys
 
     QGlobal::SLTEMP = new TStringList;
+    QGlobal::CONFIG = new TStringList;
+    QGlobal::LOKTUT = new TStringList;
+    QGlobal::bfonttex = NULL;
+    bfonttex = NULL;
+    loaderbackg = NULL;
+    loaderbrief = NULL;
+    consolebackg = NULL;
+
+    Controlled = NULL; // pojazd, który prowadzimy
 }
 
 
@@ -196,6 +212,21 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     CreateDir(QGlobal::asAPPDIR + QGlobal::asSSHOTDIR + QGlobal::asSSHOTSUB);         // SCREENSHOTS DIRECTORY CONTAINER
     CreateDir(QGlobal::asAPPDIR + "data\\");
     CreateDir(QGlobal::asAPPDIR + "data\\logs\\");
+
+    QGlobal::bSCNLOADED = false;
+    QGlobal::bfirstloadingscn = true;
+    ShowWindow(NhWnd,SW_SHOW);
+    SetForegroundWindow(NhWnd);                                                    // slightly higher priority
+    SetFocus(NhWnd);
+
+    LOADLOADERCONFIG();
+    LOADLOADERFONTS();
+    LOADLOADERTEXTURES();
+
+    if (QGlobal::bSPLASHSCR)
+    QGlobal::splashscreen = TTexturesManager::GetTextureID("data/lbacks/", Global::asCurrentTexturePath.c_str(), AnsiString("data/lbacks/splashscreen.bmp").c_str());
+    QGlobal::mousepoint = TTexturesManager::GetTextureID("data/menu/", Global::asCurrentTexturePath.c_str(), AnsiString("data/menu/menu_point.bmp").c_str());
+    QGlobal::mousesymbol = TTexturesManager::GetTextureID("data/menu/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfx/ismouse.bmp").c_str());
 
     WriteLog("");
     WriteLog("");
@@ -484,6 +515,10 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 
+    if (QGlobal::bSPLASHSCR) RenderSPLASHSCR(hDC, 77, "SS", 1);
+    if (QGlobal::bSPLASHSCR) RenderLoaderU(hDC, 77, "SS");
+    QGlobal::fscreenfade2 = 1;
+
     /*--------------------Render Initialization End---------------------*/
 
     WriteLog("Font init"); // pocz¹tek inicjacji fontów 2D
@@ -541,6 +576,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     glLoadIdentity();
     //    glColor4f(0.3f,0.0f,0.0f,0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+/*
     glTranslatef(0.0f, 0.0f, -0.50f);
     //    glRasterPos2f(-0.25f, -0.10f);
     glDisable(GL_DEPTH_TEST); // Disables depth testing
@@ -561,15 +597,19 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     glVertex3f(-0.28f, 0.22f, 0.0f); // top left of the texture and quad
     glEnd();
     //~logo; Ra: to jest bez sensu zapis
+    */
+
+    RenderLoader(hDC, 77, "SOUND INITIALIZATION...");
+    
     glColor3f(0.0f, 0.0f, 100.0f);
-    if (Global::detonatoryOK)
-    {
-        glRasterPos2f(-0.25f, -0.09f);
-        glPrint("Uruchamianie / Initializing...");
-        glRasterPos2f(-0.25f, -0.10f);
-        glPrint("Dzwiek / Sound...");
-    }
-    SwapBuffers(hDC); // Swap Buffers (Double Buffering)
+    //if (Global::detonatoryOK)
+    //{
+    //    glRasterPos2f(-0.25f, -0.09f);
+    //    glPrint("Uruchamianie / Initializing...");
+    //    glRasterPos2f(-0.25f, -0.10f);
+    //    glPrint("Dzwiek / Sound...");
+    //}
+    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
     glEnable(GL_LIGHTING);
     /*-----------------------Sound Initialization-----------------------*/
@@ -577,69 +617,72 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     // TSoundsManager::LoadSounds( "" );
     /*---------------------Sound Initialization End---------------------*/
     WriteLog("Sound Init OK");
-    if (Global::detonatoryOK)
-    {
-        glRasterPos2f(-0.25f, -0.11f);
-        glPrint("OK.");
-    }
-    SwapBuffers(hDC); // Swap Buffers (Double Buffering)
+    //if (Global::detonatoryOK)
+    //{
+    //    glRasterPos2f(-0.25f, -0.11f);
+    //    glPrint("OK.");
+    //}
+   // SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
     int i;
 
+    RenderLoader(hDC, 77, "TEXTUREMANAGER INITIALIZATION...");
     Paused = true;
     WriteLog("Textures init");
-    if (Global::detonatoryOK)
-    {
-        glRasterPos2f(-0.25f, -0.12f);
-        glPrint("Tekstury / Textures...");
-    }
-    SwapBuffers(hDC); // Swap Buffers (Double Buffering)
+    //if (Global::detonatoryOK)
+    //{
+    //    glRasterPos2f(-0.25f, -0.12f);
+    //    glPrint("Tekstury / Textures...");
+    //}
+    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
     TTexturesManager::Init();
     WriteLog("Textures init OK");
-    if (Global::detonatoryOK)
-    {
-        glRasterPos2f(-0.25f, -0.13f);
-        glPrint("OK.");
-    }
-    SwapBuffers(hDC); // Swap Buffers (Double Buffering)
+    //if (Global::detonatoryOK)
+    //{
+    //    glRasterPos2f(-0.25f, -0.13f);
+    //    glPrint("OK.");
+    //}
+    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
+    RenderLoader(hDC, 77, "MODELMANAGER INITIALIZATION...");
     WriteLog("Models init");
-    if (Global::detonatoryOK)
-    {
-        glRasterPos2f(-0.25f, -0.14f);
-        glPrint("Modele / Models...");
-    }
-    SwapBuffers(hDC); // Swap Buffers (Double Buffering)
+    //if (Global::detonatoryOK)
+    //{
+    //    glRasterPos2f(-0.25f, -0.14f);
+    //    glPrint("Modele / Models...");
+    //}
+    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
     // McZapkie: dodalem sciezke zeby mozna bylo definiowac skad brac modele ale to malo eleganckie
     //    TModelsManager::LoadModels(asModelsPatch);
     TModelsManager::Init();
     WriteLog("Models init OK");
-    if (Global::detonatoryOK)
-    {
-        glRasterPos2f(-0.25f, -0.15f);
-        glPrint("OK.");
-    }
-    SwapBuffers(hDC); // Swap Buffers (Double Buffering)
-
+    //if (Global::detonatoryOK)
+    //{
+    //    glRasterPos2f(-0.25f, -0.15f);
+    //    glPrint("OK.");
+    //}
+    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
+    
+    RenderLoader(hDC, 77, "GROUND INITIALIZATION...");
     WriteLog("Ground init");
-    if (Global::detonatoryOK)
-    {
-        glRasterPos2f(-0.25f, -0.16f);
-        glPrint("Sceneria / Scenery (please wait)...");
-    }
-    SwapBuffers(hDC); // Swap Buffers (Double Buffering)
+    //if (Global::detonatoryOK)
+    //{
+    //    glRasterPos2f(-0.25f, -0.16f);
+    //    glPrint("Sceneria / Scenery (please wait)...");
+    //}
+    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
     Ground.Init(Global::szSceneryFile, hDC);
     //    Global::tSinceStart= 0;
     Clouds.Init();
     WriteLog("Ground init OK");
-    if (Global::detonatoryOK)
-    {
-        glRasterPos2f(-0.25f, -0.17f);
-        glPrint("OK.");
-    }
-    SwapBuffers(hDC); // Swap Buffers (Double Buffering)
+    //if (Global::detonatoryOK)
+    //{
+    //    glRasterPos2f(-0.25f, -0.17f);
+    //    glPrint("OK.");
+    //}
+    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
     //    TTrack *Track=Ground.FindGroundNode("train_start",TP_TRACK)->pTrack;
 
@@ -650,13 +693,14 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     //      Camera.Init(Global::pFreeCameraInit,0,M_PI,0);
     Camera.Init(Global::pFreeCameraInit[0], Global::pFreeCameraInitAngle[0]);
 
+    RenderLoader(hDC, 77, "Player Train initialization...");
     char buff[255] = "Player train init: ";
-    if (Global::detonatoryOK)
-    {
-        glRasterPos2f(-0.25f, -0.18f);
-        glPrint("Przygotowanie kabiny do sterowania...");
-    }
-    SwapBuffers(hDC); // Swap Buffers (Double Buffering)
+    //if (Global::detonatoryOK)
+    //{
+    //    glRasterPos2f(-0.25f, -0.18f);
+    //    glPrint("Przygotowanie kabiny do sterowania...");
+    //}
+    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
     strcat(buff, Global::asHumanCtrlVehicle.c_str());
     WriteLog(buff);
@@ -672,24 +716,28 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
             mvControlled = Controlled->ControlledFind()->MoverParameters;
             Global::pUserDynamic = Controlled; // renerowanie pojazdu wzglêdem kabiny
             WriteLog("Player train init OK");
-            if (Global::detonatoryOK)
-            {
-                glRasterPos2f(-0.25f, -0.19f);
-                glPrint("OK.");
-            }
+            RenderLoader(hDC, 77, "Player Train initialization OK.");
+            Sleep(200);
+            //if (Global::detonatoryOK)
+            //{
+            //    glRasterPos2f(-0.25f, -0.19f);
+            //    glPrint("OK.");
+            //}
             FollowView();
-            SwapBuffers(hDC); // Swap Buffers (Double Buffering)
+            //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
         }
         else
         {
+            RenderLoader(hDC, 77, "Player Train initialization FAILED!");
+            Sleep(200);
             Error("Player train init failed!", false);
             FreeFlyModeFlag = true; // Ra: automatycznie w³¹czone latanie
-            if (Global::detonatoryOK)
-            {
-                glRasterPos2f(-0.25f, -0.20f);
-                glPrint("Blad inicjalizacji sterowanego pojazdu!");
-            }
-            SwapBuffers(hDC); // Swap Buffers (Double Buffering)
+            //if (Global::detonatoryOK)
+            //{
+            //    glRasterPos2f(-0.25f, -0.20f);
+            //    glPrint("Blad inicjalizacji sterowanego pojazdu!");
+            //}
+            //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
             Controlled = NULL;
             mvControlled = NULL;
             Camera.Type = tp_Free;
@@ -699,12 +747,14 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     {
         if (Global::asHumanCtrlVehicle != "ghostview")
         {
-            Error("Player train not exist!", false);
-            if (Global::detonatoryOK)
-            {
-                glRasterPos2f(-0.25f, -0.20f);
-                glPrint("Wybrany pojazd nie istnieje w scenerii!");
-            }
+          RenderLoader(hDC, 77, "Player Train NOT EXIST!");
+          Sleep(200);
+          Error("Player train not exist!", false);
+            //if (Global::detonatoryOK)
+            //{
+            //    glRasterPos2f(-0.25f, -0.20f);
+            //    glPrint("Wybrany pojazd nie istnieje w scenerii!");
+            //}
         }
         FreeFlyModeFlag = true; // Ra: automatycznie w³¹czone latanie
         SwapBuffers(hDC); // swap buffers (double buffering)
@@ -777,20 +827,20 @@ void TWorld::OnKeyDown(int cKey)
 
     if (GetAsyncKeyState(VK_SHIFT) < 0) { QGlobal::isshift = isshift = true; }      // USUNALEM SPRAWDZANIE W TTrain::OnKeyDown() zastepujac parametrem funkcji;
 
-    if (!Global::iPause && cKey == VK_F10)
-        {
-         //if (Global::iTextMode==cKey)
-         // Global::iTextMode=(Global::iPause&&(cKey!=VK_F1)?VK_F1:0); //wy³¹czenie napisów, chyba ¿e pauza
-         //else
-         Global::iPause = true;
-         Global::iTextMode = cKey;
-        }
+//    if (!Global::iPause && cKey == VK_F10)
+//        {
+//         //if (Global::iTextMode==cKey)
+//         // Global::iTextMode=(Global::iPause&&(cKey!=VK_F1)?VK_F1:0); //wy³¹czenie napisów, chyba ¿e pauza
+//         //else
+//         Global::iPause = true;
+//         Global::iTextMode = cKey;
+//        }
 
-    if (Global::iPause && Global::iTextMode==VK_F10) if (Console::Pressed(VkKeyScan('n')))   // Jezeli pauza po wcisnieciu F10 i wcisnie sie n ...
-        {
-         Global::iPause = false;    // koniec pauzy
-         Global::iTextMode = -999;  // resetuj flage textmode
-        }
+//    if (Global::iPause && Global::iTextMode==VK_F10) if (Console::Pressed(VkKeyScan('n')))   // Jezeli pauza po wcisnieciu F10 i wcisnie sie n ...
+//        {
+//         Global::iPause = false;    // koniec pauzy
+//         Global::iTextMode = -999;  // resetuj flage textmode
+//        }
 
  if (Global::iPause && Global::iTextMode==VK_F10) if (Console::Pressed(VkKeyScan('y')) || Console::Pressed(VkKeyScan('n')))
       {

@@ -94,8 +94,10 @@ USEUNIT("Console\LPT.cpp");
 USEUNIT("qutils.cpp");
 USEUNIT("modelpreview.cpp");
 USEUNIT("freetype.cpp");
-USEUNIT("screen.cpp");
 USELIB("freetype.lib");
+USEUNIT("screen.cpp");
+USEUNIT("menu\bitmap_Font.cpp");
+USEUNIT("orthorender.cpp");
 USEFORM("frm_debugger.cpp", DEBUGGER);
 //---------------------------------------------------------------------------
 #include "World.h"
@@ -118,8 +120,8 @@ static POINT mouse;
 static POINT xmouse;
 static int mx=0, my=0;
 bool replacescn = false;
-int tocutlen;
-AnsiString appath, commandline, tocut, filetoopen;
+
+AnsiString appath, commandline, filetoopen;
 TStringList *ss;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); // Declaration For WndProc
@@ -806,7 +808,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  MSG msg; // windows message structure
  WIN32_FILE_ATTRIBUTE_DATA attr;
  SYSTEMTIME creation;
- int sh, sv, argc;
+ int sh, sv, argc, tcl;
  char screendim[100];
  char tolog[100];
  char cmdline[100];
@@ -816,7 +818,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  char shotdir[100];
  char szFILE[200];
  char szCFGFILE[200];
- std::string line;
+ std::string line, tocut;
  AnsiString FDT;
  WORD vmajor, vminor, vbuild, vrev;
 
@@ -830,43 +832,9 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
  DEBUGGER = new TDEBUGGER(NULL);   // UTWORZENIE FORMY DEBUGGERA
 
-// RegisterHotKey(NULL, 1, MOD_ALT, VK_SNAPSHOT);
-
-
 
  GetDesktopResolution(sh, sv);
  SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());  // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
-
- commandline = lpCmdLine;
- commandline = StringReplace( commandline, "e3d", "t3d", TReplaceFlags() << rfReplaceAll );
- commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );
-
- //WriteLog("CM= [" + commandline + "]"); // C:/MaSzyna_15_04/models/ip/wloclawek/wwek_przychodniak.t3d
- tocut = ExtractFilePath(ParamStr(0)) + "models\\";   
- tocutlen = tocut.Length();
-
-
- // OTWIERANIE PODGLADU MODELU GDY KLIKNIETO NA PLIK MODELU ********************
- if (commandline != "")
-   if ((commandline.Pos("models") > 0))
-   {
-    filetoopen = commandline.Delete( 1, tocutlen);  // usuwa sciezke aplikacji + models/ zostaje ip/wloclawek/wwek_przychodniak.t3d
-
-    //WriteLog("FO=" + filetoopen);
-
-    //std::vector<std::string> x = split(commandline.c_str(), ' ');
-
-    modelpreview(filetoopen.c_str(), "", "", "");
-
-    commandline = AnsiString("-vm " + filetoopen).c_str();
-
-    replacescn = true;
-   }
-  else
-   {
-    commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );
-   }
- // else commandline = "";
 
 
  GETCWD();   // POBIERA SCIEZKE APLIKACJI DO ZMIENNEJ GLOBALNEJ Global::asCWD
@@ -874,6 +842,47 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  QGlobal::asAPPDIR = ExtractFilePath(ParamStr(0));
 
  appath = GETCWD();
+ WriteLog("GETCWD: " + appath);
+ WriteLog("asAPPDIR: " + QGlobal::asAPPDIR);
+
+ commandline = lpCmdLine;
+ commandline = StringReplace( commandline, "e3d", "t3d", TReplaceFlags() << rfReplaceAll ); /* ZAMIENIA 'e3d' na 't3d'    */
+ commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );   /* ZAMIENIA Z '\' na '/'  */
+// filetoopen = StringReplace( filetoopen, "\\", "/", TReplaceFlags() << rfReplaceAll );
+ WriteLog("CLINE: [" + commandline + "]");                // np: C:\MaSzyna_15_04\models\ip\wloclawek\wwek_przychodniak.t3d
+
+ tocut = AnsiString(QGlobal::asAPPDIR + "models\\").c_str();
+
+ tocut = AnsiString(StringReplace( tocut.c_str(), "\\", "/", TReplaceFlags() << rfReplaceAll )).c_str();
+
+ WriteLog("TOCUT: [" + AnsiString(tocut.c_str()) + "]");
+
+ tcl = tocut.capacity();                              // dlugosc powyzszego lancucha
+ WriteLog("LENGH: " + IntToStr(tcl));
+
+
+
+ // OTWIERANIE PODGLADU MODELU GDY KLIKNIETO NA PLIK MODELU ********************
+   if (commandline.Pos("models") > 0)
+   {
+    filetoopen = commandline.Delete( 1, tcl);
+
+
+    WriteLog("FTOPE: [" + filetoopen + "]");
+    //std::vector<std::string> x = split(commandline.c_str(), ' ');
+
+    modelpreview(filetoopen.c_str(), "", "", "");  // tworzenie tymczasowego pliku scenerii
+
+    commandline = AnsiString("-vm " + filetoopen).c_str();
+
+    replacescn = true;
+   }
+ // else
+//   {
+//    commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );
+ //  }
+ // else commandline = "";
+
 
  QGlobal::USERPID =  AnsiString(GetMachineID("C:\\"));
  
@@ -958,6 +967,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 	     	if (test == "screenresh") sv = StrToInt(par1.c_str());
 		if (test == "fullscreen") fullscreen = atoi(par1.c_str());
                 if (test == "askforfull") askforfull = atoi(par1.c_str());
+                if (test == "aspectratio") QGlobal::aspectratio = atoi(par1.c_str());
               //if (test == "debugmode1") DebugMode1 = atoi(par1.c_str());
 	        if (test == "openlogonx") openlogonx = atoi(par1.c_str());
           	if (test == "logfilenm1") QGlobal::logfilenm1 = par1;

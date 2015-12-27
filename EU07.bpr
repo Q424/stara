@@ -14,7 +14,8 @@
       ResourceManager.obj VBO.obj TextureDDS.obj opengl\ARB_Multisample.obj 
       Float3d.obj Classes.obj Driver.obj Names.obj Console.obj Mover.obj 
       Console\PoKeys55.obj Forth.obj Console\LPT.obj qutils.obj modelpreview.obj 
-      freetype.obj screen.obj frm_debugger.obj"/>
+      freetype.obj screen.obj menu\bitmap_Font.obj orthorender.obj 
+      frm_debugger.obj"/>
     <RESFILES value="EU07.res"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
@@ -24,7 +25,7 @@
     <LIBRARIES value="IcsBcb50.lib dclocx50.bpi bcbsmp50.bpi VCLX50.lib bcbsmp50.lib Vcl50.lib"/>
     <SPARELIBS value="Vcl50.lib bcbsmp50.lib VCLX50.lib bcbsmp50.bpi dclocx50.bpi IcsBcb50.lib"/>
     <PACKAGES value="Vcl50.bpi Vclx50.bpi"/>
-    <PATHCPP value=".;opengl;Console"/>
+    <PATHCPP value=".;opengl;Console;menu"/>
     <PATHPAS value=".;McZapkie"/>
     <PATHRC value=".;"/>
     <PATHASM value=".;"/>
@@ -34,8 +35,8 @@
     <USERDEFINES value="GLEW_STATIC;_DEBUG"/>
     <SYSDEFINES value="NO_STRICT;_RTLDLL"/>
     <MAINSOURCE value="EU07.cpp"/>
-    <INCLUDEPATH value="&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects&quot;;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl"/>
-    <LIBPATH value="$(BCB)\Projects\Lib;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects&quot;;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="menu;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl"/>
+    <LIBPATH value="menu;$(BCB)\Projects\Lib;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
   </MACROS>
   <OPTIONS>
@@ -82,12 +83,16 @@ ProductVersion=15.4
 Comments=
 
 [HistoryLists\hlIncludePath]
-Count=1
-Item0=Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl
+Count=3
+Item0=menu;C:\Program Files (x86)\Borland\CBuilder5\Projects\;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl
+Item1=menu;C:\Program Files (x86)\Borland\CBuilder5\Projects;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl
+Item2=Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl
 
 [HistoryLists\hlLibraryPath]
-Count=1
-Item0=Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib
+Count=3
+Item0=menu;$(BCB)\Projects\Lib;C:\Program Files (x86)\Borland\CBuilder5\Projects\;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib
+Item1=menu;$(BCB)\Projects\Lib;C:\Program Files (x86)\Borland\CBuilder5\Projects;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib
+Item2=Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib
 
 [HistoryLists\hlDebugSourcePath]
 Count=2

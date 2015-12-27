@@ -128,8 +128,26 @@ int QGlobal::loaderrefresh = 5;
 
 double QGlobal::fMoveLightS = -1.0f;
 double QGlobal::fps = 1.0f;
+float QGlobal::gtc1 = 0;
+float QGlobal::gtc2 = 0;
+float QGlobal::lsec = 0;
+float QGlobal::rtim = 0;
 float QGlobal::ffov = 45.0f;
-
+float QGlobal::LDRREFRESH = 0.1;
+float QGlobal::GUITUTOPAC = 0.1;
+double QGlobal::fscreenfade = 1.0;
+double QGlobal::fscreenfade2 = 1.0;
+GLuint QGlobal::reflecttex;
+GLuint QGlobal::mousesymbol;
+GLuint QGlobal::mousepoint;
+GLuint QGlobal::splashscreen;
+GLuint QGlobal::loaderbackg;
+GLuint QGlobal::loaderbrief;
+GLuint QGlobal::loaderlogo;
+GLuint QGlobal::bfonttex;
+GLuint QGlobal::consolebackg;
+GLuint QGlobal::SCRFILTER;
+GLfloat QGlobal::selcolor[4];
 
 // parametry do u¿ytku wewnêtrznego
 // double Global::tSinceStart=0;

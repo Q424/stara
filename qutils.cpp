@@ -51,26 +51,37 @@ void GetOSVersionVCL(TStringList *lines)
   int buildNumber = Win32BuildNumber;
   if (Win32Platform == VER_PLATFORM_WIN32_WINDOWS)
     buildNumber = LOWORD(buildNumber);
+    AnsiString v;
+    String platform = "Unknown";
  // lines->Add("Build Number:   " +String(buildNumber));
 
    lines->Add("sysvers: " +
-    String(Win32MajorVersion) + "." + String(Win32MinorVersion) + "." + String(buildNumber));
+   String(Win32MajorVersion) + "." + String(Win32MinorVersion) + "." + String(buildNumber));
+
+   v = String(Win32MajorVersion) + "." + String(Win32MinorVersion) + "." + String(buildNumber) ;
 
 
-  String platform = "Unknown";
   if (Win32Platform == VER_PLATFORM_WIN32s)
     platform = "Win32s";
   else if (Win32Platform == 
              VER_PLATFORM_WIN32_WINDOWS)
   {
-    if ((Win32MajorVersion > 4) || 
-         ((Win32MajorVersion == 4) && 
-         (Win32MinorVersion > 0)))
-      platform = "Windows 98";
-    else
-      platform = "windows 95";
+    if ((Win32MajorVersion > 4) ||((Win32MajorVersion == 4) &&(Win32MinorVersion > 0))) platform = "Windows 98";
+    else platform = "windows 95";
   }
-  else if (Win32Platform == VER_PLATFORM_WIN32_NT) platform = "Windows NT";
+  //else if (Win32Platform == VER_PLATFORM_WIN32_NT) platform = "Windows NT";
+   
+   if (v == "5.0.2195") platform = "Windows 2000";
+   if (v == "4.90.300") platform = "Windows ME";
+   if (v == "5.1.2600") platform = "Windows XP";
+   if (v == "5.2.3790") platform = "Windows XP Proffesional 64";
+   if (v == "6.0.6001") platform = "Windows Vista";
+   if (v == "6.1.7600") platform = "Windows 7";
+   if (v == "6.1.7601") platform = "Windows 7";
+   if (v == "6.2.9200") platform = "Windows 8";
+   if (v == "6.2.9201") platform = "Windows 8";
+   if (v == "6.3.9600") platform = "Windows 8.1";
+   if (v == "10.0.10586") platform = "Windows 10";
 
   lines->Add("sysname: " + platform);
 

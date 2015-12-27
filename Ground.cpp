@@ -1569,6 +1569,9 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
     if (r >= 0)
         tmp->fSquareRadius = r * r;
     tmp->fSquareMinRadius = rmin * rmin;
+
+    if (GetAsyncKeyState(VK_ESCAPE)<0) { exit(0); }                              //Q 27.12.15: WYMUSZENIE PRZERWANIA WCZYTYWANIA I WYJSCIE
+
     if (str == "triangles")
         tmp->iType = GL_TRIANGLES;
     else if (str == "triangle_strip")
