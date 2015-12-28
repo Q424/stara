@@ -48,6 +48,7 @@ AnsiString QGlobal::asSCREENSHOTFILE= "";
 AnsiString QGlobal::asSSHOTDIR= "SCR\\";
 AnsiString QGlobal::asSSHOTSUB= "2014\\";
 AnsiString QGlobal::asSSHOTEXT= ".jpg";
+AnsiString QGlobal::asLBACKEXT= ".jpg";
 AnsiString QGlobal::asAPPVERS= "0.0.0.0";
 AnsiString QGlobal::asAPPDATE= "00.00.00";
 AnsiString QGlobal::asAPPSIZE= "0";
@@ -70,6 +71,7 @@ TStringList *QGlobal::SLTEMP;
 TStringList *QGlobal::CONFIG;
 TStringList *QGlobal::LOKTUT;
 TStringList *QGlobal::LOKKBD;
+TStringList *QGlobal::MBRIEF;
 
 GLblendstate QGlobal::GLBLENDSTATE;
 

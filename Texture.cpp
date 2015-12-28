@@ -17,6 +17,9 @@ http://mozilla.org/MPL/2.0/.
 #include <fstream>
 #include "opengl/glew.h"
 #include <ddraw>
+#include <jpeg.hpp>          // TJPEGImage
+#include <math.h>	// Header File For The Math Library
+#include <olectl.h>	// Header File For The OLE Controls Library
 
 #include "system.hpp"
 #include "classes.hpp"
@@ -36,11 +39,509 @@ TTexturesManager::Names TTexturesManager::_names;
 
 void TTexturesManager::Init(){};
 
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// PCX TEXTURES ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+struct gl_texture_t
+{
+  GLsizei width;
+  GLsizei height;
+
+  GLenum format;
+  GLint internalFormat;
+  GLuint id;
+
+  GLubyte *texels;
+  GLint numMipmaps;
+};
+
+#pragma pack(1)
+/* PCX header */
+struct pcx_header_t
+{
+  GLubyte manufacturer;
+  GLubyte version;
+  GLubyte encoding;
+  GLubyte bitsPerPixel;
+
+  GLushort xmin, ymin;
+  GLushort xmax, ymax;
+  GLushort horzRes, vertRes;
+
+  GLubyte palette[48];
+  GLubyte reserved;
+  GLubyte numColorPlanes;
+
+  GLushort bytesPerScanLine;
+  GLushort paletteType;
+  GLushort horzSize, vertSize;
+
+  GLubyte padding[54];
+};
+#pragma pack(4)
+
+
+// PCX 1 BIT ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+static void ReadPCX1bit (FILE *fp, const struct pcx_header_t *hdr, struct gl_texture_t *texinfo)
+{
+  int y, i, bytes;
+  int colorIndex;
+  int rle_count = 0, rle_value = 0;
+  GLubyte *ptr = texinfo->texels;
+
+  for (y = 0; y < texinfo->height; ++y)
+    {
+      ptr = &texinfo->texels[(texinfo->height - (y + 1)) * texinfo->width * 3];
+      bytes = hdr->bytesPerScanLine;
+
+      /* Decode line number y */
+      while (bytes--)
+	{
+	  if (rle_count == 0)
+	    {
+	      if ( (rle_value = fgetc (fp)) < 0xc0)
+		{
+		  rle_count = 1;
+		}
+	      else
+		{
+		  rle_count = rle_value - 0xc0;
+		  rle_value = fgetc (fp);
+		}
+	    }
+
+	  rle_count--;
+
+	  for (i = 7; i >= 0; --i, ptr += 3)
+	    {
+	      colorIndex = ((rle_value & (1 << i)) > 0);
+
+	      ptr[0] = hdr->palette[colorIndex * 3 + 0];
+	      ptr[1] = hdr->palette[colorIndex * 3 + 1];
+	      ptr[2] = hdr->palette[colorIndex * 3 + 2];
+	    }
+	}
+    }
+}
+
+// PCX 4 BIT ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+static void ReadPCX4bits (FILE *fp, const struct pcx_header_t *hdr, struct gl_texture_t *texinfo)
+{
+  GLubyte *colorIndex, *line;
+  GLubyte *pLine, *ptr;
+  int rle_count = 0, rle_value = 0;
+  int x, y, c;
+  int bytes;
+
+  colorIndex = (GLubyte *)malloc (sizeof (GLubyte) * texinfo->width);
+  line = (GLubyte *)malloc (sizeof (GLubyte) * hdr->bytesPerScanLine);
+
+  for (y = 0; y < texinfo->height; ++y)
+    {
+      ptr = &texinfo->texels[(texinfo->height - (y + 1)) * texinfo->width * 3];
+
+      memset (colorIndex, 0, texinfo->width * sizeof (GLubyte));
+
+      for (c = 0; c < 4; ++c)
+	{
+	  pLine = line;
+	  bytes = hdr->bytesPerScanLine;
+
+	  /* Decode line number y */
+	  while (bytes--)
+	    {
+	      if (rle_count == 0)
+		{
+		  if ( (rle_value = fgetc (fp)) < 0xc0)
+		    {
+		      rle_count = 1;
+		    }
+		  else
+		    {
+		      rle_count = rle_value - 0xc0;
+		      rle_value = fgetc (fp);
+		    }
+		}
+
+	      rle_count--;
+	      *(pLine++) = rle_value;
+	    }
+
+	  /* Compute line's color indexes */
+	  for (x = 0; x < texinfo->width; ++x)
+	    {
+	      if (line[x / 8] & (128 >> (x % 8)))
+		colorIndex[x] += (1 << c);
+	    }
+	}
+
+      /* Decode scan line.  color index => rgb  */
+      for (x = 0; x < texinfo->width; ++x, ptr += 3)
+	{
+	  ptr[0] = hdr->palette[colorIndex[x] * 3 + 0];
+	  ptr[1] = hdr->palette[colorIndex[x] * 3 + 1];
+	  ptr[2] = hdr->palette[colorIndex[x] * 3 + 2];
+	}
+    }
+
+  /* Release memory */
+  free (colorIndex);
+  free (line);
+}
+
+
+// PCX 8 BIT ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+static void ReadPCX8bits (FILE *fp, const struct pcx_header_t *hdr, struct gl_texture_t *texinfo)
+{
+  int rle_count = 0, rle_value = 0;
+  GLubyte palette[768];
+  GLubyte magic;
+  GLubyte *ptr;
+  fpos_t curpos;
+  int y, bytes;
+
+  /* The palette is contained in the last 769 bytes of the file */
+  fgetpos (fp, &curpos);
+  fseek (fp, -769, SEEK_END);
+  magic = fgetc (fp);
+
+  /* First byte must be equal to 0x0c (12) */
+  if (magic != 0x0c)
+    {
+      fprintf (stderr, "error: colormap's first byte must be 0x0c! "
+	       "(%#x)\n", magic);
+
+      free (texinfo->texels);
+      texinfo->texels = NULL;
+      return;
+    }
+
+  /* Read palette */
+  fread (palette, sizeof (GLubyte), 768, fp);
+  fsetpos (fp, &curpos);
+
+  /* Read pixel data */
+  for (y = 0; y < texinfo->height; ++y)
+    {
+      ptr = &texinfo->texels[(texinfo->height - (y + 1)) * texinfo->width * 3];
+      bytes = hdr->bytesPerScanLine;
+
+      /* Decode line number y */
+      while (bytes--)
+	{
+	  if (rle_count == 0)
+	    {
+	      if( (rle_value = fgetc (fp)) < 0xc0)
+		{
+		  rle_count = 1;
+		}
+	      else
+		{
+		  rle_count = rle_value - 0xc0;
+		  rle_value = fgetc (fp);
+		}
+	    }
+
+	  rle_count--;
+
+	  ptr[0] = palette[rle_value * 3 + 0];
+	  ptr[1] = palette[rle_value * 3 + 1];
+	  ptr[2] = palette[rle_value * 3 + 2];
+	  ptr += 3;
+	}
+    }
+}
+
+// PCX 24 BIT ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+static void ReadPCX24bits (FILE *fp, const struct pcx_header_t *hdr, struct gl_texture_t *texinfo)
+{
+  GLubyte *ptr = texinfo->texels;
+  int rle_count = 0, rle_value = 0;
+  int y, c;
+  int bytes;
+
+  for (y = 0; y < texinfo->height; ++y)
+    {
+      /* For each color plane */
+      for (c = 0; c < 3; ++c)
+	{
+	  ptr = &texinfo->texels[(texinfo->height - (y + 1)) * texinfo->width * 3];
+	  bytes = hdr->bytesPerScanLine;
+
+	  /* Decode line number y */
+	  while (bytes--)
+	    {
+	      if (rle_count == 0)
+		{
+		  if( (rle_value = fgetc (fp)) < 0xc0)
+		    {
+		      rle_count = 1;
+		    }
+		  else
+		    {
+		      rle_count = rle_value - 0xc0;
+		      rle_value = fgetc (fp);
+		    }
+		}
+
+	      rle_count--;
+	      ptr[c] = (GLubyte)rle_value;
+	      ptr += 3;
+	    }
+	}
+    }
+}
+
+
+static struct gl_texture_t * ReadPCXFile (const char *filename)
+{
+  struct gl_texture_t *texinfo;
+  struct pcx_header_t header;
+  FILE *fp = NULL;
+  int bitcount;
+
+  /* Open image file */
+  fp = fopen (filename, "rb");
+  if (!fp)
+    {
+      fprintf (stderr, "error: couldn't open \"%s\"!\n", filename);
+      return NULL;
+    }
+
+  /* Read header file */
+  fread (&header, sizeof (struct pcx_header_t), 1, fp);
+  if (header.manufacturer != 0x0a)
+    {
+      fprintf (stderr, "error: bad version number! (%i)\n", header.manufacturer);
+      return NULL;
+    }
+
+  /* Initialize texture parameters */
+  texinfo = (struct gl_texture_t *)
+  malloc (sizeof (struct gl_texture_t));
+  texinfo->width = header.xmax - header.xmin + 1;
+  texinfo->height = header.ymax - header.ymin + 1;
+  texinfo->format = GL_RGB;
+  texinfo->internalFormat = 3;
+  texinfo->texels = (GLubyte *)
+  malloc (sizeof (GLubyte) * texinfo->width * texinfo->height * texinfo->internalFormat);
+
+  bitcount = header.bitsPerPixel * header.numColorPlanes;
+
+  /* Read image data */
+  switch (bitcount)
+    {
+    case  1: ReadPCX1bit (fp, &header, texinfo); break; /* 1 bit color index */
+    case  4: ReadPCX4bits (fp, &header, texinfo); break; /* 4 bits color index */
+    case  8: ReadPCX8bits (fp, &header, texinfo); break;  /* 8 bits color index */
+    case 24: ReadPCX24bits (fp, &header, texinfo); break; /* 24 bits */
+
+    default:
+      /* Unsupported */
+      fprintf (stderr, "error: unknown %i bitcount pcx files\n", bitcount);
+      free (texinfo->texels);
+      free (texinfo);
+      texinfo = NULL;
+      break;
+    }
+
+  fclose (fp);
+  return texinfo;
+}
+
+
+TTexturesManager::AlphaValue   TTexturesManager::ReadPCX (char *szFileName)
+{
+  struct gl_texture_t *pcx_tex = NULL;
+  GLuint tex_id = 0;
+  GLuint ID = 0;
+  AlphaValue fail(0, false);
+
+  GLfloat maxaniso;
+  glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxaniso);
+
+  pcx_tex = ReadPCXFile (szFileName);
+
+  if (pcx_tex && pcx_tex->texels)
+    {
+      /* Generate texture */
+      glGenTextures (1, &ID);
+      glBindTexture (GL_TEXTURE_2D, ID);
+
+      /* Setup some parameters for texture filters and mipmapping */
+      //glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxaniso);
+
+//#if 0
+      glTexImage2D (GL_TEXTURE_2D, 0, pcx_tex->internalFormat, pcx_tex->width, pcx_tex->height, 0, pcx_tex->format, GL_UNSIGNED_BYTE, pcx_tex->texels);
+//#else
+      gluBuild2DMipmaps (GL_TEXTURE_2D, pcx_tex->internalFormat, pcx_tex->width, pcx_tex->height, pcx_tex->format, GL_UNSIGNED_BYTE, pcx_tex->texels);
+//#endif
+ 
+
+      free (pcx_tex->texels);
+      free (pcx_tex);
+    }
+  return std::make_pair(ID, false);                                       // Return True (All Good)
+}
+
+
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// LOADING JPEG TEXTURES
+
+TTexturesManager::AlphaValue   TTexturesManager::LOADJPG(char* szPathName)				// Load Image And Convert To A Texture
+{
+	HDC		hdcTemp;						// The DC To Hold Our Bitmap
+	HBITMAP		hbmpTemp;						// Holds The Bitmap Temporarily
+	IPicture	*pPicture;						// IPicture Interface
+	OLECHAR		wszPath[MAX_PATH+1];					// Full Path To Picture (WCHAR)
+	char		szPath[MAX_PATH+1];					// Full Path To Picture
+	long		lWidth;							// Width In Logical Units
+	long		lHeight;						// Height In Logical Units
+	long		lWidthPixels;						// Width In Pixels
+	long		lHeightPixels;						// Height In Pixels
+	GLint		glMaxTexDim ;						// Holds Maximum Texture Size
+        GLuint ID;
+
+        ID = 0;
+
+        AlphaValue fail(0, false);
+
+        //WriteLog(szPathName);
+
+        GLfloat maxaniso;
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxaniso);
+
+	if (strstr(szPathName, "http://"))					// If PathName Contains http:// Then...
+	{
+        strcpy(szPath, szPathName);						// Append The PathName To szPath
+        //WriteLog("http tex:");
+        //WriteLog(szPath);
+	}
+	else									// Otherwise... We Are Loading From A File
+	{
+		GetCurrentDirectory(MAX_PATH, szPath);				// Get Our Working Directory
+		strcat(szPath, "\\");						// Append "\" After The Working Directory
+		strcat(szPath, szPathName);					// Append The PathName
+	}
+
+	MultiByteToWideChar(CP_ACP, 0, szPath, -1, wszPath, MAX_PATH);		// Convert From ASCII To Unicode
+	HRESULT hr = OleLoadPicturePath(wszPath, 0, 0, 0, IID_IPicture, (void**)&pPicture);
+
+	if(FAILED(hr))								// If Loading Failed
+		return fail;							// Return False
+
+	hdcTemp = CreateCompatibleDC(GetDC(0));					// Create The Windows Compatible Device Context
+	if(!hdcTemp)								// Did Creation Fail?
+	{
+		pPicture->Release();						// Decrements IPicture Reference Count
+		return fail;							// Return False (Failure)
+	}
+
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glMaxTexDim);			// Get Maximum Texture Size Supported
+	
+	pPicture->get_Width(&lWidth);						// Get IPicture Width (Convert To Pixels)
+	lWidthPixels	= MulDiv(lWidth, GetDeviceCaps(hdcTemp, LOGPIXELSX), 2540);
+	pPicture->get_Height(&lHeight);						// Get IPicture Height (Convert To Pixels)
+	lHeightPixels	= MulDiv(lHeight, GetDeviceCaps(hdcTemp, LOGPIXELSY), 2540);
+
+	// Resize Image To Closest Power Of Two
+	if (lWidthPixels <= glMaxTexDim) // Is Image Width Less Than Or Equal To Cards Limit
+		lWidthPixels = 1 << (int)floor((log((double)lWidthPixels)/log(2.0f)) + 0.5f); 
+	else  // Otherwise  Set Width To "Max Power Of Two" That The Card Can Handle
+		lWidthPixels = glMaxTexDim;
+ 
+	if (lHeightPixels <= glMaxTexDim) // Is Image Height Greater Than Cards Limit
+		lHeightPixels = 1 << (int)floor((log((double)lHeightPixels)/log(2.0f)) + 0.5f);
+	else  // Otherwise  Set Height To "Max Power Of Two" That The Card Can Handle
+		lHeightPixels = glMaxTexDim;
+	
+	//	Create A Temporary Bitmap
+	BITMAPINFO	bi = {0};						// The Type Of Bitmap We Request
+	DWORD		*pBits = 0;						// Pointer To The Bitmap Bits
+
+	bi.bmiHeader.biSize		= sizeof(BITMAPINFOHEADER);		// Set Structure Size
+	bi.bmiHeader.biBitCount		= 32;					// 32 Bit
+	bi.bmiHeader.biWidth		= lWidthPixels;				// Power Of Two Width
+	bi.bmiHeader.biHeight		= lHeightPixels;			// Make Image Top Up (Positive Y-Axis)
+	bi.bmiHeader.biCompression	= BI_RGB;				// RGB Encoding
+	bi.bmiHeader.biPlanes		= 1;					// 1 Bitplane
+
+	//	Creating A Bitmap This Way Allows Us To Specify Color Depth And Gives Us Imediate Access To The Bits
+	hbmpTemp = CreateDIBSection(hdcTemp, &bi, DIB_RGB_COLORS, (void**)&pBits, 0, 0);
+	
+	if(!hbmpTemp)								// Did Creation Fail?
+	{
+		DeleteDC(hdcTemp);						// Delete The Device Context
+		pPicture->Release();						// Decrements IPicture Reference Count
+		return fail;							// Return False (Failure)
+	}
+
+	SelectObject(hdcTemp, hbmpTemp);					// Select Handle To Our Temp DC And Our Temp Bitmap Object
+
+	// Render The IPicture On To The Bitmap
+	pPicture->Render(hdcTemp, 0, 0, lWidthPixels, lHeightPixels, 0, lHeight, lWidth, -lHeight, 0);
+
+	// Convert From BGR To RGB Format And Add An Alpha Value Of 255
+
+
+	for(long i = 0; i < lWidthPixels * lHeightPixels; i++)			// Loop Through All Of The Pixels
+	{
+		BYTE* pPixel	= (BYTE*)(&pBits[i]);				// Grab The Current Pixel
+		BYTE  temp		= pPixel[0];				// Store 1st Color In Temp Variable (Blue)
+		pPixel[0]		= pPixel[2];				// Move Red Value To Correct Position (1st)
+		pPixel[2]		= temp;					// Move Temp Value To Correct Blue Position (3rd)
+                pPixel[3]	        = 255;                                  // Set The Alpha Value To 255  ( NIEPRZEZROCZYSTE)
+
+                //if (Global::bGrayScale)
+                //  {
+                //   // CONVERTIG TO GRAYSCALE
+                //   pPixel[0] = 0.5*pPixel[0] + 0.39*pPixel[1] + 0.11*pPixel[2];
+                //   pPixel[1] = 0.5*pPixel[0] + 0.39*pPixel[1] + 0.11*pPixel[2];
+                //   pPixel[2] = 0.5*pPixel[0] + 0.39*pPixel[1] + 0.11*pPixel[2];
+                //  }
+
+		// This Will Make Any Black Pixels, Completely Transparent	(You Can Hardcode The Value If You Wish)
+		//if ((pPixel[0]==0) && (pPixel[1]==0) && (pPixel[2]==0)) pPixel[3] =   0;	 // Is Pixel Completely Black  Set The Alpha Value To 0
+	}
+
+	glGenTextures(1, &ID);							// Create The Texture
+
+	// Typical Texture Generation Using Data From The Bitmap
+	glBindTexture(GL_TEXTURE_2D, ID);					// Bind To The Texture ID
+
+        // FILTROWANIE TEKSTURY COBY UZYSKAC NA TORZE TAKI EFEKT JAK PRZY TEKSTURZE Z PLIKU .TEX
+        //--gluBuild2DMipmaps( GL_TEXTURE_2D, 4, lWidthPixels, lHeightPixels, GL_RGBA, GL_UNSIGNED_BYTE, pBits );
+
+        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        //--glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      //  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxaniso);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lWidthPixels, lHeightPixels, 0, GL_RGBA, GL_UNSIGNED_BYTE, pBits);	// (Modify This If You Want Mipmaps)
+
+
+	DeleteObject(hbmpTemp);							// Delete The Object
+	DeleteDC(hdcTemp);							// Delete The Device Context
+
+	pPicture->Release();							// Decrements IPicture Reference Count
+
+        return std::make_pair(ID, false);                                       // Return True (All Good)
+}
+
+
 TTexturesManager::Names::iterator TTexturesManager::LoadFromFile(std::string fileName, int filter)
 {
 
     std::string message("Loading - texture: ");
-
+    AnsiString fnnoext, str, inetlink;
     std::string realFileName(fileName);
     std::ifstream file(fileName.c_str());
     // Ra: niby bez tego jest lepiej, ale dzia³a gorzej, wiêc przywrócone jest oryginalne
@@ -54,8 +555,19 @@ TTexturesManager::Names::iterator TTexturesManager::LoadFromFile(std::string fil
     message += realFileName;
     WriteLog(message.c_str()); // Ra: chybaa mia³o byæ z komunikatem z przodu, a nie tylko nazwa
 
+    char* cFileName = const_cast<char*>(fileName.c_str());  // Q:
+
     size_t pos = fileName.rfind('.');
     std::string ext(fileName, pos + 1, std::string::npos);
+
+
+    if (strstr(realFileName.c_str(), "http-"))
+        {
+         str = AnsiString(realFileName.c_str());              // textures\http-xxxxxx.jpg
+         inetlink = "http://eu07.es/textures\\" + str.SubString(15, 255);   // UCINAMY  "textures\http-"
+         WriteLog("INETLINK: " + inetlink);                                     // INETLINK: http://q.matinf.pl/textures\ip\jpegtestd.jpg
+         cFileName = inetlink.c_str();
+        }
 
     AlphaValue texinfo;
 
@@ -67,9 +579,14 @@ TTexturesManager::Names::iterator TTexturesManager::LoadFromFile(std::string fil
         texinfo = LoadBMP(realFileName);
     else if (ext == "dds")
         texinfo = LoadDDS(realFileName, filter);
-
-    _alphas.insert(
-        texinfo); // zapamiêtanie stanu przezroczystoœci tekstury - mo¿na by tylko przezroczyste
+    else if (ext == "jpg")
+     texinfo = LOADJPG( cFileName );
+    else if (ext == "gif")
+     texinfo = LOADJPG( cFileName );
+    else if (ext == "pcx")
+     texinfo = ReadPCX( cFileName );
+     
+    _alphas.insert(texinfo); // zapamiêtanie stanu przezroczystoœci tekstury - mo¿na by tylko przezroczyste
     std::pair<Names::iterator, bool> ret = _names.insert(std::make_pair(fileName, texinfo.first));
 
     if (!texinfo.first)
@@ -80,10 +597,10 @@ TTexturesManager::Names::iterator TTexturesManager::LoadFromFile(std::string fil
     };
 
     _alphas.insert(texinfo);
-    ret = _names.insert(
-        std::make_pair(fileName, texinfo.first)); // dodanie tekstury do magazynu (spisu nazw)
+    ret = _names.insert(std::make_pair(fileName, texinfo.first)); // dodanie tekstury do magazynu (spisu nazw)
 
     // WriteLog("OK"); //Ra: "OK" nie potrzeba, samo "Failed" wystarczy
+    
     return ret.first;
 };
 

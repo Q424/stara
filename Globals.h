@@ -353,7 +353,7 @@ class QGlobal
  static TStringList *CONFIG;
  static TStringList *LOKTUT;
  static TStringList *LOKKBD;
-
+ static TStringList *MBRIEF;
 
  static AnsiString USERPID;
  static AnsiString asCurrentSceneryPath;
@@ -369,6 +369,7 @@ class QGlobal
  static AnsiString asSSHOTDIR;
  static AnsiString asSSHOTSUB;
  static AnsiString asSSHOTEXT;
+ static AnsiString asLBACKEXT;
  static AnsiString asAPPVERS;
  static AnsiString asAPPDATE;
  static AnsiString asAPPSIZE;

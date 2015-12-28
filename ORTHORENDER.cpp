@@ -1234,7 +1234,6 @@ lineplus(15);
 
     if (type == 99) // LOADING ... ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         {
-
          int i =1;
          int l =0;
          int g =0;
@@ -1252,7 +1251,6 @@ lineplus(15);
          glVertex2i(Global::iWindowWidth-10, 200-8);  // gora
          glVertex2i(10, 200-8);                       // gora
          glEnd();
-
 
          PBY = Global::iWindowHeight - (200-8);
 
@@ -1278,9 +1276,37 @@ lineplus(15);
          glColor4f(0.5, 0.5, 0.5, 0.7);
          BFONT->Print_scale(1,63,AnsiString(AnsiString(FormatFloat("0.000", (QGlobal::lsec/1000)))).c_str(), 1, 0.7, 0.7);
 
+         // glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_ONE);
+       //   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //  glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_COLOR);
+        //glDisable(GL_BLEND);
+        // glColor4f(0.2, 0.2, 0.9, 1.0);  // 09 07 02
+        // BFONT->Print_scale(10,12,AnsiString(AnsiString("ssssssssssssssaaaaaaaa1234567890ABCDE")).c_str(), 1, 0.9, 0.9);       // WERSJA APLIKACJI, DATA KOMPILACJI
+        //  BFONT->Print_scale( 10,14,AnsiString("Wcisnij ESC aby przerwac").c_str(), 1, 0.9, 0.9);
+        // glEnable(GL_BLEND);
+         //BFONT->End();
+
          if (QGlobal::bfirstloadingscn) BFONT->Print_scale( 2,56,AnsiString(LDR_STR_FRST).c_str(), 1, 0.7, 0.7);
          BFONT->End();
-            
+
+
+         // Q: TEKST OPISU MISJI
+         if (QGlobal::bloaderbriefing)
+         {
+         glColor4f(0.2, 0.2, 0.2, 0.9);
+         int py = 200;
+
+         freetype::print(our_font14, 55, Global::iWindowHeight-200, QGlobal::MBRIEF->Strings[0].c_str());   // Nazwa skladu ...
+         py+=24;
+         freetype::print(our_font12, 55, Global::iWindowHeight-py, QGlobal::MBRIEF->Strings[1].c_str());    // Prowadzimy ...
+         py+=20;
+
+         for (int l = 2; l<QGlobal::MBRIEF->Count -1; l++)
+         {
+          py+=14;
+          freetype::print(our_font10, 55, Global::iWindowHeight-py, QGlobal::MBRIEF->Strings[l].c_str());
+          }
+         } 
         }
 
  /*
@@ -3702,7 +3728,7 @@ bool __fastcall TWorld::LOADLOADERCONFIG()
 bool __fastcall TWorld::LOADLOADERFONTS()
 {
  WriteLog("LOADING LOADER FONTS...");
-
+ our_font10.init("data\\fonts\\arial.ttf", 10);
  our_font12.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\creditvz.ttf").c_str(), 12);
  our_font14.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\creditvz.ttf").c_str(), 14);
  our_font16.init("data\\fonts\\creditvz.ttf", 16);
@@ -3725,12 +3751,19 @@ bool __fastcall TWorld::LOADLOADERTEXTURES()
 
     AnsiString cscn = Global::szSceneryFile;
     AnsiString clok = Global::asHumanCtrlVehicle;
-    AnsiString asBRIEFFILE = "data\\briefs\\" + cscn + "-" + clok + ".tga";
-    AnsiString asSCNBACKG =  "data\\lbacks\\" + cscn + ".bmp";
-    if (!FEX(asBRIEFFILE)) QGlobal::bloaderbriefing = false;
-    if ( FEX(asBRIEFFILE)) QGlobal::bloaderbriefing = true;
+    AnsiString asBRIEFFILE = "data\\briefs\\briefbackg.tga"; // + cscn + "-" + clok + ".tga";
+    AnsiString asSCNBACKG =  "data\\lbacks\\" + cscn + QGlobal::asLBACKEXT;
 
-    WriteLog(asBRIEFFILE);
+    AnsiString asBRIEFTEXT = QGlobal::asAPPDIR + "data\\briefs\\" + cscn + "-" + clok + ".txt";
+
+    WriteLog(asBRIEFTEXT);
+    if (FEX(asBRIEFTEXT))
+    QGlobal::MBRIEF->LoadFromFile( asBRIEFTEXT);
+
+    if (!FEX(asBRIEFTEXT)) QGlobal::bloaderbriefing = false;
+    if ( FEX(asBRIEFTEXT)) QGlobal::bloaderbriefing = true;
+
+    WriteLog(asBRIEFTEXT);
     Global::asCurrentTexturePath= "../data/";
     Global::asCurrentTexturePath= "../data/";
 
@@ -3738,7 +3771,7 @@ bool __fastcall TWorld::LOADLOADERTEXTURES()
 
     QGlobal::bfonttex = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString("data\\menu\\menu_xfont.bmp").c_str());
 
-    if (!FileExists(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString("data\\lbacks\\lbackg.tga").c_str());
+    if (!FileExists(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString("data\\lbacks\\lbackgdef" + QGlobal::asLBACKEXT).c_str());
     if ( FEX(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString(asSCNBACKG).c_str());
 
     Global::asCurrentTexturePath = AnsiString(szTexturePath);
@@ -3746,24 +3779,23 @@ bool __fastcall TWorld::LOADLOADERTEXTURES()
 }
 
 
-
+// *****************************************************************************
+// RYSOWANIE OPCJONALNEGO SPLASH SCREENU POPRZEDZAJACEGO EKRAN WCZYTYWANIA
+// *****************************************************************************
 bool __fastcall TWorld::RenderSPLASHSCR(HDC hDC, int node, AnsiString text, double alpha)
 {
-WriteLog("splshscrn-1");
  float et;
  float st = GetTickCount();
  float pt= 0;
  bool sndok = false;
  QGlobal::fscreenfade = 1;
-// for (int l=1; l<1900; l++)
- while (pt < 7000)
+ while (pt < 7000)      // Przez 7s renderujemy splasha az do zanikniecia dzwieku...
    {
     et = GetTickCount();
     pt = et-st;
 
-  //  if (l == 305)  PlaySound("data\\sounds\\START.WAV", NULL, SND_ASYNC);
-    if ((pt > 1) && (!sndok) && FileExists("data\\sounds\\START.WAV")) PlaySound("data\\sounds\\START.WAV", NULL, SND_ASYNC);
-    if ((pt > 1) && (!sndok)) sndok = true;
+    if ((pt > 150) && (!sndok) && FileExists("data\\sounds\\START.WAV")) PlaySound("data\\sounds\\START.WAV", NULL, SND_ASYNC);
+    if ((pt > 150) && (!sndok)) sndok = true;
 
     glDisable(GL_LIGHTING);
     glDisable(GL_FOG);
@@ -3775,11 +3807,9 @@ WriteLog("splshscrn-1");
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity( );
     glClearColor (1, 1, 1, 0.99);     // 09 07 04 07
-
     glDisable(GL_DEPTH_TEST);			// Disables depth testing
 
     glColor4f(1.0,1.0,1.0,1);
-  //glColor3f(1, 1, 1);
     int margin = 0;
     int pm = 0;
 
@@ -3807,53 +3837,29 @@ WriteLog("splshscrn-1");
     glEnd( );
    }
 
-   // LOGO PROGRAMU ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   /*
-   if (LDR_LOGOVIS !=0)
-   {
-   glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-   glColor4f(0.8,0.8,0.8,LDR_MLOGO_A);
-   glEnable(GL_BLEND);
-   glBindTexture(GL_TEXTURE_2D, Global::loaderlogo);
-   glBegin( GL_QUADS );
-   glTexCoord2f(0, 1); glVertex3i( LDR_MLOGO_X,   LDR_MLOGO_Y,0);   // GORNY LEWY
-   glTexCoord2f(0, 0); glVertex3i( LDR_MLOGO_X,   LDR_MLOGO_Y+100,0); // DOLY LEWY
-   glTexCoord2f(1, 0); glVertex3i( LDR_MLOGO_X+300, LDR_MLOGO_Y+100,0); // DOLNY PRAWY
-   glTexCoord2f(1, 1); glVertex3i( LDR_MLOGO_X+300, LDR_MLOGO_Y,0);   // GORNY PRAWY
-   glEnd( );
-   }
-    */
+   int i =1;
+   int l =0;
+   int g =0;
+   glEnable( GL_TEXTURE_2D);
+   BFONT->Begin();
+   glDisable(GL_TEXTURE_2D);
+   glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+   glColor4f(LDR_TBACK_R, LDR_TBACK_G, LDR_TBACK_B, LDR_TBACK_A);
 
-
-    /*
-   if (LDR_DESCVIS != 0 && Global::bloaderbriefing)
-   {
-   glDisable(GL_BLEND);
-   //glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-   //glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_COLOR);  // PRAWIE OK
-
-   glColor4f(1.9,1.9,1.9,1.9);
-   //glEnable(GL_BLEND);
-   glBindTexture(GL_TEXTURE_2D, loaderbrief);
-   glBegin( GL_QUADS );
-   glTexCoord2f(0, 1); glVertex3i( LDR_BRIEF_X,   LDR_BRIEF_Y,0);   // GORNY LEWY
-   glTexCoord2f(0, 0); glVertex3i( LDR_BRIEF_X,   LDR_BRIEF_Y+1000,0); // DOLY LEWY
-   glTexCoord2f(1, 0); glVertex3i( LDR_BRIEF_X+500, LDR_BRIEF_Y+1000,0); // DOLNY PRAWY
-   glTexCoord2f(1, 1); glVertex3i( LDR_BRIEF_X+500, LDR_BRIEF_Y,0);   // GORNY PRAWY
-   glEnd( );
-   }
-    */
-
-   //glDisable(GL_BLEND);
-
-   //RenderInformation(99);
-
+   g=1;
+   glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_COLOR);
+   glEnable(GL_TEXTURE_2D);
+   glColor4f(LDR_STR_1_R, LDR_STR_1_G, LDR_STR_1_B, LDR_STR_1_A);
+   glColor4f(0.5, 0.5, 0.5, 0.7);  // 09 07 02
+   BFONT->Print_scale(75,63,AnsiString(AnsiString(QGlobal::asAPPVERS)).c_str(), 1, 0.7, 0.7);       // WERSJA APLIKACJI, DATA KOMPILACJI
+   BFONT->End();
+   
    SwapBuffers(hDC);
   }
-WriteLog("splshscrn-2");
+
 
 QGlobal::fscreenfade = 0;
-while( QGlobal::fscreenfade < 1.0 )
+while( QGlobal::fscreenfade < 1.0 ) // Proces plynnego zaciemniania splasha (tzw. fadeoff) ...
     {
     if (!floaded) BFONT = new Font();
     if (!floaded) BFONT->loadf("none");
@@ -3867,7 +3873,6 @@ while( QGlobal::fscreenfade < 1.0 )
     glEnable( GL_TEXTURE_2D);
     BFONT->Begin();
 
-  //  glDisable(GL_TEXTURE_2D);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0,0,0,QGlobal::fscreenfade);
 
@@ -3886,7 +3891,6 @@ while( QGlobal::fscreenfade < 1.0 )
     if (QGlobal::fscreenfade < 1.0) QGlobal::fscreenfade += 0.01;
     Sleep(10);
     SwapBuffers(hDC);
-
     }
 
 
@@ -3894,20 +3898,19 @@ while( QGlobal::fscreenfade < 1.0 )
    QGlobal::fscreenfade2 = 1;
 
    glEnable(GL_TEXTURE_2D);
-   glEnable(GL_FOG);
+//   glEnable(GL_FOG);
 
  return true;
 }
 
 
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-// RenderLoader() - SCREEN WCZYTYWANIA SCENERII ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// RenderLoaderU() - Zaraz po splashu, stopniowe rozjasnianie ekranu wczytywania
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 bool __fastcall TWorld::RenderLoaderU(HDC hDC, int node, AnsiString text)
 {
-  QGlobal::fscreenfade = 1;
-while ( QGlobal::fscreenfade > 0.01 )
+ QGlobal::fscreenfade = 1;
+ while ( QGlobal::fscreenfade > 0.01 )
     {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_PROJECTION);
@@ -4120,6 +4123,9 @@ while ( QGlobal::fscreenfade > 0.01 )
 
 bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
 {
+    if (!floaded) BFONT = new Font();
+    if (!floaded) BFONT->loadf("none");
+    floaded = true;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_PROJECTION);
@@ -4205,11 +4211,12 @@ bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
    // BRIEFING - OPIS MISJI ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    if (LDR_DESCVIS != 0 && QGlobal::bloaderbriefing)
    {
-   glDisable(GL_BLEND);
- //glBlendFunc(GL_SRC_ALPHA,GL_ONE);
- //glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_COLOR);  // PRAWIE OK
+   glEnable(GL_BLEND);
+ glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 
-   glColor4f(1.9,1.9,1.9,1.9);
+// glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_COLOR);  // PRAWIE OK
+
+   glColor4f(1.9,1.9,1.9,0.6);
  //glEnable(GL_BLEND);
    glBindTexture(GL_TEXTURE_2D, loaderbrief);
    glBegin( GL_QUADS );
@@ -4219,11 +4226,11 @@ bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
    glTexCoord2f(1, 1); glVertex3i( LDR_BRIEF_X+500, LDR_BRIEF_Y,0);   // GORNY PRAWY
    glEnd( );
    }
-   glDisable(GL_BLEND);
+   glEnable(GL_BLEND);
+
 
 
    //PROGRESSBAR ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
    int PBARY = PBY+68;
    float PBARLEN = Global::iWindowWidth / 100; //LDR_PBARLEN;
 

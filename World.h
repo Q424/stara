@@ -52,7 +52,7 @@ class TWorld
     static GLuint loaderlogo;
     static GLuint bfonttex;
     static GLuint consolebackg;
-
+    freetype::font_data our_font10;
     freetype::font_data our_font12;
     freetype::font_data our_font14;
     freetype::font_data our_font16;

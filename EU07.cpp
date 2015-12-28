@@ -830,6 +830,11 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  fullscreen = true;
  DecimalSeparator = '.';
 
+ QGlobal::SLTEMP = new TStringList;
+ QGlobal::CONFIG = new TStringList;
+ QGlobal::LOKTUT = new TStringList;
+ QGlobal::MBRIEF = new TStringList;
+
  DEBUGGER = new TDEBUGGER(NULL);   // UTWORZENIE FORMY DEBUGGERA
 
 
@@ -957,10 +962,16 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 		AnsiString test,par1;
                 int pos1 = 0;
 		int pos2 = 0;
+                int pos3 = 0;
 		pos1 = line.find(" ");
-		pos2 = line.find(":");
+		pos2 = line.find(":");                      //14
+                pos3 = line.find("//");                     //33
 		test = line.substr(0, pos1).c_str();
-                par1 = line.substr(pos2+1, 20).c_str();
+                int aa= pos3 - pos2;
+                par1 = Trim(line.substr(pos2+1, aa-1).c_str());      //14+1
+
+                WriteLog(test + "=[" + par1 + "]");
+                // sendlogftp   :0                 //
 
 		if (test == "getscreenb") getscreenb = atoi(par1.c_str());
 	      	if (test == "screenresw") sh = StrToInt(par1.c_str());
@@ -976,6 +987,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
                 if (test == "scrshotext") QGlobal::asSSHOTEXT = par1;
                 if (test == "scrshotdir") QGlobal::asSSHOTDIR = par1;
                 if (test == "scrshotsub") QGlobal::asSSHOTSUB = par1;
+                if (test == "ldrbackext") QGlobal::asLBACKEXT = par1;
                 if (test == "z-fightfix") QGlobal::bzfightfix = atoi(par1.c_str());
                 if (test == "reg-t3de3d") rege3dt3d = atoi(par1.c_str());
               //if (test == "guitutopac") QGlobal::GUITUTOPAC = atof(par1.c_str());
@@ -1013,9 +1025,13 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
  // !!! REJESTROWANIE DZIALA TYLKO W TRYBIE ZGODNOSCI NA WINDOWS 8
  if (rege3dt3d) WriteLog("Registering model file extensions e3d/t3d...");
- if (rege3dt3d) RegisterFileExtansion(".e3d", "maszynamodelbin", "Binarny plik modelu MaSZyna", "\\data\\icons\\e3d.ico,0" );
- if (rege3dt3d) RegisterFileExtansion(".t3d", "maszynamodeltxt", "Tekstowy plik modelu MaSZyna", "\\data\\icons\\t3d.ico,0" );
-     WriteLog("");
+// if (rege3dt3d) RegisterFileExtansion(".e3d", "maszynamodelbin", "Binarny plik modelu MaSZyna", "\\data\\icons\\e3d.ico,0" );
+// if (rege3dt3d) RegisterFileExtansion(".t3d", "maszynamodeltxt", "Tekstowy plik modelu MaSZyna", "\\data\\icons\\t3d.ico,0" );
+ if (rege3dt3d) CreateREGfile(".e3d", "maszynamodelbin", "Binarny plik modelu MaSZyna", "\\data\\icons\\e3d.ico,0", "e3d");
+ if (rege3dt3d) CreateREGfile(".t3d", "maszynamodeltxt", "Tekstowy plik modelu MaSZyna", "\\data\\icons\\t3d.ico,0", "t3d");
+
+
+ WriteLog("");
 
 
  WriteLog("environment informations: ");
@@ -1076,7 +1092,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
     {
      DEBUGGER->Left = 0;
      DEBUGGER->Width = Screen->Width;
-     DEBUGGER->Show();
+   //DEBUGGER->Show();
      DEBUGGER->FTP->Port = 21;
      DEBUGGER->FTP->HostName = "lisek.org.pl";
      DEBUGGER->FTP->UserName = "queued_q";

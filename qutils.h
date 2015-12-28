@@ -26,6 +26,7 @@ int ParseCommandline();
 AnsiString __fastcall GETCWD();
 BOOL GetAppVersion( char *LibName, WORD *MajorVersion, WORD *MinorVersion, WORD *BuildNumber, WORD *RevisionNumber );
 void GetDesktopResolution(int& horizontal, int& vertical);
+void CreateREGfile(AnsiString ext, AnsiString key, AnsiString desc, AnsiString iconfile, AnsiString icon);
 void RegisterFileExtansion(AnsiString ext, AnsiString key, AnsiString desc, AnsiString iconfile);
 bool switch2dRender();
 bool FEX(AnsiString filename);

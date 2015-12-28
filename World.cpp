@@ -77,9 +77,6 @@ TWorld::TWorld()
     fMaxDt = 0.01; //[s] pocz¹tkowy krok czasowy fizyki
     fTime50Hz = 0.0; // bufor czasu dla komunikacji z PoKeys
 
-    QGlobal::SLTEMP = new TStringList;
-    QGlobal::CONFIG = new TStringList;
-    QGlobal::LOKTUT = new TStringList;
     QGlobal::bfonttex = NULL;
     bfonttex = NULL;
     loaderbackg = NULL;
@@ -224,7 +221,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     LOADLOADERTEXTURES();
 
     if (QGlobal::bSPLASHSCR)
-    QGlobal::splashscreen = TTexturesManager::GetTextureID("data/lbacks/", Global::asCurrentTexturePath.c_str(), AnsiString("data/lbacks/splashscreen.bmp").c_str());
+    QGlobal::splashscreen = TTexturesManager::GetTextureID("data/lbacks/", Global::asCurrentTexturePath.c_str(), AnsiString("data/lbacks/splashscreen" + QGlobal::asLBACKEXT).c_str());
     QGlobal::mousepoint = TTexturesManager::GetTextureID("data/menu/", Global::asCurrentTexturePath.c_str(), AnsiString("data/menu/menu_point.bmp").c_str());
     QGlobal::mousesymbol = TTexturesManager::GetTextureID("data/menu/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfx/ismouse.bmp").c_str());
 
@@ -503,7 +500,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     //	glFogf(GL_FOG_DENSITY, 0.594f);						// How Dense Will The
     //Fog
     // Be
-    //	glHint(GL_FOG_HINT, GL_NICEST);					    // Fog Hint Value
+    //	glHint(GL_FOG_HINT, GL_NICEST);					        // Fog Hint Value
     WriteLog("glFogf(GL_FOG_START, 1000.0f);");
     glFogf(GL_FOG_START, 10.0f); // Fog Start Depth
     WriteLog("glFogf(GL_FOG_END, 2000.0f);");
@@ -515,8 +512,8 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 
-    if (QGlobal::bSPLASHSCR) RenderSPLASHSCR(hDC, 77, "SS", 1);
-    if (QGlobal::bSPLASHSCR) RenderLoaderU(hDC, 77, "SS");
+    if (QGlobal::bSPLASHSCR) RenderSPLASHSCR(hDC, 77, "SS", 1);                 // Pierwsza czesc splasha (7s)
+    if (QGlobal::bSPLASHSCR) RenderLoaderU(hDC, 77, "SS");                      // Zaraz po splashu stopniowe wylonienie sie z czerni ekranu wczytywania
     QGlobal::fscreenfade2 = 1;
 
     /*--------------------Render Initialization End---------------------*/
@@ -529,8 +526,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
         SetErrorMode(mode);
         // If the handle is valid, try to get the function address.
         if (hinstGLUT32)
-            glutBitmapCharacterDLL =
-                (FglutBitmapCharacter)GetProcAddress(hinstGLUT32, "glutBitmapCharacter");
+            glutBitmapCharacterDLL = (FglutBitmapCharacter)GetProcAddress(hinstGLUT32, "glutBitmapCharacter");
         else
             WriteLog("Missed GLUT32.DLL.");
         if (glutBitmapCharacterDLL)
@@ -561,21 +557,22 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
         WriteLog("Display Lists font used."); //+AnsiString(glGetError())
     }
     WriteLog("Font init OK"); //+AnsiString(glGetError())
+    SetForegroundWindow(hWnd);
 
     Timer::ResetTimers();
 
     hWnd = NhWnd;
     glColor4f(1.0f, 3.0f, 3.0f, 0.0f);
-    //    SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
+    //    SwapBuffers(hDC);					                // Swap Buffers (Double Buffering)
     //    glClear(GL_COLOR_BUFFER_BIT);
     //    glFlush();
 
-    SetForegroundWindow(hWnd);
+
     WriteLog("Sound Init");
 
-    glLoadIdentity();
+//--    glLoadIdentity();
     //    glColor4f(0.3f,0.0f,0.0f,0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//--    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 /*
     glTranslatef(0.0f, 0.0f, -0.50f);
     //    glRasterPos2f(-0.25f, -0.10f);
@@ -600,7 +597,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     */
 
     RenderLoader(hDC, 77, "SOUND INITIALIZATION...");
-    
+
     glColor3f(0.0f, 0.0f, 100.0f);
     //if (Global::detonatoryOK)
     //{
@@ -757,10 +754,11 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
             //}
         }
         FreeFlyModeFlag = true; // Ra: automatycznie w³¹czone latanie
-        SwapBuffers(hDC); // swap buffers (double buffering)
+        //SwapBuffers(hDC); // swap buffers (double buffering)
         Controlled = NULL;
         mvControlled = NULL;
         Camera.Type = tp_Free;
+        Camera.Pos.y += 4.0f;
     }
     glEnable(GL_DEPTH_TEST);
     // Ground.pTrain=Train;

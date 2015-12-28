@@ -352,6 +352,59 @@ void GetDesktopResolution(int& horizontal, int& vertical)
    vertical = desktop.bottom;
 }
 
+void CreateREGfile(AnsiString ext, AnsiString key, AnsiString desc, AnsiString iconfile, AnsiString icon)
+{
+/*
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\maszynamodelbin]
+@="Binarny plik modelu MaSZyna"
+
+[HKEY_CLASSES_ROOT\maszynamodelbin\DefaultIcon]
+@="F:\\MaSzyna_15_04\\data\\icons\\e3d.ico,0"
+
+[HKEY_CLASSES_ROOT\maszynamodelbin\shell]
+@="open"
+
+[HKEY_CLASSES_ROOT\maszynamodelbin\shell\open]
+@="&Open"
+
+[HKEY_CLASSES_ROOT\maszynamodelbin\shell\open\command]
+@="F:\\MaSzyna_15_04\\EU07-271215-2.exe %1"
+
+*/
+ AnsiString pathx ;
+
+ QGlobal::SLTEMP->Clear();
+ QGlobal::SLTEMP->Add("Windows Registry Editor Version 5.00");
+ QGlobal::SLTEMP->Add("");
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\maszynamodelbin]");
+ QGlobal::SLTEMP->Add("@=\"Binarny plik modelu MaSZyna\"");
+ QGlobal::SLTEMP->Add("");
+
+ pathx = AnsiString(StringReplace( QGlobal::asAPPDIR, "\\", "\\\\", TReplaceFlags() << rfReplaceAll )).c_str();
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\maszynamodelbin\\DefaultIcon]");
+ QGlobal::SLTEMP->Add("@=\"" + pathx + "\data\\\\icons\\\\" + icon + ".ico,0\"");
+ QGlobal::SLTEMP->Add("");
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\maszynamodelbin\\shell\\open]");
+ QGlobal::SLTEMP->Add("@=\"&Open\"");
+ QGlobal::SLTEMP->Add("");
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\maszynamodelbin\\shell\\open]");
+ QGlobal::SLTEMP->Add("@=\"&Open\"");
+ QGlobal::SLTEMP->Add("");
+
+ pathx = AnsiString(StringReplace( ParamStr(0), "\\", "\\\\", TReplaceFlags() << rfReplaceAll )).c_str();
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\maszynamodelbin\\shell\\open\\command]");
+ QGlobal::SLTEMP->Add("@=\"" + pathx + " %1\"");
+ QGlobal::SLTEMP->Add("");
+
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\." + UpperCase(icon) + "]");
+ QGlobal::SLTEMP->Add("@=\"maszynamodelbin\"");
+ QGlobal::SLTEMP->Add("");
+
+ QGlobal::SLTEMP->SaveToFile(key + ".reg");
+}
+
 
 // *****************************************************************************
 // REJESTROWANIE ROZSZERZEN E3D I T3D
