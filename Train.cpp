@@ -2208,9 +2208,9 @@ void TTrain::OnKeyDown(int cKey)
                                 3); // na skrzy¿owaniu pojedzie prosto
                 }
                 else if (cKey == Global::Keys[k_MechUp])
-                    pMechOffset.y += 0.2; // McZapkie-120302 - wstawanie
+                    pMechOffset.y += 0.05; // McZapkie-120302 - wstawanie        //Q 291215: ZWIEKSZAM DOKLADNOSC Z  0.20 NA 0.05
                 else if (cKey == Global::Keys[k_MechDown])
-                    pMechOffset.y -= 0.2; // McZapkie-120302 - siadanie
+                    pMechOffset.y -= 0.05; // McZapkie-120302 - siadanie         //Q 291215: ZWIEKSZAM DOKLADNOSC Z  0.20 NA 0.05
             }
         }
 
@@ -2222,27 +2222,27 @@ void TTrain::OnKeyDown(int cKey)
             {
                 while (d)
                 {
-                    d->Move(100.0 * d->DirectionGet());
-                    d = d->Next(); // pozosta³e te¿
+                    if (!Console::Pressed(VK_CONTROL)) d->Move(10.0 * d->DirectionGet());
+                    if ( Console::Pressed(VK_CONTROL)) d = d->Next(); // pozosta³e te¿
                 }
                 d = DynamicObject->Prev();
                 while (d)
                 {
-                    d->Move(100.0 * d->DirectionGet());
-                    d = d->Prev(); // w drug¹ stronê te¿
+                    if (!Console::Pressed(VK_CONTROL)) d->Move(10.0 * d->DirectionGet());
+                    if ( Console::Pressed(VK_CONTROL)) d = d->Prev(); // w drug¹ stronê te¿
                 }
             }
             else if (cKey == VkKeyScan(']'))
             {
                 while (d)
                 {
-                    d->Move(-100.0 * d->DirectionGet());
+                    d->Move(-10.0 * d->DirectionGet());
                     d = d->Next(); // pozosta³e te¿
                 }
                 d = DynamicObject->Prev();
                 while (d)
                 {
-                    d->Move(-100.0 * d->DirectionGet());
+                    d->Move(-10.0 * d->DirectionGet());
                     d = d->Prev(); // w drug¹ stronê te¿
                 }
             }
@@ -3783,8 +3783,9 @@ bool TTrain::Update()
         }
 
         //******************************************
-        // przelaczniki
+        // przelaczniki OnUpdate
 
+        if (!Global::iPause)                          //Q 291215: blokowanie uruchomienia syreny gdy pauza
         if (Console::Pressed(Global::Keys[k_Horn]))
         {
             if (Console::Pressed(VK_SHIFT))

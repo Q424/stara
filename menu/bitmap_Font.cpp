@@ -92,7 +92,7 @@ if (QGlobal::SCNLOADED) _screen_y_font = 1024;
 }
 
 
-void Font::loadf(char *filename)				// Build Our Font Display List
+void Font::init(char *filename)				// Build Our Font Display List
 {
 	float	cx;											// Holds Our X Character Coord
 	float	cy;											// Holds Our Y Character Coord

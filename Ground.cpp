@@ -40,6 +40,7 @@ http://mozilla.org/MPL/2.0/.
 #include "Driver.h"
 #include "Console.h"
 #include "Names.h"
+#include "World.h"
 
 #define _PROBLEND 1
 //---------------------------------------------------------------------------
@@ -48,6 +49,9 @@ http://mozilla.org/MPL/2.0/.
 bool bCondition; // McZapkie: do testowania warunku na event multiple
 AnsiString LogComment;
 
+float gtc1 = 0;
+float gtc2 = 0;
+float rtim = 0;
 //---------------------------------------------------------------------------
 // Obiekt renderuj¹cy siatkê jest sztucznie tworzonym obiektem pomocniczym,
 // grupuj¹cym siatki obiektów dla danej tekstury. Obiektami sk³adowymi mog¹
@@ -1566,11 +1570,36 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
     TGroundNode *tmp, *tmp2;
     tmp = new TGroundNode();
     tmp->asName = (asNodeName == AnsiString("none") ? AnsiString("") : asNodeName);
-    if (r >= 0)
-        tmp->fSquareRadius = r * r;
+    if (r >= 0) tmp->fSquareRadius = r * r;
     tmp->fSquareMinRadius = rmin * rmin;
+    
+    QGlobal::iNODES++;
+    QGlobal::postep++;
+    QGlobal::asNODENAME = tmp->asName;
 
-    if (GetAsyncKeyState(VK_ESCAPE)<0) { exit(0); }                              //Q 27.12.15: WYMUSZENIE PRZERWANIA WCZYTYWANIA I WYJSCIE
+    gtc2 =  GetTickCount();
+
+    rtim = gtc2 - gtc1;
+
+    QGlobal::rtim = (rtim) / 1000 ;
+
+    QGlobal::gtc2 = GetTickCount();
+    QGlobal::lsec = QGlobal::gtc2 - QGlobal::gtc1;
+
+
+ if (QGlobal::rtim > QGlobal::LDRREFRESH)
+   {
+    WriteLog(AnsiString(QGlobal::rtim));
+    gtc1 =  GetTickCount();
+    rtim = 0;
+    QGlobal::rtim = 0;
+    AnsiString element;
+    element = str + " >> " + asNodeName;
+    Global::pWorld->RenderLoader(QGlobal::glHDC, 77, element);    // Q: Wywolywanie stad powoduje krzaczenie sie znakow w opisie scenerii, czemu?
+
+    }
+
+    if (GetAsyncKeyState(VK_ESCAPE) < 0) { exit(0); }                           //Q 27.12.15: WYMUSZENIE PRZERWANIA WCZYTYWANIA I WYJSCIE
 
     if (str == "triangles")
         tmp->iType = GL_TRIANGLES;
@@ -1785,6 +1814,8 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
         break;
     case TP_DYNAMIC:
         tmp->DynamicObject = new TDynamicObject();
+
+        Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "dynamic: " + QGlobal::asNODENAME);
         // tmp->DynamicObject->Load(Parser);
         parser->getTokens();
         *parser >> token;
@@ -2261,6 +2292,7 @@ void TGround::FirstInit()
     if (bInitDone)
         return; // Ra: ¿eby nie robi³o siê dwa razy
     bInitDone = true;
+    Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "FIRSTINIT");
     WriteLog("InitNormals");
     int i, j;
     for (i = 0; i < TP_LAST; ++i)
@@ -2802,6 +2834,7 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
         }
         else if (str == AnsiString("sky"))
         { // youBy - niebo z pliku
+            Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "SKY...");
             WriteLog("Scenery sky definition");
             parser.getTokens();
             parser >> token;
@@ -2817,7 +2850,9 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
             WriteLog(Global::asSky.c_str());
         }
         else if (str == AnsiString("firstinit"))
+         {
             FirstInit();
+         }
         else if (str == AnsiString("description"))
         {
             do

@@ -22,6 +22,34 @@
 #include "logs.h"
 
 
+std::string encryptDecrypt(std::string toEncrypt) {
+    char key[7] = {'K', 'C', 'Q', '4', '2', '4', 'i'}; //Any chars will work
+    string output = toEncrypt;
+    
+    for (int i = 0; i < toEncrypt.size(); i++)
+        output[i] = toEncrypt[i] ^ key[i % (sizeof(key) / sizeof(char))];
+    
+    return output;
+}
+
+std::string cryptdecrypt(std::string value, std::string key)
+{
+    string retval(value);
+ 
+    short unsigned int klen=key.length();
+    short unsigned int vlen=value.length();
+    short unsigned int k=0;
+    short unsigned int v=0;
+     
+    for(v;v<vlen;v++)
+    {
+        retval[v]=value[v]^key[k];
+        k=(++k<klen?k:0);
+    }
+     
+    return retval;
+}
+
 // *****************************************************************************
 //
 // *****************************************************************************
@@ -35,12 +63,12 @@ std::vector<std::string> &split(const std::string &s, char delim, std::vector<st
     return elems;
 }
 
-std::vector<std::string> split(const std::string &s, char delim)
-{
-    std::vector<std::string> elems;
-    split(s, delim, elems);
-    return elems;
-}
+//std::vector<std::string> split(const std::string &s, char delim)
+//{
+//    std::vector<std::string> elems;
+//    split(s, delim, elems);
+//    return elems;
+//}
 
 
 // *****************************************************************************

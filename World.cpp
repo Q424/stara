@@ -57,6 +57,26 @@ GLuint TWorld::bfonttex;
 GLuint TWorld::consolebackg;
 
 
+
+bool __fastcall TWorld::STARTSIMULATION()
+{
+   TSCREEN::CFOV = 45;
+   QGlobal::bSHOWBRIEFING = FALSE;
+   glEnable(GL_LIGHTING);
+   glEnable(GL_DEPTH_TEST);
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   gluPerspective(TSCREEN::CFOV, (GLdouble)Global::iWindowWidth/(GLdouble)Global::iWindowHeight, 0.1f, 13234566.0f);  //1999950600.0f
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity( );
+   Camera.Reset();
+   Global::iPause = false;
+   loaderbrief = NULL;      // USUNIECIE TEKSTURY
+ //loaderbackg = NULL;      // USUNIECIE TEKSTURY
+}
+
+
 // *****************************************************************************
 // Konstruktor klasy TWorld
 // *****************************************************************************
@@ -210,15 +230,21 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     CreateDir(QGlobal::asAPPDIR + "data\\");
     CreateDir(QGlobal::asAPPDIR + "data\\logs\\");
 
+    QGlobal::gtc1 =  GetTickCount();
+    QGlobal::iRANDTABPOS = 0;
+    QGlobal::iNODES = 0;
+    QGlobal::postep = 0;
     QGlobal::bSCNLOADED = false;
     QGlobal::bfirstloadingscn = true;
     ShowWindow(NhWnd,SW_SHOW);
     SetForegroundWindow(NhWnd);                                                    // slightly higher priority
     SetFocus(NhWnd);
 
-    LOADLOADERCONFIG();
     LOADLOADERFONTS();
+    LOADLOADERCONFIG();
+
     LOADLOADERTEXTURES();
+
 
     if (QGlobal::bSPLASHSCR)
     QGlobal::splashscreen = TTexturesManager::GetTextureID("data/lbacks/", Global::asCurrentTexturePath.c_str(), AnsiString("data/lbacks/splashscreen" + QGlobal::asLBACKEXT).c_str());
@@ -794,14 +820,24 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
        {
         Global::SetCameraPosition(Global::pFreeCameraInit[1]); //nowa pozycja dla generowania obiektów
         Ground.Silence(Camera.Pos); //wyciszenie wszystkiego z poprzedniej pozycji
-        Camera.Init(Global::pFreeCameraInit[1], Global::pFreeCameraInitAngle[1]); //przestawienie
+        Camera.Init(Global::pFreeCameraInit[0], Global::pFreeCameraInitAngle[0]); //przestawienie
 
-        Camera.Reset(); // likwidacja obrotów - patrzy horyzontalnie na po³udnie
+        //Camera.Reset(); // likwidacja obrotów - patrzy horyzontalnie na po³udnie
 
-        //Camera.LookAt = vector3(0,0,0);
-        
+       // Camera.LookAt = vector3(0,0,0);
+
+       Global::SetCameraPosition(Global::pFreeCameraInit[1]); // nowa pozycja dla generowania obiektów
+       Ground.Silence(Camera.Pos); // wyciszenie wszystkiego z poprzedniej pozycji
+       Camera.Init(Global::pFreeCameraInit[1], Global::pFreeCameraInitAngle[1]); // przestawienie
+
         if (FreeFlyModeFlag) Camera.RaLook(); // jednorazowe przestawienie kamery
        }
+
+    QGlobal::bSCNLOADED = true;
+    QGlobal::SLTEMP->Clear();
+    QGlobal::SLTEMP->Add(IntToStr(QGlobal::iNODES));
+    QGlobal::SLTEMP->SaveToFile("data\\pbars\\" + AnsiString(Global::szSceneryFile));
+    Global::iPause = true;
     return true;
 };
 
@@ -821,9 +857,11 @@ void TWorld::OnKeyDown(int cKey)
 
  QGlobal::isshift = false;
 
-    if (!Console::Pressed(VK_SHIFT) && cKey == VK_F11) SCR->SaveScreen_xxx();     // Q 261215: zrut ekranu do jpg, tga lub bmp w zaleznosci od opcji w config.txt
+ if (Global::iPause && cKey==Global::Keys[k_Czuwak]) STARTSIMULATION();         //Q 291215: Bo po zaladowaniu symulacji jest pauza i pozostaje obraz wczytywania jako tlo pauzy
 
-    if (GetAsyncKeyState(VK_SHIFT) < 0) { QGlobal::isshift = isshift = true; }      // USUNALEM SPRAWDZANIE W TTrain::OnKeyDown() zastepujac parametrem funkcji;
+ if (!Console::Pressed(VK_SHIFT) && cKey == VK_F11) SCR->SaveScreen_xxx();   // Q 261215: zrut ekranu do jpg, tga lub bmp w zaleznosci od opcji w config.txt
+
+ if (GetAsyncKeyState(VK_SHIFT) < 0) { QGlobal::isshift = isshift = true; }  // USUNALEM SPRAWDZANIE W TTrain::OnKeyDown() zastepujac parametrem funkcji;
 
 //    if (!Global::iPause && cKey == VK_F10)
 //        {
@@ -1307,6 +1345,9 @@ bool TWorld::Update()
         WriteLog("Scenery moved");
     };
 #endif
+
+
+
     if (iCheckFPS)
         --iCheckFPS;
     else
@@ -2764,20 +2805,17 @@ bool TWorld::Render()
 
     if (QGlobal::bmodelpreview) DRAW_XYGRID();
     if (QGlobal::bmodelpreview) Draw_SCENE000(0, 0, 0);
+   // if (QGlobal::bmodelpreview) Camera.LookAt = vector3(0,0,0);
 
     if (Global::bUseVBO)
     { // renderowanie przez VBO
-        if (!Ground.RenderVBO(Camera.Pos))
-            return false;
-        if (!Ground.RenderAlphaVBO(Camera.Pos))
-            return false;
+        if (!Ground.RenderVBO(Camera.Pos)) return false;
+        if (!Ground.RenderAlphaVBO(Camera.Pos)) return false;
     }
     else
-    { // renderowanie przez Display List
-        if (!Ground.RenderDL(Camera.Pos))
-            return false;
-        if (!Ground.RenderAlphaDL(Camera.Pos))
-            return false;
+    { // renderowanie przez DL
+        if (!Ground.RenderDL(Camera.Pos)) return false;
+        if (!Ground.RenderAlphaDL(Camera.Pos)) return false;
     }
     TSubModel::iInstance = (int)(Train ? Train->Dynamic() : 0); //¿eby nie robiæ cudzych animacji
     // if (Camera.Type==tp_Follow)
@@ -2786,6 +2824,11 @@ bool TWorld::Render()
     // if (Global::bRenderAlpha)
     // if (Controlled)
     //  Train->RenderAlpha();
+
+    if (!FreeFlyModeFlag)
+    if (QGlobal::bSHOWBRIEFING) RenderLoader(QGlobal::glHDC, 77, "Zakonczono wczytywanie, wcisnij spacjê");
+    //if (QGlobal::bSHOWBRIEFING) freetype::print(our_font14, 20, Global::iWindowHeight-930, "FPS: %7.2f", GetFPS());  // PO ZALADOWANIU SCN ALE PRZED WCISNIECIEM SPACJI
+
     glFlush();
     // Global::bReCompile=false; //Ra: ju¿ zrobiona rekompilacja
     ResourceManager::Sweep(Timer::GetSimulationTime());

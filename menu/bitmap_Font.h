@@ -22,7 +22,7 @@ public:
 	void Print_xy_scale(GLint x, GLint y, char *string, int set,float scale_x,float scale_y);
 	void Print_xy_rot(GLint x, GLint y, char *string, int set,float uhol,float scale);
 	void Print_xy(GLint x, GLint y, char * string, int set);
-	void loadf(char *filename);
+	void init(char *filename);
 	~Font(void);
         Font(void);
 	GLvoid glPrint_xy(GLint x, GLint y, char *string, int set);		// pise na OpenGL suradnice x,y

@@ -936,7 +936,7 @@ bool __fastcall TWorld::renderfadeoff(float trans)
 if (QGlobal::fscreenfade > 0.01)
     {
     if (!floaded) BFONT = new Font();
-    if (!floaded) BFONT->loadf("none");
+    if (!floaded) BFONT->init("none");
     floaded = true;
 
     GWW = Global::iWindowWidth;
@@ -3728,14 +3728,14 @@ bool __fastcall TWorld::LOADLOADERCONFIG()
 bool __fastcall TWorld::LOADLOADERFONTS()
 {
  WriteLog("LOADING LOADER FONTS...");
- our_font10.init("data\\fonts\\arial.ttf", 10);
+ our_font10.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\arial.ttf").c_str(), 10);
  our_font12.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\creditvz.ttf").c_str(), 12);
  our_font14.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\creditvz.ttf").c_str(), 14);
  our_font16.init("data\\fonts\\creditvz.ttf", 16);
  our_font18.init("data\\fonts\\creditvz.ttf", 18);			        //Build the freetype font
 
  if (!floaded) BFONT = new Font();
- if (!floaded) BFONT->loadf("none");
+ if (!floaded) BFONT->init("none");
  floaded = true;
  return true;
 }
@@ -3756,7 +3756,7 @@ bool __fastcall TWorld::LOADLOADERTEXTURES()
 
     AnsiString asBRIEFTEXT = QGlobal::asAPPDIR + "data\\briefs\\" + cscn + "-" + clok + ".txt";
 
-    WriteLog(asBRIEFTEXT);
+    //WriteLog(asBRIEFTEXT);
     if (FEX(asBRIEFTEXT))
     QGlobal::MBRIEF->LoadFromFile( asBRIEFTEXT);
 
@@ -3861,9 +3861,9 @@ bool __fastcall TWorld::RenderSPLASHSCR(HDC hDC, int node, AnsiString text, doub
 QGlobal::fscreenfade = 0;
 while( QGlobal::fscreenfade < 1.0 ) // Proces plynnego zaciemniania splasha (tzw. fadeoff) ...
     {
-    if (!floaded) BFONT = new Font();
-    if (!floaded) BFONT->loadf("none");
-    floaded = true;
+    //if (!floaded) BFONT = new Font();
+    //if (!floaded) BFONT->init("none");
+    //floaded = true;
 
     GWW = Global::iWindowWidth;
     GWH = Global::iWindowHeight;
@@ -4124,7 +4124,7 @@ bool __fastcall TWorld::RenderLoaderU(HDC hDC, int node, AnsiString text)
 bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
 {
     if (!floaded) BFONT = new Font();
-    if (!floaded) BFONT->loadf("none");
+    if (!floaded) BFONT->init("none");
     floaded = true;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -4138,12 +4138,6 @@ bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
     glDisable(GL_DEPTH_TEST);			// Disables depth testing
     glDisable(GL_LIGHTING);
     glDisable(GL_FOG);
-
-
-    //if (!floaded) BFONT = new Font();
-    //if (!floaded) BFONT->loadf("none");
-    //floaded = true;
-
     glEnable(GL_TEXTURE_2D);
 
 //    if (node != 77) nn = Global::iPARSERBYTESPASSED;

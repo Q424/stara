@@ -37,7 +37,7 @@ bool __fastcall modelpreview(std::string par1, std::string par2, std::string par
          atmoline = "atmo 0.41 0.41 0.44 150 383 0.41 0.41 0.44 endatmo";
          lightline = "light 331 336 -337 0.13 0.14 0.19 0.14 0.12 0.12 0.4 0.4 0.4 endlight";
          skyline = "sky cgskj_blueclear008.t3d sky/modelviewer.bmp endsky";
-         cam1line = "camera 30.0 30.0 30.0 40.0 21.0 1.0 1 endcamera";
+         cam1line = "camera 30.0 30.0 30.0 0.0 21.0 1.0 1 endcamera";
 
          stream = fopen("scenery\\temp.scn", "a+");
          sprintf(addline, "node;-1;0;modelpreview;model;0.0;0.2;0.0;0.0;%s;%s;;endmodel", par1.c_str(), "none");

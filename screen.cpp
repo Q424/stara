@@ -21,6 +21,7 @@ GLuint TSCREEN::loaderbrief;
 double TSCREEN::CFOV = 45.0;
 bool TSCREEN::ADJFOV = false;
 bool TSCREEN::ADJSCR = false;
+bool TSCREEN::FOVBLOCKED = false;
 int x1 = 0;
 int y1 = 0;
 int x2 = GetSystemMetrics(SM_CXSCREEN);
@@ -137,9 +138,12 @@ void __fastcall TSCREEN::FOVADD()
 {
        ADJSCR = true;
        ADJFOV = true;
-       if (QGlobal::ffov < 45.0) QGlobal::ffov += 0.10;
+
+       if (QGlobal::ffov < 75.0) QGlobal::ffov += 0.10;
        TSCREEN::CFOV = QGlobal::ffov;
        ReSizeGLSceneEx(QGlobal::ffov, Global::iWindowWidth, Global::iWindowHeight);
+       if (QGlobal::ffov == 45.0) Sleep(500);
+
 }
 
 void __fastcall TSCREEN::FOVADDF()
@@ -149,6 +153,7 @@ void __fastcall TSCREEN::FOVADDF()
        if (QGlobal::ffov < 45.0) QGlobal::ffov += 2.0;
        TSCREEN::CFOV = QGlobal::ffov;
        ReSizeGLSceneEx(QGlobal::ffov, Global::iWindowWidth, Global::iWindowHeight);
+
 }
 
 
@@ -162,6 +167,8 @@ void __fastcall TSCREEN::FOVREM()
        if (QGlobal::ffov > 20.0) QGlobal::ffov -= 0.10;
        TSCREEN::CFOV = QGlobal::ffov;
        ReSizeGLSceneEx(QGlobal::ffov, Global::iWindowWidth, Global::iWindowHeight);
+       if (QGlobal::ffov == 45.0) Sleep(500);
+
 }
 
 void __fastcall TSCREEN::FOVDEL()

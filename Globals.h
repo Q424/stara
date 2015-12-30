@@ -19,7 +19,7 @@ http://mozilla.org/MPL/2.0/.
 #include "opengl/glew.h"
 #include "dumb3d.h"
 #include "Logs.h"
-
+//#include "world.h"
 
 #define PI 3.1415926535897f
 #define DTOR (PI/180.0f)
@@ -30,6 +30,8 @@ typedef struct {
 	GLint blendSrc;
 	GLint blendDst;
 } GLblendstate;
+
+
 
 using namespace Math3D;
 
@@ -454,6 +456,7 @@ class QGlobal
  static float ffov;
  static float LDRREFRESH;
  static float GUITUTOPAC;
+ static float ffovblocktime;
 
  static GLuint reflecttex;
  static GLuint mousesymbol;

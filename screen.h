@@ -37,6 +37,7 @@ BOOL ChangeScreenResolution (int width, int height, int bitsPerPixel);
 static double CFOV;
 static bool ADJSCR;
 static bool ADJFOV;
+static bool FOVBLOCKED; 
 
 static GLuint loaderbrief;
 private:

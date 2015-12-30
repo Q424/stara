@@ -102,11 +102,12 @@ USEFORM("frm_debugger.cpp", DEBUGGER);
 //---------------------------------------------------------------------------
 #include "World.h"
 
+
+TWorld World;
+
 HDC hDC = NULL; // Private GDI Device Context
 HGLRC hRC = NULL; // Permanent Rendering Context
 HWND hWnd = NULL; // Holds Our Window Handle
-
-TWorld World;
 
 // bool active=TRUE;	//window active flag set to TRUE by default
 bool fullscreen = TRUE; // fullscreen flag set to fullscreen mode by default
@@ -190,8 +191,8 @@ int InitGL(GLvoid) // All Setup For OpenGL Goes Here
 
     return World.Init(hWnd, hDC); // true jeœli wszystko pójdzie dobrze
 }
-//---------------------------------------------------------------------------
 
+//---------------------------------------------------------------------------
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // resize and initialize the GL Window
 {
     WindowWidth = width;
@@ -335,8 +336,7 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
         dmScreenSettings.dmPelsWidth = width; // selected screen width
         dmScreenSettings.dmPelsHeight = height; // selected screen height
         dmScreenSettings.dmBitsPerPel = bits; // selected bits per pixel
-        dmScreenSettings.dmFields =
-            dmScreenSettings.dmFields | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+        dmScreenSettings.dmFields = dmScreenSettings.dmFields | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
         // Try to set selected mode and get results.  NOTE: CDS_FULLSCREEN gets rid of start bar.
         if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
@@ -394,27 +394,27 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
         return FALSE; // Return FALSE
     }
 
-    static PIXELFORMATDESCRIPTOR pfd = // pfd Tells Windows How We Want Things To Be
+    static PIXELFORMATDESCRIPTOR pfd =                                          // pfd Tells Windows How We Want Things To Be
         {
-         sizeof(PIXELFORMATDESCRIPTOR), // Size Of This Pixel Format Descriptor
+         sizeof(PIXELFORMATDESCRIPTOR),                                         // Size Of This Pixel Format Descriptor
          1, // Version Number
-         PFD_DRAW_TO_WINDOW | // Format Must Support Window
-             PFD_SUPPORT_OPENGL | // Format Must Support OpenGL
-             PFD_DOUBLEBUFFER, // Must Support Double Buffering
-         PFD_TYPE_RGBA, // Request An RGBA Format
-         bits, // Select Our Color Depth
+         PFD_DRAW_TO_WINDOW |                                                   // Format Must Support Window
+             PFD_SUPPORT_OPENGL |                                               // Format Must Support OpenGL
+             PFD_DOUBLEBUFFER,                                                  // Must Support Double Buffering
+         PFD_TYPE_RGBA,                                                         // Request An RGBA Format
+         bits,                                                                  // Select Our Color Depth
          0,
-         0, 0, 0, 0, 0, // Color Bits Ignored
-         0, // No Alpha Buffer
-         0, // Shift Bit Ignored
-         0, // No Accumulation Buffer
-         0, 0, 0, 0, // Accumulation Bits Ignored
-         24, // 32Bit Z-Buffer (Depth Buffer)
-         0, // No Stencil Buffer
-         0, // No Auxiliary Buffer
-         PFD_MAIN_PLANE, // Main Drawing Layer
-         0, // Reserved
-         0, 0, 0 // Layer Masks Ignored
+         0, 0, 0, 0, 0,                                                         // Color Bits Ignored
+         0,                                                                     // No Alpha Buffer
+         0,                                                                     // Shift Bit Ignored
+         0,                                                                     // No Accumulation Buffer
+         0, 0, 0, 0,                                                            // Accumulation Bits Ignored
+         24,                                                                    // 32Bit Z-Buffer (Depth Buffer)
+         0,                                                                     // No Stencil Buffer
+         0,                                                                     // No Auxiliary Buffer
+         PFD_MAIN_PLANE,                                                        // Main Drawing Layer
+         0,                                                                     // Reserved
+         0, 0, 0                                                                // Layer Masks Ignored
         };
 
     if (NULL == (hDC = GetDC(hWnd))) // Did We Get A Device Context?
@@ -472,9 +472,9 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
         return FALSE; // Return FALSE
     }
 
-QGlobal::glHDC=hDC;
-QGlobal::glHGLRC=hRC;
-QGlobal::glHWND=hWnd;
+    QGlobal::glHDC=hDC;
+    QGlobal::glHGLRC=hRC;
+    QGlobal::glHWND=hWnd;
 
     /*
     Now that our window is created, we want to queary what samples are available
@@ -638,8 +638,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
          SetCapture(hWnd);  // window and returns, it needs to reset status
          MouseButton = 1;
 
-         //GetCursorPos(&xmouse);
-
          QGlobal::iMPX = LOWORD(lParam);
          QGlobal::iMPY = HIWORD(lParam);
 
@@ -648,13 +646,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
          World.OnMouseLpush(QGlobal::iMPX, QGlobal::iMPY);
          return 0;
         };
+
     case WM_RBUTTONDOWN :
         {
          ReleaseCapture();   // need them here, because if mouse moves off
          SetCapture(hWnd);  // window and returns, it needs to reset status
          MouseButton = 1;
-
-         //GetCursorPos(&xmouse);
 
          QGlobal::iMPX = LOWORD(lParam);
          QGlobal::iMPY = HIWORD(lParam);
@@ -664,13 +661,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
          World.OnMouseRpush(QGlobal::iMPX, QGlobal::iMPY);
          return 0;
         };
+
     case WM_MBUTTONDOWN :
         {
          ReleaseCapture();   // need them here, because if mouse moves off
          SetCapture(hWnd);  // window and returns, it needs to reset status
          MouseButton = 1;
-
-         //GetCursorPos(&xmouse);
 
          QGlobal::iMPX = LOWORD(lParam);
          QGlobal::iMPY = HIWORD(lParam);
@@ -680,13 +676,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
          World.OnMouseMpush(QGlobal::iMPX, QGlobal::iMPY);
          return 0;
         };
+        
     case WM_MOUSEWHEEL:
         {
          int zDelta = ((short) HIWORD(wParam));
          World.OnMouseWheel(zDelta);
          return 0;
         };
-
 
     case WM_KEYUP:
         if (Global::bActive)
@@ -842,14 +838,14 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());  // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
 
 
- GETCWD();   // POBIERA SCIEZKE APLIKACJI DO ZMIENNEJ GLOBALNEJ Global::asCWD
+ appath = GETCWD();   // POBIERA SCIEZKE APLIKACJI DO ZMIENNEJ GLOBALNEJ Global::asCWD
 
  QGlobal::asAPPDIR = ExtractFilePath(ParamStr(0));
 
- appath = GETCWD();
  WriteLog("GETCWD: " + appath);
- WriteLog("asAPPDIR: " + QGlobal::asAPPDIR);
-
+ WriteLog("APPDIR: " + QGlobal::asAPPDIR);
+ WriteLog("APPCWD: " + QGlobal::asCWD);
+ WriteLog("CMDLIN: " + AnsiString(lpCmdLine));
  commandline = lpCmdLine;
  commandline = StringReplace( commandline, "e3d", "t3d", TReplaceFlags() << rfReplaceAll ); /* ZAMIENIA 'e3d' na 't3d'    */
  commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );   /* ZAMIENIA Z '\' na '/'  */
@@ -865,13 +861,18 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  tcl = tocut.capacity();                              // dlugosc powyzszego lancucha
  WriteLog("LENGH: " + IntToStr(tcl));
 
+ AnsiString p = ExtractFilePath(commandline);
 
+ AnsiString testp1 = commandline.SubString(1, commandline.Pos("models")-1);
+ WriteLog("TESTP1=" + testp1);
+ AnsiString testp2 = StringReplace( QGlobal::asAPPDIR, "\\", "/", TReplaceFlags() << rfReplaceAll );
+ WriteLog("TESTP2=" + testp2);
 
- // OTWIERANIE PODGLADU MODELU GDY KLIKNIETO NA PLIK MODELU ********************
-   if (commandline.Pos("models") > 0)
+ 
+ // OTWIERANIE PODGLADU MODELU GDY KLIKNIETO NA PLIK MODELU W KATALOGU MODELS\ ...
+   if ((commandline.Pos("models") > 0) && (testp1 == testp2))
    {
     filetoopen = commandline.Delete( 1, tcl);
-
 
     WriteLog("FTOPE: [" + filetoopen + "]");
     //std::vector<std::string> x = split(commandline.c_str(), ' ');
@@ -882,14 +883,31 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
     replacescn = true;
    }
- // else
-//   {
-//    commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );
- //  }
- // else commandline = "";
+  else if (commandline.Pos("-s") == 0)   // JEZELI KLIKNIETO NA PLIK MODELU POZA KATALOGIEM MODELS\ ...
+   {
+    WriteLog("OUTOFMACHINEMODEL");
+    commandline = StringReplace( commandline, "/", "\\", TReplaceFlags() << rfReplaceAll );   /* ZAMIENIA Z '\' na '/'  */
+    AnsiString mfp = ExtractFilePath(commandline);
+    AnsiString mfn = ExtractFileName(commandline);
+    WriteLog("mfp: " + mfp);
+    WriteLog("mfn: " + mfn);
+    mfn = StringReplace( mfn, "t3d", "e3d", TReplaceFlags() << rfReplaceAll );
+    WriteLog("mfn: " + mfn);  // tu juz jest e3d
+
+    WriteLog(commandline.c_str());
+    CopyFile(AnsiString(mfp + mfn).c_str(), AnsiString(QGlobal::asAPPDIR + "models\\temp\\temp.e3d").c_str(), false);
+    Application->ProcessMessages();
+    Sleep(100);
+    modelpreview("temp/temp.t3d", "", "", "");
+
+    commandline = "-vm temp/temp.t3d";
+
+    replacescn = true;
+   }
 
 
- QGlobal::USERPID =  AnsiString(GetMachineID("C:\\"));
+
+ QGlobal::USERPID = AnsiString(GetMachineID("C:\\"));
  
  FDT = FormatDateTime("ddmmyy-hhmmss", Now());
 
@@ -897,6 +915,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
 
 // READING FILE SYTEM ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ WriteLog("");
  WriteLog("READING FILE SYSTEM...");
 
  sprintf(szFILE,"%s%s", appath.c_str() , "\\fsys.txt");
@@ -971,7 +990,6 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
                 par1 = Trim(line.substr(pos2+1, aa-1).c_str());      //14+1
 
                 WriteLog(test + "=[" + par1 + "]");
-                // sendlogftp   :0                 //
 
 		if (test == "getscreenb") getscreenb = atoi(par1.c_str());
 	      	if (test == "screenresw") sh = StrToInt(par1.c_str());
@@ -988,6 +1006,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
                 if (test == "scrshotdir") QGlobal::asSSHOTDIR = par1;
                 if (test == "scrshotsub") QGlobal::asSSHOTSUB = par1;
                 if (test == "ldrbackext") QGlobal::asLBACKEXT = par1;
+                if (test == "ldrrefresh") QGlobal::LDRREFRESH = StrToFloat(Trim(par1));
                 if (test == "z-fightfix") QGlobal::bzfightfix = atoi(par1.c_str());
                 if (test == "reg-t3de3d") rege3dt3d = atoi(par1.c_str());
               //if (test == "guitutopac") QGlobal::GUITUTOPAC = atof(par1.c_str());
@@ -1032,7 +1051,6 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
 
  WriteLog("");
-
 
  WriteLog("environment informations: ");
 
@@ -1087,20 +1105,6 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  WriteLog("");
  WriteLog("");
 
-      
-   if (QGlobal::bSENDLOGFTP)  // Jezeli wysylanie logu na ftp wlaczone to pokaz okienko debuggera i polacz z serwerem FTP
-    {
-     DEBUGGER->Left = 0;
-     DEBUGGER->Width = Screen->Width;
-   //DEBUGGER->Show();
-     DEBUGGER->FTP->Port = 21;
-     DEBUGGER->FTP->HostName = "lisek.org.pl";
-     DEBUGGER->FTP->UserName = "queued_q";
-     DEBUGGER->FTP->PassWord = "q15002900";
-     DEBUGGER->FTP->Binary          = true;
-     DEBUGGER->FTP->DisplayFileFlag = true;
-     DEBUGGER->FTP->Connect();
-    }
 
     HWND aHWnd;
     aHWnd = FindWindow(NULL, QGlobal::logwinname.c_str()); // Szukanie okna z otwartm logiem znajac etykiete
@@ -1198,6 +1202,23 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
          else Global::bFullScreen  = true;
          fullscreen = Global::bFullScreen;
         }
+
+ 
+
+   if (QGlobal::bSENDLOGFTP)  // Jezeli wysylanie logu na ftp wlaczone to pokaz okienko debuggera i polacz z serwerem FTP
+    {
+     std::string password = encryptDecrypt(X2985Z457);
+     DEBUGGER->Left = 0;
+     DEBUGGER->Width = Screen->Width;
+   //DEBUGGER->Show();
+     DEBUGGER->FTP->Port = 21;
+     DEBUGGER->FTP->HostName = "lisek.org.pl";
+     DEBUGGER->FTP->UserName = "queued_q";
+     DEBUGGER->FTP->PassWord = password.c_str(); //AnsiString(password.c_str());
+     DEBUGGER->FTP->Binary          = true;
+     DEBUGGER->FTP->DisplayFileFlag = true;
+     DEBUGGER->FTP->Connect();
+    }
 
     // create our OpenGL window
     if (!CreateGLWindow(Global::asHumanCtrlVehicle.c_str(), WindowWidth, WindowHeight, Bpp, fullscreen))
