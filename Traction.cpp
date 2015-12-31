@@ -128,6 +128,7 @@ TTraction::~TTraction()
 
 void TTraction::Optimize()
 {
+
     if (Global::bUseVBO)
         return;
     uiDisplayList = glGenLists(1);
@@ -146,13 +147,17 @@ void TTraction::Optimize()
 
         if (Wires == 2)
             WireOffset = 0;
-        // Przewoz jezdny 1 'Marcin
+
+        // Przewoz jezdny 1 'Marcin --------------------------------------------
+        glLineWidth(QGlobal::ftrwiresize);
         glBegin(GL_LINE_STRIP);
         glVertex3f(pPoint1.x - (pPoint2.z / ddp - pPoint1.z / ddp) * WireOffset, pPoint1.y,
                    pPoint1.z - (-pPoint2.x / ddp + pPoint1.x / ddp) * WireOffset);
         glVertex3f(pPoint2.x - (pPoint2.z / ddp - pPoint1.z / ddp) * WireOffset, pPoint2.y,
                    pPoint2.z - (-pPoint2.x / ddp + pPoint1.x / ddp) * WireOffset);
         glEnd();
+        glLineWidth(1.0f);
+        
         // Nie wiem co 'Marcin
         vector3 pt1, pt2, pt3, pt4, v1, v2;
         v1 = pPoint4 - pPoint3;
@@ -164,7 +169,7 @@ void TTraction::Optimize()
         float mid = 0.5;
         float t;
 
-        // Przewod nosny 'Marcin
+        // Przewod nosny 'Marcin -----------------------------------------------
         if (Wires != 1)
         {
             glBegin(GL_LINE_STRIP);
@@ -184,18 +189,22 @@ void TTraction::Optimize()
         // Drugi przewod jezdny 'Winger
         if (Wires > 2)
         {
+            glLineWidth(QGlobal::ftrwiresize);
             glBegin(GL_LINE_STRIP);
             glVertex3f(pPoint1.x + (pPoint2.z / ddp - pPoint1.z / ddp) * WireOffset, pPoint1.y,
                        pPoint1.z + (-pPoint2.x / ddp + pPoint1.x / ddp) * WireOffset);
             glVertex3f(pPoint2.x + (pPoint2.z / ddp - pPoint1.z / ddp) * WireOffset, pPoint2.y,
                        pPoint2.z + (-pPoint2.x / ddp + pPoint1.x / ddp) * WireOffset);
             glEnd();
+            glLineWidth(1.0f);
         }
 
         f = step;
 
         if (Wires == 4)
         {
+
+            glLineWidth(QGlobal::ftrwiresize);
             glBegin(GL_LINE_STRIP);
             glVertex3f(pPoint3.x, pPoint3.y - 0.65f * fHeightDifference, pPoint3.z);
             for (int i = 0; i < iNumSections - 1; i++)
@@ -211,6 +220,7 @@ void TTraction::Optimize()
             }
             glVertex3f(pPoint4.x, pPoint4.y - 0.65f * fHeightDifference, pPoint4.z);
             glEnd();
+            glLineWidth(1.0f);
         }
 
         f = step;

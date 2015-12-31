@@ -31,7 +31,7 @@ bool __fastcall modelpreview(std::string par1, std::string par2, std::string par
          std::string skyline;
          std::string cam1line;
 
-         stream = fopen("scenery\\temp.scn", "w"); // Global::logfilenm1.c_str()
+         stream = fopen("scenery\\modelpreview.scn", "w"); // Global::logfilenm1.c_str()
          fclose(stream);
 
          atmoline = "atmo 0.41 0.41 0.44 150 383 0.41 0.41 0.44 endatmo";
@@ -39,7 +39,7 @@ bool __fastcall modelpreview(std::string par1, std::string par2, std::string par
          skyline = "sky cgskj_blueclear008.t3d sky/modelviewer.bmp endsky";
          cam1line = "camera 30.0 30.0 30.0 0.0 21.0 1.0 1 endcamera";
 
-         stream = fopen("scenery\\temp.scn", "a+");
+         stream = fopen("scenery\\modelpreview.scn", "a+");
          sprintf(addline, "node;-1;0;modelpreview;model;0.0;0.2;0.0;0.0;%s;%s;;endmodel", par1.c_str(), "none");
          fprintf(stream, atmoline.c_str());
          fprintf(stream, "\n");
@@ -57,7 +57,7 @@ bool __fastcall modelpreview(std::string par1, std::string par2, std::string par
          fprintf(stream, "\n");
          fclose(stream);
 
-         par2 = "temp.scn";
+         par2 = "modelpreview.scn";
          strcpy(Global::szSceneryFile, par2.c_str());
          WriteLog("SCENERY= " + AnsiString(Global::szSceneryFile));
 

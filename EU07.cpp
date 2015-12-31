@@ -24,6 +24,17 @@ http://mozilla.org/MPL/2.0/.
 #include "classes.hpp"
 #include "windows.h"
 #include "winuser.h"
+#include <wininet.h>
+#include <iostream>
+#include <string>
+ #include <vector>
+#include <fstream>
+#include <sstream>
+#include <istream>
+
+#include <ostream>
+#include <iostream>
+#include <wtypes.h>
 
 #include "Globals.h"
 #include "Console.h"
@@ -35,6 +46,7 @@ http://mozilla.org/MPL/2.0/.
 #include "frm_debugger.h"
 #include "screen.h"
 #pragma hdrstop
+#pragma comment (lib, "Wininet.lib");
 
 #include <dsound.h> //_clear87() itp.
 
@@ -114,15 +126,15 @@ bool fullscreen = TRUE; // fullscreen flag set to fullscreen mode by default
 int WindowWidth = 800;
 int WindowHeight = 600;
 int Bpp = 32;
-char **argv = NULL;  // zmienna trzymajaca mocne argumenty
 
 int MouseButton = -1;         // mouse button down
 static POINT mouse;
 static POINT xmouse;
 static int mx=0, my=0;
-bool replacescn = false;
+char **argv = NULL;  // zmienna trzymajaca mocne argumenty
 
-AnsiString appath, commandline, filetoopen;
+AnsiString appath, commandline, filetoopen, FDT;
+std::string ftppassword;
 TStringList *ss;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); // Declaration For WndProc
@@ -131,17 +143,12 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); // Declaration For WndProc
 //---------------------------------------------------------------------------
 
 
-
-/*******************************************************************************
-WIN32 command line parser function
-*******************************************************************************/
-
-int ParseCommandline()
+ 
+int ParseCommandline1()
 {
 	int    argc, BuffSize, i;
 	WCHAR  *wcCommandLine;
 	LPWSTR *argw;
-
 
 	// Get a WCHAR version of the parsed commande line
 	wcCommandLine = GetCommandLineW();
@@ -187,7 +194,7 @@ int InitGL(GLvoid) // All Setup For OpenGL Goes Here
 
     WriteLog("World Init...");
 
-    if (replacescn) strcpy(Global::szSceneryFile, "temp.scn");
+    if (QGlobal::bmodelpreview) strcpy(Global::szSceneryFile, "modelpreview.scn");        // Q: bedzie wczytywanie scenerii z podgladem modelu
 
     return World.Init(hWnd, hDC); // true jeœli wszystko pójdzie dobrze
 }
@@ -789,6 +796,85 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
 };
 
 
+// *****************************************************************************
+// WYSYLANIE PLIKU LOG.TXT NA SERVER FTP
+// *****************************************************************************
+int SENDLOGTOFTP()
+{
+
+    FDT = FormatDateTime("ddmmyy-hhmmss", Now());
+
+    ftppassword = encryptDecrypt(X2985Z457);
+
+    char ftp[]      = "lisek.org.pl";
+
+    char user[]     = "queued_q";
+
+    char password[] = "********";
+
+    char localFile[] = "templog.txt";
+
+    char remoteFile[] = "/nazwaplikunaserwerze.txt";
+
+    std::string rf = AnsiString("log-" + FDT + ".txt").c_str();
+
+    sprintf(remoteFile, "%s", stdstrtocharc(rf));
+    //sprintf(password, "%s", stdstrtocharc(password));
+
+    HINTERNET hInternet;
+
+    HINTERNET hFtpSession;    
+
+    if(InternetAttemptConnect(0) == ERROR_SUCCESS) WriteLog("internet ok, sending log.txt...");
+     else WriteLog("Internet blocked for this app");
+ 
+
+    hInternet = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL,0);
+
+    if(hInternet != NULL){    
+
+        hFtpSession = InternetConnect(hInternet, ftp, INTERNET_DEFAULT_FTP_PORT, user, ftppassword.c_str(), INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
+
+        if(hFtpSession != NULL)
+        {
+
+            if (!FtpCreateDirectory(hFtpSession, QGlobal::USERPID.c_str()))
+               {
+                WriteLog("FTP: creating directory error. Code:" );
+               }
+
+            if (!FtpSetCurrentDirectory(hFtpSession, QGlobal::USERPID.c_str()))
+                {
+                 WriteLog("FTP: irectory changing error. Code:" );
+                }
+
+            if(FtpPutFile(hFtpSession, localFile, remoteFile , FTP_TRANSFER_TYPE_BINARY,0)){
+
+                InternetCloseHandle(hFtpSession);
+
+                InternetCloseHandle(hInternet);
+
+                }
+            else {                             
+                WriteLog("FTP: Error during log upload");
+                return -1;
+            }  
+           
+
+        }
+       
+        else return -1;
+       
+
+    }
+
+    else  return -1;
+
+    WriteLog("Wyslano Plik.");
+
+    return 0;
+
+};
 
 // *****************************************************************************
 // POCZATEK WSZYSTKIEGO
@@ -815,8 +901,11 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  char szFILE[200];
  char szCFGFILE[200];
  std::string line, tocut;
- AnsiString FDT;
+ AnsiString ftocopy;
  WORD vmajor, vminor, vbuild, vrev;
+ char    buff[BUFSIZ];
+ FILE    *in, *out;
+ size_t  n;
 
  BOOL askforfull = false;
  BOOL getscreenb = false;
@@ -833,85 +922,105 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
  DEBUGGER = new TDEBUGGER(NULL);   // UTWORZENIE FORMY DEBUGGERA
 
+ //argc = ParseCommandline2();
+
+ DeleteFile("errors.txt"); // usuniêcie starego
+ DeleteFile("templog.txt"); // usuniêcie starego
+ DeleteFile("models\\temp.e3d");
+// DeleteFile(AnsiString(QGlobal::asAPPDIR + "models\\temp.e3d").c_str());
 
  GetDesktopResolution(sh, sv);
  SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());  // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
-
 
  appath = GETCWD();   // POBIERA SCIEZKE APLIKACJI DO ZMIENNEJ GLOBALNEJ Global::asCWD
 
  QGlobal::asAPPDIR = ExtractFilePath(ParamStr(0));
 
- WriteLog("GETCWD: " + appath);
- WriteLog("APPDIR: " + QGlobal::asAPPDIR);
- WriteLog("APPCWD: " + QGlobal::asCWD);
- WriteLog("CMDLIN: " + AnsiString(lpCmdLine));
- commandline = lpCmdLine;
+// WriteLog("APPDIR: [" + QGlobal::asAPPDIR + "]");
+// WriteLog("APPCWD: [" + QGlobal::asCWD + "]");
+// WriteLog("CLINEO: [" + AnsiString(lpCmdLine) + "]");                         // np: C:\MaSzyna_15_04\models\ip\wloclawek\wwek_przychodniak.t3d
+
+ commandline = Trim(lpCmdLine);
+
+ ftocopy = commandline.c_str();
+
  commandline = StringReplace( commandline, "e3d", "t3d", TReplaceFlags() << rfReplaceAll ); /* ZAMIENIA 'e3d' na 't3d'    */
- commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );   /* ZAMIENIA Z '\' na '/'  */
-// filetoopen = StringReplace( filetoopen, "\\", "/", TReplaceFlags() << rfReplaceAll );
- WriteLog("CLINE: [" + commandline + "]");                // np: C:\MaSzyna_15_04\models\ip\wloclawek\wwek_przychodniak.t3d
+ commandline = StringReplace( commandline, "E3D", "t3d", TReplaceFlags() << rfReplaceAll );
+ commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );    // np: C:/MaSzyna_15_04/models/ip/wloclawek/wwek_przychodniak.t3d
+
+ if ((commandline.Pos("T3D") > 0) || (commandline.Pos("t3d") > 0))
+ {
+  in = fopen( ftocopy.c_str(), "rb" );
+  out= fopen( "models\\temp.e3d", "wb" );
+  while ( (n=fread(buff,1,BUFSIZ,in)) != 0 ) { fwrite( buff, 1, n, out ); }
+  fclose (in);
+  fclose (out);
+  Application->ProcessMessages();
+  if (FEX(AnsiString(QGlobal::asAPPDIR + "models\\temp.e3d").c_str())) WriteLog("FILE OK!");
+ }
+
 
  tocut = AnsiString(QGlobal::asAPPDIR + "models\\").c_str();
+// tocut = AnsiString(StringReplace( tocut.c_str(), "\\", "/", TReplaceFlags() << rfReplaceAll )).c_str();
+// WriteLog("TOCUT: [" + AnsiString(tocut.c_str()) + "]");
+ tcl = tocut.length();                              // dlugosc powyzszego lancucha
+// WriteLog("TOCUT LEN: [" + IntToStr(tcl) + "]");
 
- tocut = AnsiString(StringReplace( tocut.c_str(), "\\", "/", TReplaceFlags() << rfReplaceAll )).c_str();
-
- WriteLog("TOCUT: [" + AnsiString(tocut.c_str()) + "]");
-
- tcl = tocut.capacity();                              // dlugosc powyzszego lancucha
- WriteLog("LENGH: " + IntToStr(tcl));
-
- AnsiString p = ExtractFilePath(commandline);
 
  AnsiString testp1 = commandline.SubString(1, commandline.Pos("models")-1);
- WriteLog("TESTP1=" + testp1);
+// WriteLog("TESTP1=" + testp1);
  AnsiString testp2 = StringReplace( QGlobal::asAPPDIR, "\\", "/", TReplaceFlags() << rfReplaceAll );
- WriteLog("TESTP2=" + testp2);
+// WriteLog("TESTP2=" + testp2);
 
  
- // OTWIERANIE PODGLADU MODELU GDY KLIKNIETO NA PLIK MODELU W KATALOGU MODELS\ ...
-   if ((commandline.Pos("models") > 0) && (testp1 == testp2))
+ // OTWIERANIE PODGLADU MODELU GDY KLIKNIETO NA PLIK MODELU W KATALOGU MODELS\ Z KATALOGU TEJ MASZYNY...
+   if ((commandline.Pos("models") > 0) && (testp1 == testp2) && (commandline.Pos("t3d") > 0))
    {
-    filetoopen = commandline.Delete( 1, tcl);
-
+    WriteLog("Lauching EXE from model file double click (in habitat)...");
+    filetoopen = commandline.Delete( 1, tcl);        // usuwa F:\MaSzyna_15_04\models\ zostaje linia053\lamp-y.t3d
     WriteLog("FTOPE: [" + filetoopen + "]");
     //std::vector<std::string> x = split(commandline.c_str(), ' ');
 
-    modelpreview(filetoopen.c_str(), "", "", "");  // tworzenie tymczasowego pliku scenerii
+    modelpreview(filetoopen.c_str(), "", "", "");                               // tworzenie tymczasowego pliku scenerii
 
     commandline = AnsiString("-vm " + filetoopen).c_str();
-
-    replacescn = true;
    }
-  else if (commandline.Pos("-s") == 0)   // JEZELI KLIKNIETO NA PLIK MODELU POZA KATALOGIEM MODELS\ ...
+
+ // JEZELI KLIKNIETO NA PLIK MODELU POZA KATALOGIEM MODELS\ ...  
+  else if ((commandline.Pos("-s") == 0) && (testp1 != testp2) && ((commandline.Pos("t3d") > 0) || (commandline.Pos("T3D") > 0)))
    {
-    WriteLog("OUTOFMACHINEMODEL");
+    WriteLog("Lauching EXE from model file double click (out of habitat)...");
     commandline = StringReplace( commandline, "/", "\\", TReplaceFlags() << rfReplaceAll );   /* ZAMIENIA Z '\' na '/'  */
-    AnsiString mfp = ExtractFilePath(commandline);
-    AnsiString mfn = ExtractFileName(commandline);
-    WriteLog("mfp: " + mfp);
-    WriteLog("mfn: " + mfn);
-    mfn = StringReplace( mfn, "t3d", "e3d", TReplaceFlags() << rfReplaceAll );
-    WriteLog("mfn: " + mfn);  // tu juz jest e3d
+    //AnsiString mfp = ExtractFilePath(commandline);
+   // AnsiString mfn = ExtractFileName(commandline);
+    //WriteLog("mfp: [" + mfp + "]");
+    //WriteLog("mfn: [" + mfn + "]");
+   // mfn = StringReplace( mfn, "t3d", "e3d", TReplaceFlags() << rfReplaceAll );
+    //WriteLog("mfn: [" + mfn + "]");  // tu juz jest e3d
 
     WriteLog(commandline.c_str());
-    CopyFile(AnsiString(mfp + mfn).c_str(), AnsiString(QGlobal::asAPPDIR + "models\\temp\\temp.e3d").c_str(), false);
-    Application->ProcessMessages();
-    Sleep(100);
-    modelpreview("temp/temp.t3d", "", "", "");
 
-    commandline = "-vm temp/temp.t3d";
+    ftocopy = StringReplace( ftocopy, "t3d", "e3d", TReplaceFlags() << rfReplaceAll );
 
-    replacescn = true;
+    modelpreview("temp.t3d", "", "", "");
+
+    commandline = "-vm temp.t3d";
    }
-
+  else if ((commandline.Pos("-s") > 0))                                         // JEZLEI W POLECENIU NIE BYLO -s NP ODPALENIE EXE BEZPOSREDNIO...
+   {
+    WriteLog("Lauching program from EXE file with parameters...");
+   }
+  else if ((commandline.Pos("-s") == 0) && (commandline.Pos("t3d") == 0))       // JEZLEI W POLECENIU NIE BYLO -s NP ODPALENIE EXE BEZPOSREDNIO...
+   {
+    WriteLog("Lauching program from EXE file");
+   }
 
 
  QGlobal::USERPID = AnsiString(GetMachineID("C:\\"));
  
  FDT = FormatDateTime("ddmmyy-hhmmss", Now());
 
- argc = ParseCommandline();
+ argc = ParseCommandline1();
 
 
 // READING FILE SYTEM ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -969,9 +1078,9 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
 
 // READING CONFIG ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    WriteLog("READING CONFIG FILE...");
     sprintf(szCFGFILE,"%s%s", appath.c_str() , "\\config.txt");
-    WriteLog(szCFGFILE);
+    WriteLog("READING CONFIG FILE... (" + AnsiString(szCFGFILE) + ")");
+
     std::ifstream FileCFG(szCFGFILE);
 
     if(FileCFG)
@@ -989,7 +1098,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
                 int aa= pos3 - pos2;
                 par1 = Trim(line.substr(pos2+1, aa-1).c_str());      //14+1
 
-                WriteLog(test + "=[" + par1 + "]");
+                //WriteLog(test + "=[" + par1 + "]");
 
 		if (test == "getscreenb") getscreenb = atoi(par1.c_str());
 	      	if (test == "screenresw") sh = StrToInt(par1.c_str());
@@ -1021,6 +1130,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
                 if (test == "env_rain") QGlobal::bRENDERRAIN = atoi(par1.c_str());
                 if (test == "env_sun") QGlobal::bRENDERSUN = atoi(par1.c_str());
                 if (test == "env_moon") QGlobal::bRENDERMOON = atoi(par1.c_str());
+                if (test == "trwiresize") QGlobal::ftrwiresize = StrToFloat(Trim(par1));
               //if (test == "deftextext") Global::szDefaultExt = par1;
 
 
@@ -1054,7 +1164,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
  WriteLog("environment informations: ");
 
- sprintf(cmdline, "appfile: [%s]", argv[0]);
+ sprintf(cmdline, "appfile: [%s]", argv[0]);    //argv[0]
  WriteLog(cmdline);
 
  sprintf(apppath, "apppath: [%s]", appath.c_str());
@@ -1110,9 +1220,6 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
     aHWnd = FindWindow(NULL, QGlobal::logwinname.c_str()); // Szukanie okna z otwartm logiem znajac etykiete
     SendMessage(aHWnd, WM_CLOSE, 0, 0);    // ZAMYKAMY OTWARTY LOG
 
-
-    DeleteFile("errors.txt"); // usuniêcie starego
-    DeleteFile("templog.txt"); // usuniêcie starego
     
     WriteLog("Reading eu07.ini...");
     Global::LoadIniFile("eu07.ini"); // teraz dopiero mo¿na przejrzeæ plik z ustawieniami
@@ -1166,7 +1273,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
              modelpreview(str.c_str(), "", "", "");
 
-             if (replacescn) strcpy(Global::szSceneryFile, "temp.scn");
+             if (QGlobal::breplacescn) strcpy(Global::szSceneryFile, "modelpreview.scn");
             }
             else
                 Error("Program usage: EU07 [-s sceneryfilepath] [-v vehiclename] [-modifytga] [-e3d]", !Global::iWriteLogEnabled);
@@ -1207,17 +1314,17 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
    if (QGlobal::bSENDLOGFTP)  // Jezeli wysylanie logu na ftp wlaczone to pokaz okienko debuggera i polacz z serwerem FTP
     {
-     std::string password = encryptDecrypt(X2985Z457);
+     //password = encryptDecrypt(X2985Z457);
      DEBUGGER->Left = 0;
      DEBUGGER->Width = Screen->Width;
    //DEBUGGER->Show();
-     DEBUGGER->FTP->Port = 21;
-     DEBUGGER->FTP->HostName = "lisek.org.pl";
-     DEBUGGER->FTP->UserName = "queued_q";
-     DEBUGGER->FTP->PassWord = password.c_str(); //AnsiString(password.c_str());
-     DEBUGGER->FTP->Binary          = true;
-     DEBUGGER->FTP->DisplayFileFlag = true;
-     DEBUGGER->FTP->Connect();
+     //DEBUGGER->FTP->Port = 21;
+     //DEBUGGER->FTP->HostName = "lisek.org.pl";
+     //DEBUGGER->FTP->UserName = "queued_q";
+     //DEBUGGER->FTP->PassWord = password.c_str(); //AnsiString(password.c_str());
+     //DEBUGGER->FTP->Binary          = true;
+     //DEBUGGER->FTP->DisplayFileFlag = true;
+     //DEBUGGER->FTP->Connect();
     }
 
     // create our OpenGL window
@@ -1257,19 +1364,21 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
         if ( QGlobal::bAPPDONE ) done = true;
 
 
- if (QGlobal::bSENDLOGFTP >0)
+ if (QGlobal::bSENDLOGFTP > 0)
    {
     CopyFile("log.txt", "templog.txt", false);
 
+    SENDLOGTOFTP();
+
     Application->ProcessMessages();
 
-    DEBUGGER->FTP->LocalFileName = appath + "templog.txt";
-    DEBUGGER->FTP->HostDirName = QGlobal::USERPID;
-    DEBUGGER->FTP->HostFileName = QGlobal::USERPID;  // nazwa katalogu
-    DEBUGGER->FTP->Mkd(); // uteorzenie katalogu
-    DEBUGGER->FTP->Cwd(); // ustawienie jako roboczy
-    DEBUGGER->FTP->HostFileName = "log-" + FDT + ".txt";  // nazwa pliku logu
-    DEBUGGER->FTP->Put();      // wrzucamy plik do wczesniej wybranego
+    //DEBUGGER->FTP->LocalFileName = appath + "templog.txt";
+    //DEBUGGER->FTP->HostDirName = QGlobal::USERPID;
+    //DEBUGGER->FTP->HostFileName = QGlobal::USERPID;  // nazwa katalogu
+    //DEBUGGER->FTP->Mkd(); // uteorzenie katalogu
+    //DEBUGGER->FTP->Cwd(); // ustawienie jako roboczy
+    //DEBUGGER->FTP->HostFileName = "log-" + FDT + ".txt";  // nazwa pliku logu
+    //DEBUGGER->FTP->Put();      // wrzucamy plik do wczesniej wybranego
    }
 
        while (!done) // loop that runs while done=FALSE
@@ -1307,9 +1416,12 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  sprintf(logfile,"%s%s", appath.c_str() , QGlobal::logfilenm1.c_str());
  if (openlogonx) ShellExecute(0, "open", logfile, NULL, NULL, SW_MAXIMIZE);
  DeleteFile("templog.txt"); // usuniêcie starego
+ DeleteFile(AnsiString(QGlobal::asAPPDIR + "models\\temp\\temp.e3d").c_str());
 
     delete pConsole; // deaktywania sterownika
     // shutdown
     KillGLWindow(); // kill the window
     return (msg.wParam); // exit the program
 }
+
+

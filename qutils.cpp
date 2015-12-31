@@ -22,6 +22,42 @@
 #include "logs.h"
 
 
+/*********************************************************************************************************************
+WIN32 command line parser function
+**********************************************************************************************************************/
+
+/*******************************************************************************
+WIN32 command line parser function
+*******************************************************************************/
+
+
+int ParseCommandline2()
+{
+	int    argc, BuffSize, i;
+	WCHAR  *wcCommandLine;
+	LPWSTR *argw;
+
+	// Get a WCHAR version of the parsed commande line
+	wcCommandLine = GetCommandLineW();
+	argw = CommandLineToArgvW(wcCommandLine, &argc);
+
+	// Create the first dimension of the double array
+	QGlobal::argv = (char **)GlobalAlloc(LPTR, argc + 1);
+
+	// convert eich line of wcCommandeLine to MultiByte and place them
+	// to the argv[] array
+	for (i = 0; i < argc; i++)
+	{
+		BuffSize = WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, argw[i], -1, NULL, 0, NULL, NULL);
+		QGlobal::argv[i] = (char *)GlobalAlloc(LPTR, BuffSize);
+		WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, argw[i], BuffSize * sizeof(WCHAR), QGlobal::argv[i], BuffSize, NULL, NULL);
+	}
+
+	// return the number of argument
+	return argc;
+}
+
+
 std::string encryptDecrypt(std::string toEncrypt) {
     char key[7] = {'K', 'C', 'Q', '4', '2', '4', 'i'}; //Any chars will work
     string output = toEncrypt;

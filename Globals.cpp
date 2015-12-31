@@ -111,7 +111,7 @@ bool QGlobal::bISLAMP = false;
 bool QGlobal::bADVDEBUG1 = false;
 bool QGlobal::bRENDERGUI = false;
 bool QGlobal::bSENDLOGFTP = false;
-
+bool QGlobal::breplacescn = false;
 
 int QGlobal::objectid = 0;
 int QGlobal::cabelementid = 0;
@@ -140,6 +140,7 @@ float QGlobal::GUITUTOPAC = 0.1f;
 double QGlobal::fscreenfade = 1.0;
 double QGlobal::fscreenfade2 = 1.0;
 float QGlobal::ffovblocktime = 0.0;
+float QGlobal::ftrwiresize = 1.2f;
 GLuint QGlobal::reflecttex;
 GLuint QGlobal::mousesymbol;
 GLuint QGlobal::mousepoint;
@@ -151,6 +152,8 @@ GLuint QGlobal::bfonttex;
 GLuint QGlobal::consolebackg;
 GLuint QGlobal::SCRFILTER;
 GLfloat QGlobal::selcolor[4];
+
+char **QGlobal::argv = NULL;
 
 // parametry do u¿ytku wewnêtrznego
 // double Global::tSinceStart=0;

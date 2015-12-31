@@ -1589,7 +1589,7 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
 
  if (QGlobal::rtim > QGlobal::LDRREFRESH)
    {
-    WriteLog(AnsiString(QGlobal::rtim));
+    //WriteLog(AnsiString(QGlobal::rtim));
     gtc1 =  GetTickCount();
     rtim = 0;
     QGlobal::rtim = 0;
@@ -2294,6 +2294,7 @@ void TGround::FirstInit()
     bInitDone = true;
     Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "FIRSTINIT");
     WriteLog("InitNormals");
+    Sleep(500);
     int i, j;
     for (i = 0; i < TP_LAST; ++i)
     {
@@ -2344,18 +2345,27 @@ void TGround::FirstInit()
         for (j = 0; j < iNumRects; ++j)
             Rects[i][j].Optimize(); // optymalizacja obiektów w sektorach
     WriteLog("InitNormals OK");
+
+    Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Tracks...");
     WriteLog("InitTracks");
     InitTracks(); //³¹czenie odcinków ze sob¹ i przyklejanie eventów
     WriteLog("InitTracks OK");
+
+    Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Traction...");
     WriteLog("InitTraction");
     InitTraction(); //³¹czenie drutów ze sob¹
     WriteLog("InitTraction OK");
+
+    Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Events...");
     WriteLog("InitEvents");
     InitEvents();
     WriteLog("InitEvents OK");
+
+    Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Launchers...");
     WriteLog("InitLaunchers");
     InitLaunchers();
     WriteLog("InitLaunchers OK");
+    
     WriteLog("InitGlobalTime");
     // ABu 160205: juz nie TODO :)
     GlobalTime = new TMTableTime(

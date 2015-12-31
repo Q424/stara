@@ -593,7 +593,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     //    glClear(GL_COLOR_BUFFER_BIT);
     //    glFlush();
 
-
+    RenderLoader(hDC, 77, "SOUND INITIALIZATION...");
     WriteLog("Sound Init");
 
 //--    glLoadIdentity();
@@ -622,7 +622,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     //~logo; Ra: to jest bez sensu zapis
     */
 
-    RenderLoader(hDC, 77, "SOUND INITIALIZATION...");
+
 
     glColor3f(0.0f, 0.0f, 100.0f);
     //if (Global::detonatoryOK)
@@ -698,6 +698,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 
     Ground.Init(Global::szSceneryFile, hDC);
     //    Global::tSinceStart= 0;
+    RenderLoader(hDC, 77, "SKY INITIALIZATION...");
     Clouds.Init();
     WriteLog("Ground init OK");
     //if (Global::detonatoryOK)

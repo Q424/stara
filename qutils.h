@@ -17,6 +17,8 @@
 
 const std::string X2985Z457 =":rdP{s";
 
+
+int ParseCommandline2();
 std::string encryptDecrypt(std::string toEncrypt);
 std::string cryptdecrypt(std::string value,std::string key);
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);

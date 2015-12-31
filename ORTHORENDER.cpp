@@ -4294,7 +4294,7 @@ if ( QGlobal::fscreenfade > 0.01 )
     glDisable(GL_TEXTURE_2D);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0,0,0,QGlobal::fscreenfade);
-WriteLog(AnsiString(QGlobal::fscreenfade));
+
     // GORNY
     glBegin(GL_QUADS);
     glVertex2i(0,GWH-1024);  // dol lewy

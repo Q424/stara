@@ -348,7 +348,8 @@ class QGlobal
  static HDC glHDC;
  static HGLRC glHGLRC;
  static HWND glHWND;
-
+ 
+ static char **argv;
 // TFtpClient *FTP;
  
  static TStringList *SLTEMP;
@@ -429,6 +430,7 @@ class QGlobal
  static bool bADVDEBUG1;
  static bool bRENDERGUI;
  static bool bSENDLOGFTP;
+ static bool breplacescn;
 
  static int objectid;
  static int cabelementid;
@@ -457,6 +459,7 @@ class QGlobal
  static float LDRREFRESH;
  static float GUITUTOPAC;
  static float ffovblocktime;
+ static float ftrwiresize;
 
  static GLuint reflecttex;
  static GLuint mousesymbol;
