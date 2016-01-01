@@ -163,6 +163,8 @@ class TTrack : public Resource
     AnsiString asEvent0Name;
     AnsiString asEvent1Name;
     AnsiString asEvent2Name;
+    AnsiString asStationName;
+    AnsiString asTrackNumber;
     int iNextDirection; // 0:Point1, 1:Point2, 3:do odchylonego na zwrotnicy
     int iPrevDirection;
     TTrackType eType;

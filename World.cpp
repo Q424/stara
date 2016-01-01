@@ -2818,7 +2818,25 @@ bool TWorld::Render()
         if (!Ground.RenderDL(Camera.Pos)) return false;
         if (!Ground.RenderAlphaDL(Camera.Pos)) return false;
     }
+
+
+    vector3 test1, test2;
+    //Controlled->elementPOS = vector3(0,0,0);
+    test1 = Controlled->GetGlobalElementPositionB(vector3(-2.0, 1.295, 11.291), Controlled, 0.001);
+    //glPushMatrix();
+    //glTranslatef(test1.x, test1.y, test1.z);
+    //glutSolidSphere(0.2,12,12);
+    //glPopMatrix();
+
+    //Controlled->elementPOS = vector3(0,0,0);
+    test2 = Controlled->GetGlobalElementPositionB(vector3(2.0, 1.295, 11.291), Controlled, 0.001);
+    //glPushMatrix();
+    //glTranslatef(test2.x, test2.y, test2.z);
+    //glutSolidSphere(0.2,12,12);
+    //glPopMatrix();
+
     TSubModel::iInstance = (int)(Train ? Train->Dynamic() : 0); //¿eby nie robiæ cudzych animacji
+
     // if (Camera.Type==tp_Follow)
     if (Train)
         Train->Update();

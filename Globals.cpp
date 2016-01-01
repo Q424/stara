@@ -66,6 +66,7 @@ AnsiString QGlobal::asNODENAME = "";
 AnsiString QGlobal::asRAILTYPE = "S49";
 AnsiString QGlobal::objectidinfo = "none";
 AnsiString QGlobal::globalstr = "?";
+AnsiString QGlobal::asINCLUDETYPE = "UNKNOWN";
 
 TStringList *QGlobal::SLTEMP;
 TStringList *QGlobal::CONFIG;
@@ -127,6 +128,7 @@ int QGlobal::postep = 1;
 int QGlobal::infotype=0;
 int QGlobal::aspectratio = 43;
 int QGlobal::loaderrefresh = 5;
+int QGlobal::iINCLUDETYPE = 999;
 
 double QGlobal::fMoveLightS = -1.0f;
 double QGlobal::fps = 1.0f;

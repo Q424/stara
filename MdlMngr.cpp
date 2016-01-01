@@ -30,6 +30,10 @@ TModel3d *__fastcall TMdlContainer::LoadModel(char *newName, bool dynamic)
     Name = new char[strlen(newName) + 1];
     strcpy(Name, newName);
     Model = new TModel3d();
+    Model->iTYPE = QGlobal::iINCLUDETYPE; //Q 010116: tutaj obiektowi przypisujemy typ pobrany w parserze
+
+    WriteLog("MODEL: " + IntToStr(Model->iTYPE));
+
     if (!Model->LoadFromFile(Name, dynamic)) // np. "models\\pkp/head1-y.t3d"
         SafeDelete(Model);
     return Model;

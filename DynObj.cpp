@@ -4749,6 +4749,30 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
                     if (str != "none")
                         iCabs = 4;
                 }
+                else if (str == "doorpos_fa:")     // Q 010116: Pozycje drzwi wagonu, zazwyczaj wagon pasazerski ma czworo drzwi czasem wiecej - na razie 4
+                {
+                 pDoorFA.x = Parser->GetNextSymbol().ToDouble();
+                 pDoorFA.y = Parser->GetNextSymbol().ToDouble();
+                 pDoorFA.z = Parser->GetNextSymbol().ToDouble();
+                }
+                else if (str == "doorpos_fb:")
+                {
+                 pDoorFB.x = Parser->GetNextSymbol().ToDouble();
+                 pDoorFB.y = Parser->GetNextSymbol().ToDouble();
+                 pDoorFB.z = Parser->GetNextSymbol().ToDouble();
+                }
+                else if (str == "doorpos_ra:")
+                {
+                 pDoorRA.x = Parser->GetNextSymbol().ToDouble();
+                 pDoorRA.y = Parser->GetNextSymbol().ToDouble();
+                 pDoorRA.z = Parser->GetNextSymbol().ToDouble();
+                }
+                else if (str == "doorpos_rb:")
+                {
+                 pDoorRB.x = Parser->GetNextSymbol().ToDouble();
+                 pDoorRB.y = Parser->GetNextSymbol().ToDouble();
+                 pDoorRB.z = Parser->GetNextSymbol().ToDouble();
+                }
             }
             Stop_InternalData = true;
         }
@@ -5086,3 +5110,32 @@ void TDynamicObject::OverheadTrack(float o)
         }
     }
 };
+
+
+// **********************************************************************************************************
+// Q 010116: Przeliczanie lokalnych wspolrzednych elementu w matrixie pojazdu na wspolrzedne globalne
+// **********************************************************************************************************
+vector3 TDynamicObject::GetGlobalElementPositionA(vector3 localpos)
+{
+ return this->mMatrix*vector3(localpos.x, localpos.y, localpos.z);
+}
+
+vector3 TDynamicObject::GetGlobalElementPositionB(vector3 localpos, TDynamicObject *DO, double dt)
+{
+ vector3 pNewMirrorPos;
+ pNewMirrorPos = vector3(0,0,0);
+ elementPOS = vector3(0,0,0);
+ elementOFF = vector3(0,0,0);
+ elementSHK = vector3(0,0,0);
+
+ elementOFF = vector3(localpos);                                 // STATYCZNA POZYCJA LUSTERKA (EU07)
+
+ pNewMirrorPos = elementOFF + vector3(elementSHK.x, 5*elementSHK.y, elementSHK.z);       //ABu011104: 5*pMechShake.y, zeby ladnie pudlem rzucalo :)
+// elementMOV= elementMOV/2;
+
+ elementPOS = DO->mMatrix * pNewMirrorPos;
+ elementPOS += DO->GetPosition();
+
+ return elementPOS;
+};
+

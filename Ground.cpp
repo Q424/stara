@@ -1979,10 +1979,9 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
            {//jeœli standardowy model
         */
         tmp->Model = new TAnimModel();
-        tmp->Model->RaAnglesSet(aRotate.x, tf1 + aRotate.y,
-                                aRotate.z); // dostosowanie do pochylania linii
-        if (tmp->Model->Load(
-                parser, tmp->iType == TP_TERRAIN)) // wczytanie modelu, tekstury i stanu œwiate³...
+        tmp->Model->RaAnglesSet(aRotate.x, tf1 + aRotate.y, aRotate.z); // dostosowanie do pochylania linii
+        if (tmp->Model->Load(parser, tmp->iType == TP_TERRAIN)) // wczytanie modelu, tekstury i stanu œwiate³...
+
             tmp->iFlags =
                 tmp->Model->Flags() | 0x200; // ustalenie, czy przezroczysty; flaga usuwania
         else if (tmp->iType != TP_TERRAIN)

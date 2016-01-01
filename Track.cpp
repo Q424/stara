@@ -845,6 +845,20 @@ void TTrack::Load(cParser *parser, vector3 pOrigin, AnsiString name)
             *parser >> token;
             // trColides=; //tor kolizyjny, na którym trzeba sprawdzaæ pojazdy pod k¹tem zderzenia
         }
+        else if (str == "stationname")
+        { // informacja o nazwie stacji na ktora wjezdza pojazd/pociag
+            // prêdkoœci
+            parser->getTokens();
+            *parser >> token;
+            asStationName = AnsiString(token.c_str());
+        }
+        else if (str == "tracknumber")
+        { // informacja o nazwie stacji na ktora wjezdza pojazd/pociag
+            // prêdkoœci
+            parser->getTokens();
+            *parser >> token;
+            asTrackNumber = AnsiString(token.c_str());
+        }
         else
             ErrorLog("Unknown property: \"" + str + "\" in track \"" + name + "\"");
         parser->getTokens();

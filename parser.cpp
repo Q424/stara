@@ -11,7 +11,7 @@ http://mozilla.org/MPL/2.0/.
 
 #include "parser.h"
 #include "logs.h"
-
+#include "globals.h"
 /*
     MaSzyna EU07 locomotive simulator parser
     Copyright (C) 2003  TOLARIS
@@ -190,6 +190,26 @@ std::string cParser::readToken(bool ToLower, const char *Break)
         incfile = includefile; // coby bylo globalnie widoczne
         WriteLog(AnsiString("INC " + AnsiString(includetype.c_str()) + ", " + includefile.c_str()).c_str());
 
+        QGlobal::asINCLUDETYPE = AnsiString(includetype.c_str());   //Q 010116: trzymamy w globalnej do przypisania objektowi TModel3d
+
+        WriteLog("INCTYPE: " + QGlobal::asINCLUDETYPE);
+
+        AnsiString test = LowerCase(QGlobal::asINCLUDETYPE);
+
+        // Przypisywanie numerycznego identyfikatora dla poszczegolnych typow obiektow
+        // MODULE BUILDING SEMAPHOR-S SEMAPHOR-L SIGNALS ROADSIGN HUMAN TRACTION SWITCH TREES-A TREES-B TREES-C GRASS-A GRASS-B HMPOST-A HMPOST-B
+        if (test == "module") QGlobal::iINCLUDETYPE = 999;           // modul scenerii z roznymi wpisami
+        if (test == "posers") QGlobal::iINCLUDETYPE = 101;           // ludki na peronach, w ogole gdfziekolwiek
+        if (test == "semaphor-s") QGlobal::iINCLUDETYPE = 102;       // semafor ksztaltowy
+        if (test == "semaphor-l") QGlobal::iINCLUDETYPE = 103;       // semafor swietlny
+        if (test == "signals") QGlobal::iINCLUDETYPE = 104;          // inne wskazniki kolejowe
+        if (test == "roadsign") QGlobal::iINCLUDETYPE = 105;         // znaki uliczne
+        if (test == "traction") QGlobal::iINCLUDETYPE = 106;         // elementy sieci trakcyjnej, np modele slupow
+        if (test == "switch") QGlobal::iINCLUDETYPE = 107;           // zwrotnik rozjazdu
+        if (test == "trees") QGlobal::iINCLUDETYPE = 108;            // drzewa
+        if (test == "hmpost-a") QGlobal::iINCLUDETYPE = 109;         // slupek hektometrowy typ 1
+        if (test == "hmpost-b") QGlobal::iINCLUDETYPE = 110;         // slupek hektometrowy typ 2
+        
 
         if (LoadTraction ? true : ((includefile.find("tr/") == std::string::npos) &&
                                    (includefile.find("tra/") == std::string::npos)))

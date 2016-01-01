@@ -390,7 +390,7 @@ class QGlobal
  static AnsiString asRAILTYPE;
  static AnsiString objectidinfo;
  static AnsiString globalstr;
-
+ static AnsiString asINCLUDETYPE;
 
  static GLblendstate GLBLENDSTATE;
  
@@ -446,6 +446,7 @@ class QGlobal
  static int infotype;
  static int aspectratio;
  static int loaderrefresh;
+ static int iINCLUDETYPE;
 
  static double fscreenfade;
  static double fscreenfade2;

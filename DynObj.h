@@ -171,6 +171,17 @@ class TDynamicObject
     int NextConnectedNo; // numer sprzêgu pod³¹czonego z ty³u
     int PrevConnectedNo; // numer sprzêgu pod³¹czonego z przodu
     double fScanDist; // odleg³oœæ skanowania torów na obecnoœæ innych pojazdów
+    vector3 pDoorFA;
+    vector3 pDoorFB;
+    vector3 pDoorRA;
+    vector3 pDoorRB;
+    vector3 elementOFF;
+    vector3 elementMOV;
+    vector3 elementSHK;
+    vector3 elementPOS;
+    vector3 elementVEL;
+    vector3 GetGlobalElementPositionA(vector3 localpos);
+    vector3 GetGlobalElementPositionB(vector3 localpos, TDynamicObject *DO, double dt);
 
   public: // modele sk³adowe pojazdu
     TModel3d *mdModel; // model pud³a

@@ -379,6 +379,7 @@ class TModel3d : public CMesh
     int iFlags; // Ra: czy submodele maj¹ przezroczyste tekstury
   public: // Ra: tymczasowo
     int iNumVerts; // iloœæ wierzcho³ków (gdy nie ma VBO, to m_nVertexCount=0)
+    int iTYPE; //Q 311215: w przyszlosci do ulatwienia klasyfikacji modeli w edytorze, typ modelu bedzie brany z pierwszego parametru wpisu incfile
   private:
     TStringPack Textures; // nazwy tekstur
     TStringPack Names; // nazwy submodeli
