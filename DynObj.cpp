@@ -1463,6 +1463,8 @@ TDynamicObject::TDynamicObject()
     NextConnectedNo = PrevConnectedNo = 2; // ABu: Numery sprzegow. 2=nie pod³¹czony
     CouplCounter = 50; // bêdzie sprawdzaæ na pocz¹tku
     asName = "";
+    asStation = "";
+    asTrackNum = "";
     bEnabled = true;
     MyTrack = NULL;
     // McZapkie-260202
@@ -1501,6 +1503,9 @@ TDynamicObject::TDynamicObject()
     mdLoad = NULL;
     mdLowPolyInt = NULL;
     mdPrzedsionek = NULL;
+    mdBogieA = NULL;
+    mdBogieB = NULL;
+    mdBogieC = NULL;
     smMechanik0 = smMechanik1 = NULL;
     smBuforLewy[0] = smBuforLewy[1] = NULL;
     smBuforPrawy[0] = smBuforPrawy[1] = NULL;
@@ -2324,6 +2329,9 @@ bool TDynamicObject::Update(double dt, double dt1)
         return false; // pojazdy postawione na torach portalowych maj¹ MyTrack==NULL
     if (!bEnabled)
         return false; // a normalnie powinny mieæ bEnabled==false
+
+    if (MyTrack->asStationName != "") asStation = MyTrack->asStationName;       // Q 020116: Nazwa stacji na ktorej znajduje sie pojazd...
+    if (MyTrack->asTrackNumber != "") asTrackNum = MyTrack->asTrackNumber;      // ...i numer toru
 
     // Ra: przenios³em - no ju¿ lepiej tu, ni¿ w wyœwietlaniu!
     // if ((MoverParameters->ConverterFlag==false) && (MoverParameters->TrainType!=dt_ET22))
@@ -3211,7 +3219,8 @@ void TDynamicObject::Render()
             if (mdLowPolyInt)
                 if (FreeFlyModeFlag ? true : !mdKabina || !bDisplayCab)
                     mdLowPolyInt->RaRender(ObjSqrDist, ReplacableSkinID, iAlpha);
-            mdModel->RaRender(ObjSqrDist, ReplacableSkinID, iAlpha);
+            if (mdModel)
+                mdModel->RaRender(ObjSqrDist, ReplacableSkinID, iAlpha);
             if (mdLoad) // renderowanie nieprzezroczystego ³adunku
                 mdLoad->RaRender(ObjSqrDist, ReplacableSkinID, iAlpha);
             if (mdPrzedsionek)
@@ -3222,11 +3231,22 @@ void TDynamicObject::Render()
             if (mdLowPolyInt)
                 if (FreeFlyModeFlag ? true : !mdKabina || !bDisplayCab)
                     mdLowPolyInt->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
-            mdModel->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
+            if (mdModel)
+                mdModel->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
             if (mdLoad) // renderowanie nieprzezroczystego ³adunku
                 mdLoad->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
             if (mdPrzedsionek)
                 mdPrzedsionek->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
+    glPushMatrix();
+    glTranslatef(pBogieA.x, pBogieA.y, pBogieA.z);
+            if (mdBogieA)
+                mdBogieA->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(pBogieB.x, pBogieB.y, pBogieB.z);
+            if (mdBogieB)
+                mdBogieB->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
+    glPopMatrix();
         }
 
         // Ra: czy ta kabina tu ma sens?
@@ -3675,7 +3695,8 @@ void TDynamicObject::RenderAlpha()
             if (mdLowPolyInt)
                 if (FreeFlyModeFlag ? true : !mdKabina || !bDisplayCab)
                     mdLowPolyInt->RaRenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
-            mdModel->RaRenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
+            if (mdModel)
+                mdModel->RaRenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
             if (mdLoad)
                 mdLoad->RaRenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
             // if (mdPrzedsionek) //Ra: przedsionków tu wczeœniej nie by³o - w³¹czyæ?
@@ -3686,9 +3707,20 @@ void TDynamicObject::RenderAlpha()
             if (mdLowPolyInt)
                 if (FreeFlyModeFlag ? true : !mdKabina || !bDisplayCab)
                     mdLowPolyInt->RenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
-            mdModel->RenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
+            if (mdModel)
+                mdModel->RenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
             if (mdLoad)
                 mdLoad->RenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
+    glPushMatrix();
+    glTranslatef(pBogieA.x, pBogieA.y, pBogieA.z);
+            if (mdBogieA)
+                mdBogieA->RenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(pBogieB.x, pBogieB.y, pBogieB.z);
+            if (mdBogieB)
+                mdBogieB->RenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
+    glPopMatrix();
             // if (mdPrzedsionek) //Ra: przedsionków tu wczeœniej nie by³o - w³¹czyæ?
             // mdPrzedsionek->RenderAlpha(ObjSqrDist,ReplacableSkinID,iAlpha);
         }
@@ -4773,6 +4805,48 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
                  pDoorRB.y = Parser->GetNextSymbol().ToDouble();
                  pDoorRB.z = Parser->GetNextSymbol().ToDouble();
                 }
+                else if (str == "bogieapos:")     // Q 010116: Pozycja wozka przedniego
+                {
+                 pBogieA.x = Parser->GetNextSymbol().ToDouble();
+                 pBogieA.y = Parser->GetNextSymbol().ToDouble();
+                 pBogieA.z = Parser->GetNextSymbol().ToDouble();
+                }
+                else if (str == "bogiebpos:")     // Q 010116: Pozycja wozka tylnego
+                {
+                 pBogieB.x = Parser->GetNextSymbol().ToDouble();
+                 pBogieB.y = Parser->GetNextSymbol().ToDouble();
+                 pBogieB.z = Parser->GetNextSymbol().ToDouble();
+                }
+                else if (str == "bogiecpos:")     // Q 010116: Pozycja wozka srodkowego
+                {
+                 pBogieC.x = Parser->GetNextSymbol().ToDouble();
+                 pBogieC.y = Parser->GetNextSymbol().ToDouble();
+                 pBogieC.z = Parser->GetNextSymbol().ToDouble();
+                }
+                else if (str == AnsiString("bogieamod:")) // plik modelu wozka
+                {
+                    Global::asCurrentTexturePath = BaseDir;
+                    asBogieAModel = Parser->GetNextSymbol();
+                    asBogieAModel = BaseDir + asBogieAModel;
+                    WriteLog("bogie-a-model: " + asBogieAModel);
+                    mdBogieA = TModelsManager::GetModel(asBogieAModel.c_str(), true);
+                }
+                else if (str == AnsiString("bogiebmod:")) // plik modelu wozka
+                {
+                    Global::asCurrentTexturePath = BaseDir;
+                    asBogieBModel = Parser->GetNextSymbol();
+                    asBogieBModel = BaseDir + asBogieBModel;
+                    WriteLog("bogie-b-model: " + asBogieBModel);
+                    mdBogieB = TModelsManager::GetModel(asBogieBModel.c_str(), true);
+                }
+                else if (str == AnsiString("bogiecmod:")) // plik modelu wozka
+                {
+                    Global::asCurrentTexturePath = BaseDir;
+                    asBogieCModel = Parser->GetNextSymbol();
+                    asBogieCModel = BaseDir + asBogieCModel;
+                    WriteLog("bogie-c-model: " + asBogieCModel);
+                    mdBogieC = TModelsManager::GetModel(asBogieCModel.c_str(), true);
+                }
             }
             Stop_InternalData = true;
         }
@@ -4787,6 +4861,13 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
         mdPrzedsionek->Init();
     if (mdLowPolyInt)
         mdLowPolyInt->Init();
+    if (mdBogieA)
+        mdBogieA->Init();
+    if (mdBogieB)
+        mdBogieB->Init();
+    if (mdBogieC)
+        mdBogieC->Init();
+        
     // sHorn2.CopyIfEmpty(sHorn1); //¿eby jednak tr¹bi³ te¿ drugim
     Global::asCurrentTexturePath =
         AnsiString(szTexturePath); // kiedyœ uproszczone wnêtrze miesza³o tekstury nieba

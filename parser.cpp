@@ -152,6 +152,9 @@ std::string cParser::readToken(bool ToLower, const char *Break)
     if (token.compare("include") == 0)
     { // obs³uga include
         std::string includefile = readToken(ToLower); // nazwa pliku
+        
+        QGlobal::asINCLUDEFILE = AnsiString(includefile.c_str());
+
         if (LoadTraction ? true : ((includefile.find("tr/") == std::string::npos) &&
                                    (includefile.find("tra/") == std::string::npos)))
         {
@@ -191,6 +194,7 @@ std::string cParser::readToken(bool ToLower, const char *Break)
         WriteLog(AnsiString("INC " + AnsiString(includetype.c_str()) + ", " + includefile.c_str()).c_str());
 
         QGlobal::asINCLUDETYPE = AnsiString(includetype.c_str());   //Q 010116: trzymamy w globalnej do przypisania objektowi TModel3d
+        QGlobal::asINCLUDEFILE = AnsiString(includefile.c_str());
 
         WriteLog("INCTYPE: " + QGlobal::asINCLUDETYPE);
 

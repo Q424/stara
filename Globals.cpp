@@ -30,6 +30,23 @@ http://mozilla.org/MPL/2.0/.
 // *****************************************************************************
 // Q Globals
 // *****************************************************************************
+
+AnsiString QModelInfo::snearestobj       = "";
+AnsiString QModelInfo::sNI_file          = "";
+AnsiString QModelInfo::sNI_name          = "";
+AnsiString QModelInfo::sNI_type          = "";
+int QModelInfo::iNI_submodels      = 0;
+int QModelInfo::iNI_numtri         = 0;
+int QModelInfo::iNI_numverts       = 0;
+int QModelInfo::iNI_state          = 0;
+int QModelInfo::iNI_type           = 0;
+int QModelInfo::iNI_textureid      = 0;
+float QModelInfo::fNI_angle          = 0.0;
+float QModelInfo::fNI_posx           = 0.0;
+float QModelInfo::fNI_posy           = 0.0;
+float QModelInfo::fNI_posz           = 0.0;
+bool QModelInfo::bnearestobjengaged = true;
+
 HDC QGlobal::glHDC=NULL;
 HGLRC QGlobal::glHGLRC=NULL;
 HWND QGlobal::glHWND=NULL;
@@ -66,7 +83,8 @@ AnsiString QGlobal::asNODENAME = "";
 AnsiString QGlobal::asRAILTYPE = "S49";
 AnsiString QGlobal::objectidinfo = "none";
 AnsiString QGlobal::globalstr = "?";
-AnsiString QGlobal::asINCLUDETYPE = "UNKNOWN";
+AnsiString QGlobal::asINCLUDETYPE = "?";
+AnsiString QGlobal::asINCLUDEFILE = "?";
 
 TStringList *QGlobal::SLTEMP;
 TStringList *QGlobal::CONFIG;

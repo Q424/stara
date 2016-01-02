@@ -46,6 +46,9 @@ int TSubModelInfo::iTotalNames = 0; // d³ugoœæ obszaru nazw
 int TSubModelInfo::iTotalTextures = 0; // d³ugoœæ obszaru tekstur
 int TSubModelInfo::iCurrent = 0; // aktualny obiekt
 TSubModelInfo *TSubModelInfo::pTable = NULL; // tabele obiektów pomocniczych
+int iTotalFaces = 0;
+int iTotalVerts = 0;
+
 
 char *TStringPack::String(int n)
 { // zwraca wskaŸnik do ³añcucha o podanym numerze
@@ -463,6 +466,10 @@ int TSubModel::Load(cParser &parser, TModel3d *Model, int Pos, bool dynamic)
         else
         { // normalna lista wierzcho³ków
             iNumVerts = atoi(token.c_str());
+
+        int iNumFaces = iNumVerts/3;
+            iTotalFaces += iNumFaces;
+            
             if (iNumVerts % 3)
             {
                 iNumVerts = 0;
@@ -1574,6 +1581,7 @@ void TSubModel::BinInit(TSubModel *s, float4x4 *m, float8 *v, TStringPack *t, TS
     b_aAnim = b_Anim; // skopiowanie animacji do drugiego cyklu
     iFlags &= ~0x0200; // wczytano z pliku binarnego (nie jest w³aœcicielem tablic)
     Vertices = v + iVboPtr;
+
     // if (!iNumVerts) eType=-1; //tymczasowo zmiana typu, ¿eby siê nie renderowa³o na si³ê
 };
 void TSubModel::AdjustDist()
@@ -1647,6 +1655,9 @@ TModel3d::TModel3d()
     Root = NULL;
     iFlags = 0;
     iSubModelsCount = 0;
+    asName = "?";
+    asFile = "?";
+    asType = "?";
     iModel = NULL; // tylko jak wczytany model binarny
     iNumVerts = 0; // nie ma jeszcze wierzcho³ków
 };
@@ -1761,6 +1772,14 @@ void TModel3d::LoadFromBinFile(char *FileName, bool dynamic)
     fs->Read(iModel, fs->Size); // wczytanie pliku
     delete fs;
     float4x4 *m = NULL; // transformy
+
+    //iNumVerts = 0; // w konstruktorze to jest
+    iTotalFaces = 0;
+    iNumFaces = 0;
+    asFile = AnsiString(FileName);
+    asType = QGlobal::asINCLUDETYPE;
+    asFileInc = QGlobal::asINCLUDEFILE;
+
     // zestaw kromek:
     while ((i << 2) < size) // w pliku mo¿e byæ kilka modeli
     {
@@ -1781,6 +1800,8 @@ void TModel3d::LoadFromBinFile(char *FileName, bool dynamic)
                     iNumVerts = (k - 2) >> 3;
                     m_nVertexCount = iNumVerts;
                     m_pVNT = (CVertNormTex *)(iModel + i + 2);
+
+                    iNumFaces += iNumVerts/3;
                     break;
                 case 'SUB0': // submodele: 'SUB0',len,(256 bajtów na submodel)
                     iSubModelsCount = (k - 2) / 64;
@@ -1837,6 +1858,15 @@ void TModel3d::LoadFromBinFile(char *FileName, bool dynamic)
                 Root[i].Parent; // skopiowanie wskaŸnika nadrzêdnego do kolejnego
     }
     iFlags &= ~0x0200;
+
+
+    WriteLog(AnsiString("submodels: ") + IntToStr(iSubModelsCount));
+  //WriteLog(AnsiString("sizebytes ") + IntToStr(size));
+    WriteLog(AnsiString("FACES=") + IntToStr(iNumFaces));
+    WriteLog(AnsiString(" "));
+
+    //iNumFaces = iTotalFaces;  // iTotalFaces - naliczane w LoadFromTextFile()
+    //iNumVerts = iTotalFaces * 3;
     return;
 };
 
@@ -1846,9 +1876,14 @@ void TModel3d::LoadFromTextFile(char *FileName, bool dynamic)
     iFlags |= 0x0200; // wczytano z pliku tekstowego (w³aœcicielami tablic s¹ submodle)
     cParser parser(FileName, cParser::buffer_FILE); // Ra: tu powinno byæ "models\\"...
     TSubModel *SubModel;
-    std::string token;
+    std::string token, asFileName, modeltype;
     parser.getToken(token);
     iNumVerts = 0; // w konstruktorze to jest
+    iTotalFaces = 0;
+    asFile = AnsiString(FileName);
+    asType = QGlobal::asINCLUDETYPE;
+    asFileInc = QGlobal::asINCLUDEFILE;
+
     while (token != "" || parser.eof())
     {
         std::string parent;
@@ -1864,6 +1899,15 @@ void TModel3d::LoadFromTextFile(char *FileName, bool dynamic)
         // iSubModelsCount++;
         parser.getToken(token);
     }
+
+    WriteLog(AnsiString("submodels: ") + IntToStr(iSubModelsCount));
+  //WriteLog(AnsiString("sizebytes ") + IntToStr(size));
+    WriteLog(AnsiString("FACES=") + IntToStr(iTotalFaces));
+    WriteLog(AnsiString(" "));
+
+    iNumFaces = iTotalFaces;  // iTotalFaces - naliczane w LoadFromTextFile()
+    iNumVerts = iTotalFaces * 3;
+    
     // Ra: od wersji 334 przechylany jest ca³y model, a nie tylko pierwszy submodel
     // ale bujanie kabiny nadal u¿ywa bananów :( od 393 przywrócone, ale z dodatkowym warunkiem
     if (Global::iConvertModels & 4)
@@ -2173,13 +2217,36 @@ void TModel3d::Render(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSki
         glRotated(vAngle->x, 1.0, 0.0, 0.0);
     if (vAngle->z != 0.0)
         glRotated(vAngle->z, 0.0, 0.0, 1.0);
-    TSubModel::fSquareDist =
-        SquareMagnitude(*vPosition - Global::GetCameraPosition()); // zmienna globalna!
+
+    float fSquareDist = TSubModel::fSquareDist = SquareMagnitude(*vPosition - Global::GetCameraPosition()); // zmienna globalna!
+
+    // WYSWIETLANIE INFO O OBJEKCIE PRZY KTORYM STOI CAMERA ^^^^^^^^^^^^^^^^^^^^
+     if ((fSquareDist < 10) && (QModelInfo::bnearestobjengaged == false))             // JEZELI W ODLEGLOSCI NIE WIEKSZEJ NIZ 27
+     {
+      //posx = vPosition->x;
+      //posy = vPosition->y;
+      //posz = vPosition->z;
+
+      QModelInfo::snearestobj        = asFileInc;
+      QModelInfo::sNI_file           = asFile;
+      QModelInfo::sNI_name           = asName;
+      QModelInfo::sNI_type           = asType;
+      QModelInfo::iNI_submodels      = iSubModelsCount;
+      QModelInfo::iNI_numtri         = iNumFaces;
+      QModelInfo::iNI_numverts       = iNumVerts;
+//    QModelInfo::fNI_angle          = Global::fNI_angle;
+//    QModelInfo::fNI_posx           = posx;
+//    QModelInfo::fNI_posy           = posy;
+//    QModelInfo::fNI_posz           = posz;
+      QModelInfo::bnearestobjengaged = true;
+     }
     // odwrócenie flag, aby wy³apaæ nieprzezroczyste
     Root->ReplacableSet(ReplacableSkinId, iAlpha ^ 0x0F0F000F);
     Root->RenderDL();
     glPopMatrix();
 };
+
+
 void TModel3d::RenderAlpha(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId,
                            int iAlpha)
 { // przezroczyste, Display List

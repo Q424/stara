@@ -342,6 +342,26 @@ class TTranscripts
 //             zmiennych w jednej klasie to zaczynaja sie dziac cyrki. Docelowo zmienne konfiguracyjne z Global
 //             mozna by przeniesc do oddzielnej klasy CFG
 // ********************************************************************************************************************
+class QModelInfo
+{
+ public:
+ static AnsiString snearestobj;
+ static AnsiString sNI_file;
+ static AnsiString sNI_name;
+ static AnsiString sNI_type;
+ static int iNI_submodels;
+ static int iNI_numtri;
+ static int iNI_numverts;
+ static int iNI_state;
+ static int iNI_type;
+ static int iNI_textureid;
+ static float fNI_angle;
+ static float fNI_posx;
+ static float fNI_posy;
+ static float fNI_posz;
+ static bool bnearestobjengaged;
+};
+
 class QGlobal
 {
  public:
@@ -391,6 +411,7 @@ class QGlobal
  static AnsiString objectidinfo;
  static AnsiString globalstr;
  static AnsiString asINCLUDETYPE;
+ static AnsiString asINCLUDEFILE;
 
  static GLblendstate GLBLENDSTATE;
  

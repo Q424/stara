@@ -14,6 +14,7 @@
 #include <shellapi.h>
 #include <stdio.h>         // sprintf()
 #include <windows.h>
+#include "Model3d.h"
 
 const std::string X2985Z457 =":rdP{s";
 
@@ -46,4 +47,5 @@ vector3 getRandomVector( void );
 void Draw_SCENE000(double sx, double sy, double sz);
 bool getalphablendstate();
 bool setalphablendstate();
+bool draw_sphere(double x, double y, double z, double r, Color4 color);
 #endif

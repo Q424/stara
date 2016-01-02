@@ -24,6 +24,8 @@ struct GLVERTEX
     float tu, tv;
 };
 
+
+
 class TStringPack
 {
     char *data;
@@ -72,6 +74,24 @@ class TMaterialColor
     };
 
     char r, g, b;
+};
+
+class Color4
+{
+
+  public:
+    Color4(void)
+    {
+    }
+    Color4(scalar_t a, scalar_t b, scalar_t c, scalar_t d)
+    {
+        r = a;
+        g = b;
+        b = c;
+        o = d;
+    }
+
+    double r, g, b, o;
 };
 
 /*
@@ -379,12 +399,22 @@ class TModel3d : public CMesh
     int iFlags; // Ra: czy submodele maj¹ przezroczyste tekstury
   public: // Ra: tymczasowo
     int iNumVerts; // iloœæ wierzcho³ków (gdy nie ma VBO, to m_nVertexCount=0)
+    int iNumFaces;
+    int iSubModelsCount; // Ra: u¿ywane do tworzenia binarnych
     int iTYPE; //Q 311215: w przyszlosci do ulatwienia klasyfikacji modeli w edytorze, typ modelu bedzie brany z pierwszego parametru wpisu incfile
+    AnsiString asFile;
+    AnsiString asType;
+    AnsiString asName;
+    AnsiString asNodeName;
+    AnsiString asFileInc;
+    double posx;
+    double posy;
+    double posz;
   private:
     TStringPack Textures; // nazwy tekstur
     TStringPack Names; // nazwy submodeli
     int *iModel; // zawartoœæ pliku binarnego
-    int iSubModelsCount; // Ra: u¿ywane do tworzenia binarnych
+
     AnsiString asBinary; // nazwa pod któr¹ zapisaæ model binarny
   public:
     inline TSubModel *__fastcall GetSMRoot()
@@ -441,6 +471,7 @@ class TModel3d : public CMesh
     };
     int TerrainCount();
     TSubModel *__fastcall TerrainSquare(int n);
+    inline int __fastcall GetSubModelsCount() { return (iSubModelsCount); };   //Q
     void TerrainRenderVBO(int n);
 };
 

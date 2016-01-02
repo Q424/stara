@@ -1404,6 +1404,28 @@ TGroundNode *__fastcall TGround::FindGroundNode(AnsiString asNameToFind, TGround
     return NULL;
 }
 
+
+// *****************************************************************************
+// Q 020116: ROZWOJOWA FUNKCJA DO WYSZUKIWANIA TORU W OKRESLONEJ ODLEGLOSCI OD KAMERY
+// *****************************************************************************
+TGroundNode *__fastcall TGround::FindGroundNodeDist(float dist, TGroundNodeType iNodeType)
+{ // wyszukiwanie obiektu o podanej nazwie i konkretnym typie
+
+
+    // standardowe wyszukiwanie liniowe
+    TGroundNode *Current;
+    for (Current = nRootOfType[iNodeType]; Current; Current = Current->nNext)
+    {
+
+     if ((Current->iType == TP_TRACK) && (Current->pTrack->eType == tt_Switch))
+     {
+      float fSquareDist = SquareMagnitude(Current->pTrack->CurrentSegment()->FastGetPoint_0() - Global::GetCameraPosition());
+      if (fSquareDist < dist) return Current;
+     }
+    }
+    return NULL;
+}
+
 double fTrainSetVel = 0;
 double fTrainSetDir = 0;
 double fTrainSetDist = 0; // odleg³oœæ sk³adu od punktu 1 w stronê punktu 2
@@ -4291,6 +4313,11 @@ bool TGround::Update(double dt, int iter)
     //    oddzieln¹ listê mo¿na by zrobiæ na pojazdy z napêdem, najlepiej posortowan¹ wg typu napêdu
     if (iter > 1) // ABu: ponizsze wykonujemy tylko jesli wiecej niz jedna iteracja
     { // pierwsza iteracja i wyznaczenie stalych:
+
+   //QModelInfo::bnearestengaged = false;      // QUEUEDEU - 010407  RESETOWANIE INFO O NAJBLIZSZYM POJEZDZIE !!
+     QModelInfo::bnearestobjengaged = false;
+     QModelInfo::snearestobj = "xzvds";       // RESET NODENAME COBY PO ODDALENIU SIE OD OBIEKTU NIE BYLO MOZLIWOSCI STEROWANIA NIM
+
         for (TGroundNode *Current = nRootDynamic; Current; Current = Current->nNext)
         { //
             Current->DynamicObject->MoverParameters->ComputeConstans();

@@ -109,6 +109,11 @@ class TWorld
     AnsiString OutText2;
     AnsiString OutText3;
     AnsiString OutText4;
+    AnsiString OutText5;
+    AnsiString OutText6;
+    AnsiString OutText7;
+    AnsiString OutText8;
+    AnsiString OutText9;
     void ShowHints();
     bool Render();
     TCamera Camera;

@@ -56,6 +56,9 @@ GLuint TWorld::loaderlogo;
 GLuint TWorld::bfonttex;
 GLuint TWorld::consolebackg;
 
+TGroundNode *tmp;
+TDynamicObject *DO;
+
 
 
 bool __fastcall TWorld::STARTSIMULATION()
@@ -91,6 +94,12 @@ TWorld::TWorld()
     OutText1 = ""; // teksty wyœwietlane na ekranie
     OutText2 = "";
     OutText3 = "";
+    OutText4 = "";
+    OutText5 = "";
+    OutText6 = "";
+    OutText7 = "";
+    OutText8 = "";
+    OutText9 = "";
     iCheckFPS = 0; // kiedy znów sprawdziæ FPS, ¿eby wy³¹czaæ optymalizacji od razu do zera
     pDynamicNearest = NULL;
     fTimeBuffer = 0.0; // bufor czasu aktualizacji dla sta³ego kroku fizyki
@@ -1021,8 +1030,23 @@ void TWorld::OnKeyDown(int cKey)
     }  // if ((cKey>=VK_F1)?(cKey<=VK_F12):false)
 
 // klawisze queueda
-  if ((Console::Pressed(VK_CONTROL)) && (Console::Pressed(VkKeyScan('z'))) ) SCR->FOVREM();
-  if ((Console::Pressed(VK_CONTROL)) && (Console::Pressed(VkKeyScan('x'))) ) SCR->FOVADD();
+//if ((Console::Pressed(VK_CONTROL)) && (Console::Pressed(VkKeyScan('z'))) ) SCR->FOVREM();
+//if ((Console::Pressed(VK_CONTROL)) && (Console::Pressed(VkKeyScan('x'))) ) SCR->FOVADD();
+
+// Q 020116: niezalezne od ewentow przestawianie rozjazdu w odleglosci 1m od kamery
+    TGroundNode *tmp, *tmptrk;
+    tmptrk = Ground.FindGroundNodeDist(10, TP_TRACK);
+    if ((Console::Pressed(VK_CONTROL)) && (Console::Pressed(VkKeyScan('z'))) )
+    if (tmptrk != NULL)
+     {
+           AnsiString statestr;
+           int state = tmptrk->pTrack->GetSwitchState();
+           if (state == 0) state = 1; else state = 0;
+           if (state == 0) statestr = "(straight)"; else statestr = "(aside)";
+           tmptrk->pTrack->Switch(state, 0.05, 0.03);
+           WriteLog(tmptrk->pTrack->NameGet() + " switched to " + IntToStr(state) + " " + statestr);
+     }
+
 
     if (Global::iTextMode == VK_F10) // wyœwietlone napisy klawiszem F10
     { // i potwierdzenie
@@ -1941,13 +1965,34 @@ bool TWorld::Update()
 
     if (Global::iTextMode == VK_F8)
     {
+        OutText1 = "";
+        OutText2 = "";
+        OutText3 = "";
+        OutText4 = "";
+        OutText5 = "";
+        OutText6 = "";
+        OutText7 = "";
+        OutText8 = "";
+        OutText9 = "";
         Global::iViewMode = VK_F8;
-        OutText1 = "  FPS: ";
+        OutText1 = "FPS: ";
         OutText1 += FloatToStrF(GetFPS(), ffFixed, 6, 2);
         if (Global::iSlowMotion)
             OutText1 += " (slowmotion " + AnsiString(Global::iSlowMotion) + ")";
         OutText1 += ", sectors: ";
         OutText1 += AnsiString(Ground.iRendered);
+        OutText2 = "STATION NAME: " + Controlled->asStation;
+        OutText3 = "TRACK NUMBER: " + Controlled->asTrackNum;
+
+        if (QModelInfo::bnearestobjengaged)
+        {
+        OutText4 += "OBJ INCF: " + QModelInfo::snearestobj + ", ";
+        OutText5 += "OBJ E3DF: " + QModelInfo::sNI_file + ", ";
+        OutText6 += "OBJ NODE: " + QModelInfo::sNI_name + ", ";
+        OutText7 += "OBJ TYPE: " + QModelInfo::sNI_type + ", ";
+        OutText8 += "OBJ TRIS: " + AnsiString(QModelInfo::iNI_numtri) + ", ";
+        OutText9 += "OBJ SUBS: " + AnsiString(QModelInfo::iNI_submodels) + ", ";
+        }
     }
 
     // if (Console::Pressed(VK_F7))
@@ -2107,10 +2152,22 @@ bool TWorld::Update()
                         Global::Bezogonkow(OutText2 + ": -> " + Controlled->Mechanik->NextStop(),
                                            true); // dopisanie punktu zatrzymania
             }
+
+        OutText3 = "STATION NAME: " + Controlled->asStation + ", TOR " + Controlled->asTrackNum;
+
+        if (QModelInfo::bnearestobjengaged)
+        {
+        OutText4 += "OBJ INCF: " + QModelInfo::snearestobj + ", ";
+        OutText5 += "OBJ E3DF: " + QModelInfo::sNI_file + ", ";
+        OutText6 += "OBJ NODE: " + QModelInfo::sNI_name + ", ";
+        OutText7 += "OBJ TYPE: " + QModelInfo::sNI_type + ", ";
+        OutText8 += "OBJ TRIS: " + AnsiString(QModelInfo::iNI_numtri) + ", ";
+        OutText9 += "OBJ SUBS: " + AnsiString(QModelInfo::iNI_submodels) + ", ";
+        }
         // double CtrlPos=mvControlled->MainCtrlPos;
         // double CtrlPosNo=mvControlled->MainCtrlPosNo;
         // OutText2="defrot="+FloatToStrF(1+0.4*(CtrlPos/CtrlPosNo),ffFixed,2,5);
-        OutText3 = ""; // Pomoc w sterowaniu - [F9]";
+        //OutText3 = ""; // Pomoc w sterowaniu - [F9]";
         // OutText3=AnsiString(Global::pCameraRotationDeg); //k¹t kamery wzglêdem pó³nocy
     }
     else if (Global::iTextMode == VK_F12)
@@ -2727,6 +2784,7 @@ bool TWorld::Update()
         else if (OutText1 != "")
         { // ABu: i od razu czyszczenie tego, co bylo napisane
             // glTranslatef(0.0f,0.0f,-0.50f);
+            if (Global::iViewMode == VK_F8)       glColor3f(1.0f, 0.8f, 0.1f);
             glRasterPos2f(-0.25f, 0.20f);
             glPrint(OutText1.c_str());
             OutText1 = "";
@@ -2741,11 +2799,41 @@ bool TWorld::Update()
                 glRasterPos2f(-0.25f, 0.18f);
                 glPrint(OutText3.c_str());
                 OutText3 = "";
-                if (OutText4 != "")
+            if (OutText4 != "")
                 {
                     glRasterPos2f(-0.25f, 0.17f);
                     glPrint(OutText4.c_str());
                     OutText4 = "";
+                }
+            if (OutText5 != "")
+                {
+                    glRasterPos2f(-0.25f, 0.16f);
+                    glPrint(OutText5.c_str());
+                    OutText5 = "";
+                }
+            if (OutText6 != "")
+                {
+                    glRasterPos2f(-0.25f, 0.15f);
+                    glPrint(OutText6.c_str());
+                    OutText6 = "";
+                }
+            if (OutText7 != "")
+                {
+                    glRasterPos2f(-0.25f, 0.14f);
+                    glPrint(OutText7.c_str());
+                    OutText7 = "";
+                }
+            if (OutText8 != "")
+                {
+                    glRasterPos2f(-0.25f, 0.13f);
+                    glPrint(OutText8.c_str());
+                    OutText8 = "";
+                }
+            if (OutText9 != "")
+                {
+                    glRasterPos2f(-0.25f, 0.12f);
+                    glPrint(OutText9.c_str());
+                    OutText9 = "";
                 }
             }
         }
@@ -2819,21 +2907,27 @@ bool TWorld::Render()
         if (!Ground.RenderAlphaDL(Camera.Pos)) return false;
     }
 
+    tmp = Ground.DynamicFindAny("111aproto1");
 
-    vector3 test1, test2;
-    //Controlled->elementPOS = vector3(0,0,0);
-    test1 = Controlled->GetGlobalElementPositionB(vector3(-2.0, 1.295, 11.291), Controlled, 0.001);
-    //glPushMatrix();
-    //glTranslatef(test1.x, test1.y, test1.z);
-    //glutSolidSphere(0.2,12,12);
-    //glPopMatrix();
+    if (tmp)
+    {
+    getalphablendstate();
 
-    //Controlled->elementPOS = vector3(0,0,0);
-    test2 = Controlled->GetGlobalElementPositionB(vector3(2.0, 1.295, 11.291), Controlled, 0.001);
-    //glPushMatrix();
-    //glTranslatef(test2.x, test2.y, test2.z);
-    //glutSolidSphere(0.2,12,12);
-    //glPopMatrix();
+    DO = tmp->DynamicObject;
+
+    vector3 test1;
+    test1 = DO->GetGlobalElementPositionB(vector3(-1.4, 1.35, 11.291), DO, 0.001);
+    draw_sphere(test1.x, test1.y, test1.z, 0.07, Color4(0.9, 0.0, 0.0, 0.9));
+
+    test1 = DO->GetGlobalElementPositionB(vector3(1.4, 1.35, 11.291), DO, 0.001);
+    draw_sphere(test1.x, test1.y, test1.z, 0.07, Color4(0.9, 0.0, 0.0, 0.9));
+
+    test1 = DO->GetGlobalElementPositionB(DO->pBogieA, DO, 0.001);
+    //draw_sphere(test1.x, test1.y, test1.z, 0.27, Color4(0.9, 0.0, 0.0, 0.9));
+    test1 = DO->GetGlobalElementPositionB(DO->pBogieB, DO, 0.001);
+    //draw_sphere(test1.x, test1.y, test1.z, 0.27, Color4(0.9, 0.0, 0.0, 0.9));
+    setalphablendstate();
+    }
 
     TSubModel::iInstance = (int)(Train ? Train->Dynamic() : 0); //¿eby nie robiæ cudzych animacji
 

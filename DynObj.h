@@ -163,6 +163,8 @@ class TDynamicObject
   public: // parametry po³o¿enia pojazdu dostêpne publicznie
     AnsiString asTrack; // nazwa toru pocz¹tkowego; wywaliæ?
     AnsiString asDestination; // dok¹d pojazd ma byæ kierowany "(stacja):(tor)"
+    AnsiString asStation;   // aktualna stacja na ktorej znajduje sie pojazd (pobierane z parametru toru 'stationname')
+    AnsiString asTrackNum;  // aktualny numer toru
     matrix4x4 mMatrix; // macierz przekszta³cenia do renderowania modeli
     TMoverParameters *MoverParameters; // parametry fizyki ruchu oraz przeliczanie
     // TMoverParameters *pControlled; //wskaŸnik do sterowanego cz³onu silnikowego
@@ -175,6 +177,9 @@ class TDynamicObject
     vector3 pDoorFB;
     vector3 pDoorRA;
     vector3 pDoorRB;
+    vector3 pBogieA;
+    vector3 pBogieC;
+    vector3 pBogieB;
     vector3 elementOFF;
     vector3 elementMOV;
     vector3 elementSHK;
@@ -183,12 +188,17 @@ class TDynamicObject
     vector3 GetGlobalElementPositionA(vector3 localpos);
     vector3 GetGlobalElementPositionB(vector3 localpos, TDynamicObject *DO, double dt);
 
+    AnsiString asBogieAModel, asBogieBModel, asBogieCModel;
+
   public: // modele sk³adowe pojazdu
     TModel3d *mdModel; // model pud³a
     TModel3d *mdLoad; // model zmiennego ³adunku
     TModel3d *mdPrzedsionek; // model przedsionków dla EZT - mo¿e u¿yæ mdLoad zamiast?
     TModel3d *mdKabina; // model kabiny dla u¿ytkownika; McZapkie-030303: to z train.h
     TModel3d *mdLowPolyInt; // ABu 010305: wnetrze lowpoly
+    TModel3d *mdBogieA;    // Q 020116: modele wozkow dla pojazdu - przedni A, tylny B, ewentualnie srodkowy (C - center)
+    TModel3d *mdBogieB;
+    TModel3d *mdBogieC;
     float fShade; // zacienienie: 0:normalnie, -1:w ciemnoœci, +1:dodatkowe œwiat³o (brak koloru?)
 
   private: // zmienne i metody do animacji submodeli; Ra: sprzatam animacje w pojeŸdzie

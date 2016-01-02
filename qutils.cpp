@@ -20,7 +20,7 @@
 
 #include "globals.h"
 #include "logs.h"
-
+#include "model3d.h"
 
 /*********************************************************************************************************************
 WIN32 command line parser function
@@ -513,6 +513,20 @@ bool setalphablendstate()
 {
  glBlendFunc(QGlobal::GLBLENDSTATE.blendSrc, QGlobal::GLBLENDSTATE.blendDst);
  if (QGlobal::GLBLENDSTATE.blendEnabled) glEnable(GL_BLEND); else glDisable(GL_BLEND);
+}
+
+
+// *****************************************************************************
+// RENDEROWANIE SFERY W ZADANYM MIEJSCU
+// *****************************************************************************
+bool draw_sphere(double x, double y, double z, double r, Color4 color)
+{
+    glDisable(GL_BLEND);
+    glColor4f(color.r, color.g, color.b, color.o);
+    glPushMatrix();
+    glTranslatef(x, y, z);
+    glutSolidSphere(r, 16, 16);
+    glPopMatrix();
 }
 
 

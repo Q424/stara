@@ -348,6 +348,7 @@ class TGround
     TGroundNode *__fastcall DynamicFind(AnsiString asNameToFind);
     void DynamicList(bool all = false);
     TGroundNode *__fastcall FindGroundNode(AnsiString asNameToFind, TGroundNodeType iNodeType);
+    TGroundNode *__fastcall FindGroundNodeDist(float dist, TGroundNodeType iNodeType);          //Q 020116: do wyszukiwania rozjazdu w celu przelozenia
     TGroundRect *__fastcall GetRect(double x, double z)
     {
         return &Rects[GetColFromX(x) / iNumSubRects][GetRowFromZ(z) / iNumSubRects];
