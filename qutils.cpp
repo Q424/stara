@@ -517,6 +517,21 @@ bool setalphablendstate()
 
 
 // *****************************************************************************
+// ZAPAMIETYWANIE/PRZYWRACANIE PARAMETROW SWIATLA
+// *****************************************************************************
+bool getlightstate(int n)
+{
+ glGetBooleanv(GL_LIGHTING,&QGlobal::GLLIGHTSTATE.lightEnabled);
+}
+
+bool setlightstate(int n)
+{
+ glGetBooleanv(GL_LIGHTING,&QGlobal::GLLIGHTSTATE.lightEnabled);
+ if (QGlobal::GLLIGHTSTATE.lightEnabled) glEnable(GL_LIGHTING); else glDisable(GL_LIGHTING);
+}
+
+
+// *****************************************************************************
 // RENDEROWANIE SFERY W ZADANYM MIEJSCU
 // *****************************************************************************
 bool draw_sphere(double x, double y, double z, double r, Color4 color)

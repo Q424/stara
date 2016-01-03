@@ -24,6 +24,7 @@ http://mozilla.org/MPL/2.0/.
 #define PI 3.1415926535897f
 #define DTOR (PI/180.0f)
 #define SQR(x) (x*x)
+#define MAXSTATIONS 64
 
 typedef struct {
 	GLboolean blendEnabled;
@@ -31,7 +32,31 @@ typedef struct {
 	GLint blendDst;
 } GLblendstate;
 
+typedef struct
+{
+  GLboolean lightEnabled;
+} GLlightstate;
 
+struct trackinfocontainer
+{
+  std::string platformav;
+  std::string number;
+  int len;
+  int platformlen;
+  int electrified;
+};
+
+struct stationscontainer
+{
+  AnsiString Name;
+  AnsiString Info;
+  AnsiString Type;
+  AnsiString SubType;
+  int platforms;
+  int platformedges;
+  int tracksnum;
+  trackinfocontainer trackinfo[50];
+};
 
 using namespace Math3D;
 
@@ -414,7 +439,8 @@ class QGlobal
  static AnsiString asINCLUDEFILE;
 
  static GLblendstate GLBLENDSTATE;
- 
+ static GLlightstate GLLIGHTSTATE;
+
  static bool isshift;
  static bool camerasaved;
  static bool mousemode;
@@ -468,6 +494,7 @@ class QGlobal
  static int aspectratio;
  static int loaderrefresh;
  static int iINCLUDETYPE;
+ static int iSTATIONPOSINTAB;
 
  static double fscreenfade;
  static double fscreenfade2;
@@ -494,6 +521,8 @@ class QGlobal
  static GLuint consolebackg;
  static GLuint SCRFILTER;
  static GLfloat selcolor[4];
+
+ static stationscontainer station[MAXSTATIONS];     // POWODUJE KRZACZENIE PODCZAS WYCHODZENIA???
 };
 
 class Global
@@ -654,7 +683,11 @@ class Global
     static bool AddToQuery(TEvent *event, TDynamicObject *who);
     static bool DoEvents();
     static AnsiString Bezogonkow(AnsiString str, bool _ = false);
-	static double Min0RSpeed(double vel1, double vel2);
+    static double Min0RSpeed(double vel1, double vel2);
+    static AnsiString LoadStationsBase();
+    static int findstationbyname(AnsiString name);
+    static int listdir(const char *szDir, bool bCountHidden, AnsiString ext, TStringList &SL );
+    static int setpassengerdest(AnsiString train, AnsiString station);
 };
 
 //---------------------------------------------------------------------------

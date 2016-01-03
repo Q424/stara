@@ -99,6 +99,7 @@ bool cParser::getTokens(int Count, bool ToLower, const char *Break)
 
 std::string cParser::readToken(bool ToLower, const char *Break)
 {
+    AnsiString par, tst, trainnumber, stationname;
     std::string token = "";
     size_t pos; // pocz¹tek podmienianego ci¹gu
     // see if there's include parsing going on. clean up when it's done.
@@ -218,14 +219,21 @@ std::string cParser::readToken(bool ToLower, const char *Break)
         if (LoadTraction ? true : ((includefile.find("tr/") == std::string::npos) &&
                                    (includefile.find("tra/") == std::string::npos)))
         {
-            std::string parameter = readToken(false); // w parametrach nie zmniejszamy
+            std::string parameter = readToken(false); // w parametrach nie zmniejszamy (WIELKOSCI ZNAKOW)
             while (parameter.compare("end") != 0)
             {
+                par = parameter.c_str();
+                tst = par.SubString(1,4);
+
+                if ( tst == "rel-") trainnumber = AnsiString(parameter.c_str()); // WriteLog("TRAINNUMBER " + AnsiString(parameter.c_str()));
+                if ( tst == "dst-") stationname = AnsiString(parameter.c_str()); //WriteLog("DESTINATION " + AnsiString(parameter.c_str()));
+                if ( tst == "dst-") Global::setpassengerdest(trainnumber, stationname);
+
                 parameters.push_back(parameter);
                 parameter = readToken(ToLower);
             }
             // if (trtest2.find("tr/")!=0)
-            mIncludeParser = new cParser(includefile, buffer_FILE, mPath, LoadTraction);
+            mIncludeParser = new cParser(includefile, buffer_FILE, mPath, LoadTraction);   // Rozpoczynamy parsowanie...
             if (mIncludeParser->mSize <= 0)
                 ErrorLog("Missed include: " + AnsiString(includefile.c_str()));
         }

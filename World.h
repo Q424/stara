@@ -105,15 +105,18 @@ class TWorld
     bool __fastcall RenderSnow();
     bool __fastcall SnowInit();
   private:
-    AnsiString OutText1; // teksty na ekranie
-    AnsiString OutText2;
-    AnsiString OutText3;
-    AnsiString OutText4;
-    AnsiString OutText5;
-    AnsiString OutText6;
-    AnsiString OutText7;
-    AnsiString OutText8;
-    AnsiString OutText9;
+    AnsiString OutText01; // teksty na ekranie
+    AnsiString OutText02;
+    AnsiString OutText03;
+    AnsiString OutText04;
+    AnsiString OutText05;
+    AnsiString OutText06;
+    AnsiString OutText07;
+    AnsiString OutText08;
+    AnsiString OutText09;
+    AnsiString OutText10;
+    AnsiString OutText11;
+    AnsiString OutText12;
     void ShowHints();
     bool Render();
     TCamera Camera;

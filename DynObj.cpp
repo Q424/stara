@@ -32,6 +32,7 @@ http://mozilla.org/MPL/2.0/.
 #include "Camera.h" //bo likwidujemy trzêsienie
 #include "Console.h"
 #include "Traction.h"
+#include "qutils.h"
 #pragma package(smart_init)
 
 // Ra: taki zapis funkcjonuje lepiej, ale mo¿e nie jest optymalny
@@ -3180,6 +3181,23 @@ void TDynamicObject::Render()
         }
 #endif
 
+    getalphablendstate();
+    getlightstate(0);
+    //DO = tmp->DynamicObject;
+
+    vector3 test1;
+    test1 = GetGlobalElementPositionB(vector3(-1.8, 1.35, 11.291), this, 0.001);
+    //draw_sphere(test1.x, test1.y, test1.z, 0.07, Color4(0.9, 0.0, 0.0, 0.9));
+    test1 = GetGlobalElementPositionB(vector3(1.8, 1.35, 11.291), this, 0.001);
+    //draw_sphere(test1.x, test1.y, test1.z, 0.07, Color4(0.9, 0.0, 0.0, 0.9));
+
+    test1 = GetGlobalElementPositionB(pBogieA, this, 0.001);                    // Wozek A
+    if (bBogieA) draw_sphere(test1.x, test1.y, test1.z, 0.4, Color4(0.9, 0.0, 0.0, 0.9));
+    test1 = GetGlobalElementPositionB(pBogieB, this, 0.001);
+    if (bBogieB) draw_sphere(test1.x, test1.y, test1.z, 0.4, Color4(0.9, 0.0, 0.0, 0.9));   // Wozek B
+    setalphablendstate();
+    setlightstate(0);
+
         glPushMatrix();
         // vector3 pos= vPosition;
         // double ObjDist= SquareMagnitude(Global::pCameraPosition-pos);
@@ -4810,25 +4828,28 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
                  pBogieA.x = Parser->GetNextSymbol().ToDouble();
                  pBogieA.y = Parser->GetNextSymbol().ToDouble();
                  pBogieA.z = Parser->GetNextSymbol().ToDouble();
+                 bBogieA = true;
                 }
                 else if (str == "bogiebpos:")     // Q 010116: Pozycja wozka tylnego
                 {
                  pBogieB.x = Parser->GetNextSymbol().ToDouble();
                  pBogieB.y = Parser->GetNextSymbol().ToDouble();
                  pBogieB.z = Parser->GetNextSymbol().ToDouble();
+                 bBogieB = true;
                 }
                 else if (str == "bogiecpos:")     // Q 010116: Pozycja wozka srodkowego
                 {
                  pBogieC.x = Parser->GetNextSymbol().ToDouble();
                  pBogieC.y = Parser->GetNextSymbol().ToDouble();
                  pBogieC.z = Parser->GetNextSymbol().ToDouble();
+                 bBogieC = true;
                 }
                 else if (str == AnsiString("bogieamod:")) // plik modelu wozka
                 {
                     Global::asCurrentTexturePath = BaseDir;
                     asBogieAModel = Parser->GetNextSymbol();
                     asBogieAModel = BaseDir + asBogieAModel;
-                    WriteLog("bogie-a-model: " + asBogieAModel);
+                  //WriteLog("bogie-a-model: " + asBogieAModel);
                     mdBogieA = TModelsManager::GetModel(asBogieAModel.c_str(), true);
                 }
                 else if (str == AnsiString("bogiebmod:")) // plik modelu wozka
@@ -4836,7 +4857,7 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
                     Global::asCurrentTexturePath = BaseDir;
                     asBogieBModel = Parser->GetNextSymbol();
                     asBogieBModel = BaseDir + asBogieBModel;
-                    WriteLog("bogie-b-model: " + asBogieBModel);
+                  //WriteLog("bogie-b-model: " + asBogieBModel);
                     mdBogieB = TModelsManager::GetModel(asBogieBModel.c_str(), true);
                 }
                 else if (str == AnsiString("bogiecmod:")) // plik modelu wozka
@@ -4844,7 +4865,7 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
                     Global::asCurrentTexturePath = BaseDir;
                     asBogieCModel = Parser->GetNextSymbol();
                     asBogieCModel = BaseDir + asBogieCModel;
-                    WriteLog("bogie-c-model: " + asBogieCModel);
+                  //WriteLog("bogie-c-model: " + asBogieCModel);
                     mdBogieC = TModelsManager::GetModel(asBogieCModel.c_str(), true);
                 }
             }

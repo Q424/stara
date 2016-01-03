@@ -93,6 +93,7 @@ TStringList *QGlobal::LOKKBD;
 TStringList *QGlobal::MBRIEF;
 
 GLblendstate QGlobal::GLBLENDSTATE;
+GLlightstate QGlobal::GLLIGHTSTATE;
 
 bool QGlobal::isshift = false;
 bool QGlobal::camerasaved = false;
@@ -147,6 +148,7 @@ int QGlobal::infotype=0;
 int QGlobal::aspectratio = 43;
 int QGlobal::loaderrefresh = 5;
 int QGlobal::iINCLUDETYPE = 999;
+int QGlobal::iSTATIONPOSINTAB = 0;
 
 double QGlobal::fMoveLightS = -1.0f;
 double QGlobal::fps = 1.0f;
@@ -174,6 +176,9 @@ GLuint QGlobal::SCRFILTER;
 GLfloat QGlobal::selcolor[4];
 
 char **QGlobal::argv = NULL;
+
+stationscontainer QGlobal::station[MAXSTATIONS];
+
 
 // parametry do u¿ytku wewnêtrznego
 // double Global::tSinceStart=0;
@@ -995,6 +1000,136 @@ double Global::Min0RSpeed(double vel1, double vel2)
 	if (vel2 == -1.0)
 		vel2 = std::numeric_limits<double>::max();
 	return Min0R(vel1, vel2);
+}
+
+
+int Global::listdir(const char *szDir, bool bCountHidden, AnsiString ext, TStringList &SL)
+{
+	char path[MAX_PATH];
+	WIN32_FIND_DATA fd;
+	DWORD dwAttr = FILE_ATTRIBUTE_DIRECTORY;
+	if( !bCountHidden) dwAttr |= FILE_ATTRIBUTE_HIDDEN;
+	sprintf( path, "%s\\*", szDir);
+	HANDLE hFind = FindFirstFile( path, &fd);
+        AnsiString noext, sinext;
+        
+	if(hFind != INVALID_HANDLE_VALUE)
+	{
+		int count = 0;
+		do
+		{
+			if( !(fd.dwFileAttributes & dwAttr))
+                          {
+				puts( fd.cFileName);
+
+                              // TWORZENIE LISTY SCENERII ^^^^^^^^^^^^^^^^^^^^^^
+                              if (ext == "txt")
+                              if (ExtractFileExt(fd.cFileName) == ".txt")
+                                  {
+                                   noext = fd.cFileName;
+                                   sinext = noext.SubString(1, noext.Length()-4);
+                                   SL.Add( fd.cFileName );
+                                 //WriteLog( sinext );
+                                  }
+
+                           }
+		}while( FindNextFile( hFind, &fd));
+		FindClose( hFind);
+		return count;
+	}
+	return -1;
+}
+
+
+// *****************************************************************************
+// Q 030116: Wczytywanie informacji o stacjach
+// *****************************************************************************
+AnsiString Global::LoadStationsBase()
+{
+ WriteLog("");
+ WriteLog("Loading station base...");
+ int fn = 1;
+ int tn = 1;
+ int pos1 = 0;
+ int pos2 = 0;
+ bool trackinfo = false;
+ TStringList *slFiles = new TStringList;
+ TStringList *slFile = new TStringList;
+ std::string line;
+ AnsiString test, par1, par2;
+ slFiles->Clear();
+
+ listdir("stations\\", false, "txt", *slFiles);
+
+ fn = slFiles->Count;
+
+ for (int i = 0; i<fn; i++)   // LISTA PLIKOW ...
+      {
+       WriteLog("Retrieving station info from " + slFiles->Strings[i]);
+       slFile->Clear();
+       slFile->LoadFromFile("stations\\" + slFiles->Strings[i]);
+
+       for (int j = 0; j< slFile->Count-1; j++)  // PARSOWANIE PLIKU ...
+          {
+           line = slFile->Strings[j].c_str();
+           pos1 = line.find("=");
+           pos2 = line.find("=");
+           test = Trim(line.substr(0, pos1).c_str());
+
+           par1 = Trim(line.substr(pos2 + 1, 255).c_str());     
+
+           //if (test != "") WriteLog("[" +test+ "][" + par1 + "]");
+
+           if (test == "name") QGlobal::station[i].Name = Trim(par1);
+           if (test == "info") QGlobal::station[i].Info = Trim(par1);
+           if (test == "type") QGlobal::station[i].Type = Trim(par1);               // junction JS, suburban SS,
+           if (test == "subtype") QGlobal::station[i].SubType = Trim(par1);           // P - passenger, F - freight
+           if (test == "platforms") QGlobal::station[i].platforms = par1.ToInt();      // ilosc peronow
+           if (test == "platformedges") QGlobal::station[i].platformedges = par1.ToInt(); // ilosc krawedzi peronowych
+           if (test == "tracksnum") QGlobal::station[i].tracksnum = par1.ToInt();         // ogolna liczba torow na stacji
+
+           trackinfo = false;
+           // czytanie wlasnosci torow
+           if (QGlobal::station[i].tracksnum > 0)
+               {
+                if (test == "track-" + IntToStr(tn)) trackinfo = true;
+
+                if (test == "len") QGlobal::station[i].trackinfo[tn].len = StrToInt(par1);    // dlugosc pomiedzy semaforami wyjazdowymi
+                if (test == "number") QGlobal::station[i].trackinfo[tn].number = par1.c_str();    // kolejowa numeracja torow - parzyste po lewej, nieparzyste po prawej  (w kierunku rosnacym kilometrarza)
+                if (test == "platformav") QGlobal::station[i].trackinfo[tn].platformav = par1.c_str();  // lr, l, r, none
+                if (test == "platformlen") QGlobal::station[i].trackinfo[tn].electrified = StrToInt(par1);  // dlugosc peronu
+                if (test == "electrified") QGlobal::station[i].trackinfo[tn].electrified = StrToInt(par1);  // 1 - zelektryfikowany, 0 - nie,
+
+                if (trackinfo) tn++;
+                trackinfo = false;
+               }
+          }
+      }
+}
+
+
+// **********************************************************************************************************
+// Q 03.01.16: Po pobraniu nazwy stacji z toru wypadaloby wyszukac informacji o niej w bazie
+// **********************************************************************************************************
+int Global::findstationbyname(AnsiString name)
+{
+ int tp = 0;;
+ for (int i = 0; i<50; i++)   // LISTA STACJI ...
+      {
+       tp = i;
+       //WriteLog(LowerCase(QGlobal::station[i].Name) + " : " + LowerCase(name));
+       if (LowerCase(QGlobal::station[i].Name) == LowerCase(name)) return tp;
+      }
+ return -1;
+}
+
+
+int Global::setpassengerdest(AnsiString train, AnsiString station)
+{
+ train = Trim(train);
+ station = Trim(station);
+ //WriteLog(train.SubString(5,255) + " : " + station.SubString(5,255));
+ return 0;
 }
 
 

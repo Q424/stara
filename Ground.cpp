@@ -2314,6 +2314,7 @@ void TGround::FirstInit()
         return; // Ra: ¿eby nie robi³o siê dwa razy
     bInitDone = true;
     Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "FIRSTINIT");
+    WriteLog("");
     WriteLog("InitNormals");
     Sleep(500);
     int i, j;
@@ -2368,25 +2369,30 @@ void TGround::FirstInit()
     WriteLog("InitNormals OK");
 
     Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Tracks...");
+    WriteLog("");
     WriteLog("InitTracks");
     InitTracks(); //³¹czenie odcinków ze sob¹ i przyklejanie eventów
     WriteLog("InitTracks OK");
 
     Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Traction...");
+    WriteLog("");
     WriteLog("InitTraction");
     InitTraction(); //³¹czenie drutów ze sob¹
     WriteLog("InitTraction OK");
 
     Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Events...");
+    WriteLog("");
     WriteLog("InitEvents");
     InitEvents();
     WriteLog("InitEvents OK");
 
     Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Launchers...");
+    WriteLog("");
     WriteLog("InitLaunchers");
     InitLaunchers();
     WriteLog("InitLaunchers OK");
-    
+
+    WriteLog("");
     WriteLog("InitGlobalTime");
     // ABu 160205: juz nie TODO :)
     GlobalTime = new TMTableTime(
@@ -2427,7 +2433,11 @@ void TGround::FirstInit()
     else if (Global::bDoubleAmbient) // Ra: wczeœniej by³o ambient dawane na obydwa œwiat³a
         glLightModelfv(GL_LIGHT_MODEL_AMBIENT, Global::ambientDayLight);
     glEnable(GL_LIGHTING);
+    WriteLog("");
     WriteLog("FirstInit is done");
+    WriteLog("");
+    WriteLog("");
+    WriteLog("");
 };
 
 bool TGround::Init(AnsiString asFile, HDC hDC)

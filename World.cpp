@@ -91,15 +91,18 @@ TWorld::TWorld()
         KeyEvents[i] = NULL; // eventy wyzwalane klawiszami cyfrowymi
     Global::iSlowMotion = 0;
     // Global::changeDynObj=NULL;
-    OutText1 = ""; // teksty wyœwietlane na ekranie
-    OutText2 = "";
-    OutText3 = "";
-    OutText4 = "";
-    OutText5 = "";
-    OutText6 = "";
-    OutText7 = "";
-    OutText8 = "";
-    OutText9 = "";
+    OutText01 = ""; // teksty wyœwietlane na ekranie
+    OutText02 = "";
+    OutText03 = "";
+    OutText04 = "";
+    OutText05 = "";
+    OutText06 = "";
+    OutText07 = "";
+    OutText08 = "";
+    OutText09 = "";
+    OutText10 = "";
+    OutText11 = "";
+    OutText12 = "";
     iCheckFPS = 0; // kiedy znów sprawdziæ FPS, ¿eby wy³¹czaæ optymalizacji od razu do zera
     pDynamicNearest = NULL;
     fTimeBuffer = 0.0; // bufor czasu aktualizacji dla sta³ego kroku fizyki
@@ -254,11 +257,12 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 
     LOADLOADERTEXTURES();
 
-
     if (QGlobal::bSPLASHSCR)
     QGlobal::splashscreen = TTexturesManager::GetTextureID("data/lbacks/", Global::asCurrentTexturePath.c_str(), AnsiString("data/lbacks/splashscreen" + QGlobal::asLBACKEXT).c_str());
     QGlobal::mousepoint = TTexturesManager::GetTextureID("data/menu/", Global::asCurrentTexturePath.c_str(), AnsiString("data/menu/menu_point.bmp").c_str());
     QGlobal::mousesymbol = TTexturesManager::GetTextureID("data/menu/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfx/ismouse.bmp").c_str());
+
+    Global::LoadStationsBase(); // Q 030116: Wczytywanie informacji o stacjach
 
     WriteLog("");
     WriteLog("");
@@ -1426,7 +1430,11 @@ bool TWorld::Update()
         */
         iCheckFPS = 0.25 * GetFPS(); // tak za 0.25 sekundy sprawdziæ ponownie (jeszcze przycina?)
     }
+    
+    if (Controlled) QGlobal::iSTATIONPOSINTAB = Global::findstationbyname(Trim(Controlled->asStation)); // Q 030116: Pobieranie pozycji itemu stacji na liscie
+
     UpdateTimers(Global::iPause);
+    
     if (!Global::iPause)
     { // jak pauza, to nie ma po co tego przeliczaæ
         GlobalTime->UpdateMTableTime(GetDeltaTime()); // McZapkie-300302: czas rozkladowy
@@ -1948,14 +1956,14 @@ bool TWorld::Update()
     } // koniec: if (Train)
     if (DebugModeFlag && !Global::iTextMode)
     {
-        OutText1 = "  FPS: ";
-        OutText1 += FloatToStrF(GetFPS(), ffFixed, 6, 2);
-        OutText1 += Global::iSlowMotion ? "s" : "n";
+        OutText01 = "  FPS: ";
+        OutText01 += FloatToStrF(GetFPS(), ffFixed, 6, 2);
+        OutText01 += Global::iSlowMotion ? "s" : "n";
 
-        OutText1 += (GetDeltaTime() >= 0.2) ? "!" : " ";
+        OutText01 += (GetDeltaTime() >= 0.2) ? "!" : " ";
         // if (GetDeltaTime()>=0.2) //Ra: to za bardzo miota tekstem!
         // {
-        //     OutText1+= " Slowing Down !!! ";
+        //     OutText01+= " Slowing Down !!! ";
         // }
     }
     /*if (Console::Pressed(VK_F5))
@@ -1965,79 +1973,82 @@ bool TWorld::Update()
 
     if (Global::iTextMode == VK_F8)
     {
-        OutText1 = "";
-        OutText2 = "";
-        OutText3 = "";
-        OutText4 = "";
-        OutText5 = "";
-        OutText6 = "";
-        OutText7 = "";
-        OutText8 = "";
-        OutText9 = "";
+        OutText01 = "";
+        OutText02 = "";
+        OutText03 = "";
+        OutText04 = "";
+        OutText05 = "";
+        OutText06 = "";
+        OutText07 = "";
+        OutText08 = "";
+        OutText09 = "";
+        OutText10 = "";
+        OutText11 = "";
+        OutText12 = "";
         Global::iViewMode = VK_F8;
-        OutText1 = "FPS: ";
-        OutText1 += FloatToStrF(GetFPS(), ffFixed, 6, 2);
+        OutText01 = "FPS: ";
+        OutText01 += FloatToStrF(GetFPS(), ffFixed, 6, 2);
         if (Global::iSlowMotion)
-            OutText1 += " (slowmotion " + AnsiString(Global::iSlowMotion) + ")";
-        OutText1 += ", sectors: ";
-        OutText1 += AnsiString(Ground.iRendered);
-        OutText2 = "STATION NAME: " + Controlled->asStation;
-        OutText3 = "TRACK NUMBER: " + Controlled->asTrackNum;
+            OutText01 += " (slowmotion " + AnsiString(Global::iSlowMotion) + ")";
+        OutText01 += ", sectors: ";
+        OutText01 += AnsiString(Ground.iRendered);
+        OutText02 = "STATION NAME: " + Controlled->asStation;
+        OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
 
         if (QModelInfo::bnearestobjengaged)
         {
-        OutText4 += "OBJ INCF: " + QModelInfo::snearestobj + ", ";
-        OutText5 += "OBJ E3DF: " + QModelInfo::sNI_file + ", ";
-        OutText6 += "OBJ NODE: " + QModelInfo::sNI_name + ", ";
-        OutText7 += "OBJ TYPE: " + QModelInfo::sNI_type + ", ";
-        OutText8 += "OBJ TRIS: " + AnsiString(QModelInfo::iNI_numtri) + ", ";
-        OutText9 += "OBJ SUBS: " + AnsiString(QModelInfo::iNI_submodels) + ", ";
+        OutText04 += "OBJ INCF: " + QModelInfo::snearestobj + ", ";
+        OutText05 += "OBJ E3DF: " + QModelInfo::sNI_file + ", ";
+        OutText06 += "OBJ NODE: " + QModelInfo::sNI_name + ", ";
+        OutText07 += "OBJ TYPE: " + QModelInfo::sNI_type + ", ";
+        OutText08 += "OBJ TRIS: " + AnsiString(QModelInfo::iNI_numtri) + ", ";
+        OutText09 += "OBJ SUBS: " + AnsiString(QModelInfo::iNI_submodels) + ", ";
         }
     }
 
     // if (Console::Pressed(VK_F7))
     //{
-    //  OutText1=FloatToStrF(Controlled->MoverParameters->Couplers[0].CouplingFlag,ffFixed,2,0)+",
+    //  OutText01=FloatToStrF(Controlled->MoverParameters->Couplers[0].CouplingFlag,ffFixed,2,0)+",
     //  ";
-    //  OutText1+=FloatToStrF(Controlled->MoverParameters->Couplers[1].CouplingFlag,ffFixed,2,0);
+    //  OutText01+=FloatToStrF(Controlled->MoverParameters->Couplers[1].CouplingFlag,ffFixed,2,0);
     //}
 
     /*
     if (Console::Pressed(VK_F5))
        {
           int line=2;
-          OutText1="Time: "+FloatToStrF(GlobalTime->hh,ffFixed,2,0)+":"
+          OutText01="Time: "+FloatToStrF(GlobalTime->hh,ffFixed,2,0)+":"
                   +FloatToStrF(GlobalTime->mm,ffFixed,2,0)+", ";
-          OutText1+="distance: ";
-          OutText1+="34.94";
-          OutText2="Next station: ";
-          OutText2+=FloatToStrF(Controlled->TrainParams->TimeTable[line].km,ffFixed,2,2)+" km, ";
-          OutText2+=AnsiString(Controlled->TrainParams->TimeTable[line].StationName)+", ";
-          OutText2+=AnsiString(Controlled->TrainParams->TimeTable[line].StationWare);
-          OutText3="Arrival: ";
+          OutText01+="distance: ";
+          OutText01+="34.94";
+          OutText02="Next station: ";
+          OutText02+=FloatToStrF(Controlled->TrainParams->TimeTable[line].km,ffFixed,2,2)+" km, ";
+          OutText02+=AnsiString(Controlled->TrainParams->TimeTable[line].StationName)+", ";
+          OutText02+=AnsiString(Controlled->TrainParams->TimeTable[line].StationWare);
+          OutText03="Arrival: ";
           if(Controlled->TrainParams->TimeTable[line].Ah==-1)
           {
-             OutText3+="--:--";
+             OutText03+="--:--";
           }
           else
           {
-             OutText3+=FloatToStrF(Controlled->TrainParams->TimeTable[line].Ah,ffFixed,2,0)+":";
-             OutText3+=FloatToStrF(Controlled->TrainParams->TimeTable[line].Am,ffFixed,2,0)+" ";
+             OutText03+=FloatToStrF(Controlled->TrainParams->TimeTable[line].Ah,ffFixed,2,0)+":";
+             OutText03+=FloatToStrF(Controlled->TrainParams->TimeTable[line].Am,ffFixed,2,0)+" ";
           }
-          OutText3+=" Departure: ";
-          OutText3+=FloatToStrF(Controlled->TrainParams->TimeTable[line].Dh,ffFixed,2,0)+":";
-          OutText3+=FloatToStrF(Controlled->TrainParams->TimeTable[line].Dm,ffFixed,2,0)+" ";
+          OutText03+=" Departure: ";
+          OutText03+=FloatToStrF(Controlled->TrainParams->TimeTable[line].Dh,ffFixed,2,0)+":";
+          OutText03+=FloatToStrF(Controlled->TrainParams->TimeTable[line].Dm,ffFixed,2,0)+" ";
        };
 //    */
     /*
     if (Console::Pressed(VK_F6))
     {
        //GlobalTime->UpdateMTableTime(100);
-       //OutText1=FloatToStrF(SquareMagnitude(Global::pCameraPosition-Controlled->GetPosition()),ffFixed,10,0);
-       //OutText1=FloatToStrF(Global::TnijSzczegoly,ffFixed,7,0)+", ";
-       //OutText1+=FloatToStrF(dta,ffFixed,2,4)+", ";
-       OutText1+= FloatToStrF(GetFPS(),ffFixed,6,2);
-       OutText1+= FloatToStrF(Global::ABuDebug,ffFixed,6,15);
+       //OutText01=FloatToStrF(SquareMagnitude(Global::pCameraPosition-Controlled->GetPosition()),ffFixed,10,0);
+       //OutText01=FloatToStrF(Global::TnijSzczegoly,ffFixed,7,0)+", ";
+       //OutText01+=FloatToStrF(dta,ffFixed,2,4)+", ";
+       OutText01+= FloatToStrF(GetFPS(),ffFixed,6,2);
+       OutText01+= FloatToStrF(Global::ABuDebug,ffFixed,6,15);
     };
     */
     if (Global::changeDynObj)
@@ -2130,51 +2141,56 @@ bool TWorld::Update()
     { // tekst pokazywany po wciœniêciu [F1]
         // Global::iViewMode=VK_F1;
         glColor3f(1.0f, 1.0f, 1.0f); // a, damy bia³ym
-        OutText1 = "Time: " + AnsiString((int)GlobalTime->hh) + ":";
+        OutText01 = "Time: " + AnsiString((int)GlobalTime->hh) + ":";
         int i = GlobalTime->mm; // bo inaczej potrafi zrobiæ "hh:010"
         if (i < 10)
-            OutText1 += "0";
-        OutText1 += AnsiString(i); // minuty
-        OutText1 += ":";
+            OutText01 += "0";
+        OutText01 += AnsiString(i); // minuty
+        OutText01 += ":";
         i = floor(GlobalTime->mr); // bo inaczej potrafi zrobiæ "hh:mm:010"
         if (i < 10)
-            OutText1 += "0";
-        OutText1 += AnsiString(i);
+            OutText01 += "0";
+        OutText01 += AnsiString(i);
         if (Global::iPause)
-            OutText1 += " - paused";
+            OutText01 += " - paused";
         if (Controlled)
             if (Controlled->Mechanik)
             {
-                OutText2 = Controlled->Mechanik->Relation();
-                if (!OutText2.IsEmpty()) // jeœli jest podana relacja, to dodajemy punkt nastêpnego
+                OutText02 = Controlled->Mechanik->Relation();
+                if (!OutText02.IsEmpty()) // jeœli jest podana relacja, to dodajemy punkt nastêpnego
                     // zatrzymania
-                    OutText2 =
-                        Global::Bezogonkow(OutText2 + ": -> " + Controlled->Mechanik->NextStop(),
-                                           true); // dopisanie punktu zatrzymania
+                    OutText02 =
+                        Global::Bezogonkow(OutText02 + ": -> " + Controlled->Mechanik->NextStop(),true); // dopisanie punktu zatrzymania
             }
 
-        OutText3 = "STATION NAME: " + Controlled->asStation + ", TOR " + Controlled->asTrackNum;
+            
+      if (Controlled)
+      {
+        OutText03 = "STATION NAME: " + Controlled->asStation + ", TOR " + Controlled->asTrackNum;
 
-        if (QModelInfo::bnearestobjengaged)
+        if (QGlobal::iSTATIONPOSINTAB != -1)
         {
-        OutText4 += "OBJ INCF: " + QModelInfo::snearestobj + ", ";
-        OutText5 += "OBJ E3DF: " + QModelInfo::sNI_file + ", ";
-        OutText6 += "OBJ NODE: " + QModelInfo::sNI_name + ", ";
-        OutText7 += "OBJ TYPE: " + QModelInfo::sNI_type + ", ";
-        OutText8 += "OBJ TRIS: " + AnsiString(QModelInfo::iNI_numtri) + ", ";
-        OutText9 += "OBJ SUBS: " + AnsiString(QModelInfo::iNI_submodels) + ", ";
+          OutText04 += "ST Name     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name;
+          OutText05 += "ST Info     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Info;
+          OutText06 += "ST Type     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Type;
+          OutText07 += "ST SubT     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].SubType;
+          OutText08 += "ST Platforms: " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].platforms);
+          OutText09 += "ST edges    : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].platformedges);
+          OutText10 += "ST tracks n : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].tracksnum);
         }
+      }
+
         // double CtrlPos=mvControlled->MainCtrlPos;
         // double CtrlPosNo=mvControlled->MainCtrlPosNo;
-        // OutText2="defrot="+FloatToStrF(1+0.4*(CtrlPos/CtrlPosNo),ffFixed,2,5);
-        //OutText3 = ""; // Pomoc w sterowaniu - [F9]";
-        // OutText3=AnsiString(Global::pCameraRotationDeg); //k¹t kamery wzglêdem pó³nocy
+        // OutText02="defrot="+FloatToStrF(1+0.4*(CtrlPos/CtrlPosNo),ffFixed,2,5);
+        //OutText03 = ""; // Pomoc w sterowaniu - [F9]";
+        // OutText03=AnsiString(Global::pCameraRotationDeg); //k¹t kamery wzglêdem pó³nocy
     }
     else if (Global::iTextMode == VK_F12)
     { // opcje w³¹czenia i wy³¹czenia logowania
-        OutText1 = "[0] Debugmode " + AnsiString(DebugModeFlag ? "(on)" : "(off)");
-        OutText2 = "[1] log.txt " + AnsiString((Global::iWriteLogEnabled & 1) ? "(on)" : "(off)");
-        OutText3 = "[2] Console " + AnsiString((Global::iWriteLogEnabled & 2) ? "(on)" : "(off)");
+        OutText01 = "[0] Debugmode " + AnsiString(DebugModeFlag ? "(on)" : "(off)");
+        OutText02 = "[1] log.txt " + AnsiString((Global::iWriteLogEnabled & 1) ? "(on)" : "(off)");
+        OutText03 = "[2] Console " + AnsiString((Global::iWriteLogEnabled & 2) ? "(on)" : "(off)");
     }
     else if (Global::iTextMode == VK_F2)
     { // ABu: info dla najblizszego pojazdu!
@@ -2184,157 +2200,157 @@ bool TWorld::Update()
         {
             if (Global::iScreenMode[Global::iTextMode - VK_F1] == 0)
             { // jeœli domyœlny ekran po pierwszym naciœniêciu
-                OutText3 = "";
-                OutText1 = "Vehicle name: " + AnsiString(tmp->MoverParameters->Name);
-                // yB       OutText1+="; d:  "+FloatToStrF(tmp->ABuGetDirection(),ffFixed,2,0);
-                // OutText1=FloatToStrF(tmp->MoverParameters->Couplers[0].CouplingFlag,ffFixed,3,2)+",
+                OutText03 = "";
+                OutText01 = "Vehicle name: " + AnsiString(tmp->MoverParameters->Name);
+                // yB       OutText01+="; d:  "+FloatToStrF(tmp->ABuGetDirection(),ffFixed,2,0);
+                // OutText01=FloatToStrF(tmp->MoverParameters->Couplers[0].CouplingFlag,ffFixed,3,2)+",
                 // ";
-                // OutText1+=FloatToStrF(tmp->MoverParameters->Couplers[1].CouplingFlag,ffFixed,3,2);
+                // OutText01+=FloatToStrF(tmp->MoverParameters->Couplers[1].CouplingFlag,ffFixed,3,2);
                 if (tmp->Mechanik) // jeœli jest prowadz¹cy
                 { // ostatnia komenda dla AI
-                    OutText1 += ", command: " + tmp->Mechanik->OrderCurrent();
+                    OutText01 += ", command: " + tmp->Mechanik->OrderCurrent();
                 }
                 else if (tmp->ctOwner)
-                    OutText1 += ", owned by " + AnsiString(tmp->ctOwner->OwnerName());
+                    OutText01 += ", owned by " + AnsiString(tmp->ctOwner->OwnerName());
                 if (!tmp->MoverParameters->CommandLast.IsEmpty())
-                    OutText1 += AnsiString(", put: ") + tmp->MoverParameters->CommandLast;
-                // OutText1+="; Cab="+AnsiString(tmp->MoverParameters->CabNo);
-                OutText2 = "Damage status: " +
+                    OutText01 += AnsiString(", put: ") + tmp->MoverParameters->CommandLast;
+                // OutText01+="; Cab="+AnsiString(tmp->MoverParameters->CabNo);
+                OutText02 = "Damage status: " +
                            tmp->MoverParameters->EngineDescription(0); //+" Engine status: ";
-                OutText2 += "; Brake delay: ";
+                OutText02 += "; Brake delay: ";
                 if ((tmp->MoverParameters->BrakeDelayFlag & bdelay_G) == bdelay_G)
-                    OutText2 += "G";
+                    OutText02 += "G";
                 if ((tmp->MoverParameters->BrakeDelayFlag & bdelay_P) == bdelay_P)
-                    OutText2 += "P";
+                    OutText02 += "P";
                 if ((tmp->MoverParameters->BrakeDelayFlag & bdelay_R) == bdelay_R)
-                    OutText2 += "R";
+                    OutText02 += "R";
                 if ((tmp->MoverParameters->BrakeDelayFlag & bdelay_M) == bdelay_M)
-                    OutText2 += "+Mg";
-                OutText2 += AnsiString(", BTP:") +
+                    OutText02 += "+Mg";
+                OutText02 += AnsiString(", BTP:") +
                             FloatToStrF(tmp->MoverParameters->LoadFlag, ffFixed, 5, 0);
                 // if ((tmp->MoverParameters->EnginePowerSource.SourceType==CurrentCollector) ||
                 // (tmp->MoverParameters->TrainType==dt_EZT))
                 {
-                    OutText2 += AnsiString("; pant. ") +
+                    OutText02 += AnsiString("; pant. ") +
                                 FloatToStrF(tmp->MoverParameters->PantPress, ffFixed, 8, 2);
-                    OutText2 += (tmp->MoverParameters->bPantKurek3 ? "<ZG" : "|ZG");
+                    OutText02 += (tmp->MoverParameters->bPantKurek3 ? "<ZG" : "|ZG");
                 }
 
-                //          OutText2+=AnsiString(",
+                //          OutText02+=AnsiString(",
                 //          u:")+FloatToStrF(tmp->MoverParameters->u,ffFixed,3,3);
-                //          OutText2+=AnsiString(",
+                //          OutText02+=AnsiString(",
                 //          N:")+FloatToStrF(tmp->MoverParameters->Ntotal,ffFixed,4,0);
-                OutText2 +=
+                OutText02 +=
                     AnsiString(", Ft:") + FloatToStrF(tmp->MoverParameters->Ft, ffFixed, 4, 0);
-                //          OutText3= AnsiString("BP:
+                //          OutText03= AnsiString("BP:
                 //          ")+FloatToStrF(tmp->MoverParameters->BrakePress,ffFixed,5,2)+AnsiString(",
                 //          ");
-                //          OutText3+= AnsiString("PP:
+                //          OutText03+= AnsiString("PP:
                 //          ")+FloatToStrF(tmp->MoverParameters->PipePress,ffFixed,5,2)+AnsiString(",
                 //          ");
-                //          OutText3+= AnsiString("BVP:
+                //          OutText03+= AnsiString("BVP:
                 //          ")+FloatToStrF(tmp->MoverParameters->Volume,ffFixed,5,3)+AnsiString(",
                 //          ");
-                //          OutText3+=
+                //          OutText03+=
                 //          FloatToStrF(tmp->MoverParameters->CntrlPipePress,ffFixed,5,3)+AnsiString(",
                 //          ");
-                //          OutText3+=
+                //          OutText03+=
                 //          FloatToStrF(tmp->MoverParameters->Hamulec->GetCRP(),ffFixed,5,3)+AnsiString(",
                 //          ");
-                //          OutText3+=
+                //          OutText03+=
                 //          FloatToStrF(tmp->MoverParameters->BrakeStatus,ffFixed,5,0)+AnsiString(",
                 //          ");
-                //          OutText3+= AnsiString("HP:
+                //          OutText03+= AnsiString("HP:
                 //          ")+FloatToStrF(tmp->MoverParameters->ScndPipePress,ffFixed,5,2)+AnsiString(".
                 //          ");
-                //      OutText2+=
+                //      OutText02+=
                 //      FloatToStrF(tmp->MoverParameters->CompressorPower,ffFixed,5,0)+AnsiString(",
                 //      ");
-                // yB      if(tmp->MoverParameters->BrakeSubsystem==Knorr) OutText2+=" Knorr";
-                // yB      if(tmp->MoverParameters->BrakeSubsystem==Oerlikon) OutText2+=" Oerlikon";
-                // yB      if(tmp->MoverParameters->BrakeSubsystem==Hik) OutText2+=" Hik";
-                // yB      if(tmp->MoverParameters->BrakeSubsystem==WeLu) OutText2+=" £estingha³s";
-                // OutText2= " GetFirst:
+                // yB      if(tmp->MoverParameters->BrakeSubsystem==Knorr) OutText02+=" Knorr";
+                // yB      if(tmp->MoverParameters->BrakeSubsystem==Oerlikon) OutText02+=" Oerlikon";
+                // yB      if(tmp->MoverParameters->BrakeSubsystem==Hik) OutText02+=" Hik";
+                // yB      if(tmp->MoverParameters->BrakeSubsystem==WeLu) OutText02+=" £estingha³s";
+                // OutText02= " GetFirst:
                 // "+AnsiString(tmp->GetFirstDynamic(1)->MoverParameters->Name)+" Damage
                 // status="+tmp->MoverParameters->EngineDescription(0)+" Engine status: ";
-                // OutText2+= " GetLast:
+                // OutText02+= " GetLast:
                 // "+AnsiString(tmp->GetLastDynamic(1)->MoverParameters->Name)+" Damage
                 // status="+tmp->MoverParameters->EngineDescription(0)+" Engine status: ";
-                OutText3 = AnsiString("BP: ") +
+                OutText03 = AnsiString("BP: ") +
                            FloatToStrF(tmp->MoverParameters->BrakePress, ffFixed, 5, 2) +
                            AnsiString(", ");
-                OutText3 += FloatToStrF(tmp->MoverParameters->BrakeStatus, ffFixed, 5, 0) +
+                OutText03 += FloatToStrF(tmp->MoverParameters->BrakeStatus, ffFixed, 5, 0) +
                             AnsiString(", ");
-                OutText3 += AnsiString("PP: ") +
+                OutText03 += AnsiString("PP: ") +
                             FloatToStrF(tmp->MoverParameters->PipePress, ffFixed, 5, 2) +
                             AnsiString("/");
-                OutText3 += FloatToStrF(tmp->MoverParameters->ScndPipePress, ffFixed, 5, 2) +
+                OutText03 += FloatToStrF(tmp->MoverParameters->ScndPipePress, ffFixed, 5, 2) +
                             AnsiString("/");
-                OutText3 += FloatToStrF(tmp->MoverParameters->EqvtPipePress, ffFixed, 5, 2) +
+                OutText03 += FloatToStrF(tmp->MoverParameters->EqvtPipePress, ffFixed, 5, 2) +
                             AnsiString(", ");
-                OutText3 += AnsiString("BVP: ") +
+                OutText03 += AnsiString("BVP: ") +
                             FloatToStrF(tmp->MoverParameters->Volume, ffFixed, 5, 3) +
                             AnsiString(", ");
-                OutText3 += FloatToStrF(tmp->MoverParameters->CntrlPipePress, ffFixed, 5, 3) +
+                OutText03 += FloatToStrF(tmp->MoverParameters->CntrlPipePress, ffFixed, 5, 3) +
                             AnsiString(", ");
-                OutText3 += FloatToStrF(tmp->MoverParameters->Hamulec->GetCRP(), ffFixed, 5, 3) +
+                OutText03 += FloatToStrF(tmp->MoverParameters->Hamulec->GetCRP(), ffFixed, 5, 3) +
                             AnsiString(", ");
-                OutText3 += FloatToStrF(tmp->MoverParameters->BrakeStatus, ffFixed, 5, 0) +
+                OutText03 += FloatToStrF(tmp->MoverParameters->BrakeStatus, ffFixed, 5, 0) +
                             AnsiString(", ");
-                //      OutText3+=AnsiString("BVP:
+                //      OutText03+=AnsiString("BVP:
                 //      ")+FloatToStrF(tmp->MoverParameters->BrakeVP(),ffFixed,5,2)+AnsiString(",
                 //      ");
 
-                //      OutText3+=FloatToStrF(tmp->MoverParameters->CntrlPipePress,ffFixed,5,2)+AnsiString(",
+                //      OutText03+=FloatToStrF(tmp->MoverParameters->CntrlPipePress,ffFixed,5,2)+AnsiString(",
                 //      ");
-                //      OutText3+=FloatToStrF(tmp->MoverParameters->HighPipePress,ffFixed,5,2)+AnsiString(",
+                //      OutText03+=FloatToStrF(tmp->MoverParameters->HighPipePress,ffFixed,5,2)+AnsiString(",
                 //      ");
-                //      OutText3+=FloatToStrF(tmp->MoverParameters->LowPipePress,ffFixed,5,2)+AnsiString(",
+                //      OutText03+=FloatToStrF(tmp->MoverParameters->LowPipePress,ffFixed,5,2)+AnsiString(",
                 //      ");
 
                 if (tmp->MoverParameters->ManualBrakePos > 0)
-                    OutText3 += AnsiString("manual brake active. ");
+                    OutText03 += AnsiString("manual brake active. ");
                 else if (tmp->MoverParameters->LocalBrakePos > 0)
-                    OutText3 += AnsiString("local brake active. ");
+                    OutText03 += AnsiString("local brake active. ");
                 else
-                    OutText3 += AnsiString("local brake inactive. ");
+                    OutText03 += AnsiString("local brake inactive. ");
                 /*
-                       //OutText3+=AnsiString("LSwTim:
+                       //OutText03+=AnsiString("LSwTim:
                    ")+FloatToStrF(tmp->MoverParameters->LastSwitchingTime,ffFixed,5,2);
-                       //OutText3+=AnsiString(" Physic:
+                       //OutText03+=AnsiString(" Physic:
                    ")+FloatToStrF(tmp->MoverParameters->PhysicActivation,ffFixed,5,2);
-                       //OutText3+=AnsiString(" ESF:
+                       //OutText03+=AnsiString(" ESF:
                    ")+FloatToStrF(tmp->MoverParameters->EndSignalsFlag,ffFixed,5,0);
-                       OutText3+=AnsiString(" dPAngF: ")+FloatToStrF(tmp->dPantAngleF,ffFixed,5,0);
-                       OutText3+=AnsiString(" dPAngFT:
+                       OutText03+=AnsiString(" dPAngF: ")+FloatToStrF(tmp->dPantAngleF,ffFixed,5,0);
+                       OutText03+=AnsiString(" dPAngFT:
                    ")+FloatToStrF(-(tmp->PantTraction1*28.9-136.938),ffFixed,5,0);
                        if (tmp->lastcabf==1)
                        {
-                        OutText3+=AnsiString(" pcabc1:
+                        OutText03+=AnsiString(" pcabc1:
                    ")+FloatToStrF(tmp->MoverParameters->PantFrontUp,ffFixed,5,0);
-                        OutText3+=AnsiString(" pcabc2:
+                        OutText03+=AnsiString(" pcabc2:
                    ")+FloatToStrF(tmp->MoverParameters->PantRearUp,ffFixed,5,0);
                        }
                        if (tmp->lastcabf==-1)
                        {
-                        OutText3+=AnsiString(" pcabc1:
+                        OutText03+=AnsiString(" pcabc1:
                    ")+FloatToStrF(tmp->MoverParameters->PantRearUp,ffFixed,5,0);
-                        OutText3+=AnsiString(" pcabc2:
+                        OutText03+=AnsiString(" pcabc2:
                    ")+FloatToStrF(tmp->MoverParameters->PantFrontUp,ffFixed,5,0);
                        }
                 */
-                OutText4 = "";
+                OutText04 = "";
                 if (tmp->Mechanik)
                 { // o ile jest ktoœ w œrodku
-                    // OutText4=tmp->Mechanik->StopReasonText();
-                    // if (!OutText4.IsEmpty()) OutText4+="; "; //aby ³adniejszy odstêp by³
+                    // OutText04=tmp->Mechanik->StopReasonText();
+                    // if (!OutText04.IsEmpty()) OutText04+="; "; //aby ³adniejszy odstêp by³
                     // if (Controlled->Mechanik && (Controlled->Mechanik->AIControllFlag==AIdriver))
                     AnsiString flags = "bwaccmlshhhoibsgvdp; "; // flagi AI (definicja w Driver.h)
                     for (int i = 0, j = 1; i < 19; ++i, j <<= 1)
                         if (tmp->Mechanik->DrivigFlags() & j) // jak bit ustawiony
                             flags[i + 1] ^= 0x20; // to zmiana na wielk¹ literê
-                    OutText4 = flags;
-					OutText4 +=
+                    OutText04 = flags;
+					OutText04 +=
 						AnsiString("Driver: Vd=") +
 						FloatToStrF(tmp->Mechanik->VelDesired, ffFixed, 4, 0) + AnsiString(" ad=") +
 						FloatToStrF(tmp->Mechanik->AccDesired, ffFixed, 5, 2) + AnsiString(" Pd=") +
@@ -2346,31 +2362,31 @@ bool TWorld::Update()
                     if (tmp->Mechanik->VelNext == 0.0)
                         if (tmp->Mechanik->eSignNext)
                         { // jeœli ma zapamiêtany event semafora
-                            // if (!OutText4.IsEmpty()) OutText4+=", "; //aby ³adniejszy odstêp by³
-                            OutText4 += " (" +
+                            // if (!OutText04.IsEmpty()) OutText04+=", "; //aby ³adniejszy odstêp by³
+                            OutText04 += " (" +
                                         Global::Bezogonkow(tmp->Mechanik->eSignNext->asName) +
                                         ")"; // nazwa eventu semafora
                         }
                 }
-                if (!OutText4.IsEmpty())
-                    OutText4 += "; "; // aby ³adniejszy odstêp by³
+                if (!OutText04.IsEmpty())
+                    OutText04 += "; "; // aby ³adniejszy odstêp by³
                 // informacja o sprzêgach nawet bez mechanika
-                OutText4 +=
+                OutText04 +=
                     "C0=" + (tmp->PrevConnected ?
                                  tmp->PrevConnected->GetName() + ":" +
                                      AnsiString(tmp->MoverParameters->Couplers[0].CouplingFlag) :
                                  AnsiString("NULL"));
-                OutText4 +=
+                OutText04 +=
                     " C1=" + (tmp->NextConnected ?
                                   tmp->NextConnected->GetName() + ":" +
                                       AnsiString(tmp->MoverParameters->Couplers[1].CouplingFlag) :
                                   AnsiString("NULL"));
                 if (Console::Pressed(VK_F2))
                 {
-                    WriteLog(OutText1);
-                    WriteLog(OutText2);
-                    WriteLog(OutText3);
-                    WriteLog(OutText4);
+                    WriteLog(OutText01);
+                    WriteLog(OutText02);
+                    WriteLog(OutText03);
+                    WriteLog(OutText04);
                 }
             } // koniec treœci podstawowego ekranu FK_V2
             else
@@ -2380,30 +2396,30 @@ bool TWorld::Update()
                     glColor3f(1.0f, 1.0f, 1.0f); // a, damy zielony. GF: jednak bia³y
                     // glTranslatef(0.0f,0.0f,-0.50f);
                     glRasterPos2f(-0.25f, 0.20f);
-                    // OutText1="Scan distance: "+AnsiString(tmp->Mechanik->scanmax)+", back:
+                    // OutText01="Scan distance: "+AnsiString(tmp->Mechanik->scanmax)+", back:
                     // "+AnsiString(tmp->Mechanik->scanback);
-                    OutText1 = "Time: " + AnsiString((int)GlobalTime->hh) + ":";
+                    OutText01 = "Time: " + AnsiString((int)GlobalTime->hh) + ":";
                     int i = GlobalTime->mm; // bo inaczej potrafi zrobiæ "hh:010"
                     if (i < 10)
-                        OutText1 += "0";
-                    OutText1 += AnsiString(i); // minuty
-                    OutText1 += ":";
+                        OutText01 += "0";
+                    OutText01 += AnsiString(i); // minuty
+                    OutText01 += ":";
                     i = floor(GlobalTime->mr); // bo inaczej potrafi zrobiæ "hh:mm:010"
                     if (i < 10)
-                        OutText1 += "0";
-                    OutText1 += AnsiString(i);
-                    OutText1 +=
+                        OutText01 += "0";
+                    OutText01 += AnsiString(i);
+                    OutText01 +=
                         AnsiString(". Vel: ") + FloatToStrF(tmp->GetVelocity(), ffFixed, 6, 1);
-                    OutText1 += ". Scan table:";
-                    glPrint(Global::Bezogonkow(OutText1).c_str());
+                    OutText01 += ". Scan table:";
+                    glPrint(Global::Bezogonkow(OutText01).c_str());
                     i = -1;
-                    while ((OutText1 = tmp->Mechanik->TableText(++i)) != "")
+                    while ((OutText01 = tmp->Mechanik->TableText(++i)) != "")
                     { // wyœwietlenie pozycji z tabelki
                         glRasterPos2f(-0.25f, 0.19f - 0.01f * i);
-                        glPrint(Global::Bezogonkow(OutText1).c_str());
+                        glPrint(Global::Bezogonkow(OutText01).c_str());
                     }
                     // podsumowanie sensu tabelki
-                    OutText4 =
+                    OutText04 =
                         AnsiString("Driver: Vd=") +
                         FloatToStrF(tmp->Mechanik->VelDesired, ffFixed, 4, 0) + AnsiString(" ad=") +
                         FloatToStrF(tmp->Mechanik->AccDesired, ffFixed, 5, 2) + AnsiString(" Pd=") +
@@ -2416,33 +2432,33 @@ bool TWorld::Update()
                     if (tmp->Mechanik->VelNext == 0.0)
                         if (tmp->Mechanik->eSignNext)
                         { // jeœli ma zapamiêtany event semafora
-                            // if (!OutText4.IsEmpty()) OutText4+=", "; //aby ³adniejszy odstêp by³
-                            OutText4 += " (" +
+                            // if (!OutText04.IsEmpty()) OutText04+=", "; //aby ³adniejszy odstêp by³
+                            OutText04 += " (" +
                                         Global::Bezogonkow(tmp->Mechanik->eSignNext->asName) +
                                         ")"; // nazwa eventu semafora
                         }
                     glRasterPos2f(-0.25f, 0.19f - 0.01f * i);
-                    glPrint(Global::Bezogonkow(OutText4).c_str());
+                    glPrint(Global::Bezogonkow(OutText04).c_str());
                 }
             } // koniec ekanu skanowania
         } // koniec obs³ugi, gdy mamy wskaŸnik do pojazdu
         else
         { // wyœwietlenie wspó³rzêdnych w scenerii oraz k¹ta kamery, gdy nie mamy wskaŸnika
-            OutText1 = "Camera position: " + FloatToStrF(Camera.Pos.x, ffFixed, 6, 2) + " " +
+            OutText01 = "Camera position: " + FloatToStrF(Camera.Pos.x, ffFixed, 6, 2) + " " +
                        FloatToStrF(Camera.Pos.y, ffFixed, 6, 2) + " " +
                        FloatToStrF(Camera.Pos.z, ffFixed, 6, 2);
-            OutText1 += ", azimuth: " +
+            OutText01 += ", azimuth: " +
                         FloatToStrF(180.0 - RadToDeg(Camera.Yaw), ffFixed, 3,
                                     0); // ma byæ azymut, czyli 0 na pó³nocy i roœnie na wschód
-            OutText1 +=
+            OutText01 +=
                 " " +
                 AnsiString("S SEE NEN NWW SW")
                     .SubString(1 + 2 * floor(fmod(8 + (Camera.Yaw + 0.5 * M_PI_4) / M_PI_4, 8)), 2);
         }
-        // OutText3= AnsiString("  Online documentation (PL, ENG, DE, soon CZ):
+        // OutText03= AnsiString("  Online documentation (PL, ENG, DE, soon CZ):
         // http://www.eu07.pl");
-        // OutText3="enrot="+FloatToStrF(Controlled->MoverParameters->enrot,ffFixed,6,2);
-        // OutText3="; n="+FloatToStrF(Controlled->MoverParameters->n,ffFixed,6,2);
+        // OutText03="enrot="+FloatToStrF(Controlled->MoverParameters->enrot,ffFixed,6,2);
+        // OutText03="; n="+FloatToStrF(Controlled->MoverParameters->n,ffFixed,6,2);
     } // koniec treœci podstawowego ekranu FK_V2
     else if (Global::iTextMode == VK_F5)
     { // przesiadka do innego pojazdu
@@ -2480,7 +2496,7 @@ bool TWorld::Update()
         }
         /*
 
-             OutText1=OutText2=OutText3=OutText4="";
+             OutText01=OutText02=OutText03=OutText04="";
              AnsiString flag[10]={"vmax", "tory", "smfr", "pjzd", "mnwr", "pstk", "brak", "brak",
            "brak", "brak"};
              if(tmp)
@@ -2489,17 +2505,17 @@ bool TWorld::Update()
               for(int i=0;i<15;i++)
               {
                int tmppar=floor(tmp->Mechanik->ProximityTable[i].Vel);
-               OutText2+=(tmppar<1000?(tmppar<100?((tmppar<10)&&(tmppar>=0)?"   ":"  "):"
+               OutText02+=(tmppar<1000?(tmppar<100?((tmppar<10)&&(tmppar>=0)?"   ":"  "):"
            "):"")+IntToStr(tmppar)+" ";
                tmppar=floor(tmp->Mechanik->ProximityTable[i].Dist);
-               OutText3+=(tmppar<1000?(tmppar<100?((tmppar<10)&&(tmppar>=0)?"   ":"  "):"
+               OutText03+=(tmppar<1000?(tmppar<100?((tmppar<10)&&(tmppar>=0)?"   ":"  "):"
            "):"")+IntToStr(tmppar)+" ";
-               OutText1+=flag[tmp->Mechanik->ProximityTable[i].Flag]+" ";
+               OutText01+=flag[tmp->Mechanik->ProximityTable[i].Flag]+" ";
               }
               for(int i=0;i<6;i++)
               {
                int tmppar=floor(tmp->Mechanik->ReducedTable[i]);
-               OutText4+=flag[i]+":"+(tmppar<1000?(tmppar<100?((tmppar<10)&&(tmppar>=0)?"   ":"
+               OutText04+=flag[i]+":"+(tmppar<1000?(tmppar<100?((tmppar<10)&&(tmppar>=0)?"   ":"
            "):" "):"")+IntToStr(tmppar)+" ";
               }
              }
@@ -2509,60 +2525,60 @@ bool TWorld::Update()
     { // tu mozna dodac dopisywanie do logu przebiegu lokomotywy
         // Global::iViewMode=VK_F10;
         // return false;
-        OutText1 = AnsiString("To quit press [Y] key.");
-        OutText3 = AnsiString("Aby zakonczyc program, przycisnij klawisz [Y].");
+        OutText01 = AnsiString("To quit press [Y] key.");
+        OutText03 = AnsiString("Aby zakonczyc program, przycisnij klawisz [Y].");
     }
     else if (Controlled && DebugModeFlag && !Global::iTextMode)
     {
-        OutText1 += AnsiString(";  vel ") + FloatToStrF(Controlled->GetVelocity(), ffFixed, 6, 2);
-        OutText1 += AnsiString(";  pos ") + FloatToStrF(Controlled->GetPosition().x, ffFixed, 6, 2);
-        OutText1 += AnsiString(" ; ") + FloatToStrF(Controlled->GetPosition().y, ffFixed, 6, 2);
-        OutText1 += AnsiString(" ; ") + FloatToStrF(Controlled->GetPosition().z, ffFixed, 6, 2);
-        OutText1 += AnsiString("; dist=") +
+        OutText01 += AnsiString(";  vel ") + FloatToStrF(Controlled->GetVelocity(), ffFixed, 6, 2);
+        OutText01 += AnsiString(";  pos ") + FloatToStrF(Controlled->GetPosition().x, ffFixed, 6, 2);
+        OutText01 += AnsiString(" ; ") + FloatToStrF(Controlled->GetPosition().y, ffFixed, 6, 2);
+        OutText01 += AnsiString(" ; ") + FloatToStrF(Controlled->GetPosition().z, ffFixed, 6, 2);
+        OutText01 += AnsiString("; dist=") +
                     FloatToStrF(Controlled->MoverParameters->DistCounter, ffFixed, 8, 4);
 
         // double a= acos( DotProduct(Normalize(Controlled->GetDirection()),vWorldFront));
-        //      OutText+= AnsiString(";   angle ")+FloatToStrF(a/M_PI*180,ffFixed,6,2);
-        OutText1 += AnsiString("; d_omega ") +
+        //      OutText0+= AnsiString(";   angle ")+FloatToStrF(a/M_PI*180,ffFixed,6,2);
+        OutText01 += AnsiString("; d_omega ") +
                     FloatToStrF(Controlled->MoverParameters->dizel_engagedeltaomega, ffFixed, 6, 3);
-        OutText2 = AnsiString("HamZ=") +
+        OutText02 = AnsiString("HamZ=") +
                    FloatToStrF(Controlled->MoverParameters->fBrakeCtrlPos, ffFixed, 6, 1);
-        OutText2 += AnsiString("; HamP=") + AnsiString(Controlled->MoverParameters->LocalBrakePos);
+        OutText02 += AnsiString("; HamP=") + AnsiString(Controlled->MoverParameters->LocalBrakePos);
         // mvControlled->MainCtrlPos;
         // if (mvControlled->MainCtrlPos<0)
-        //    OutText2+= AnsiString("; nastawnik 0");
+        //    OutText02+= AnsiString("; nastawnik 0");
         //      if (mvControlled->MainCtrlPos>iPozSzereg)
-        OutText2 += AnsiString("; NasJ=") + AnsiString(mvControlled->MainCtrlPos);
+        OutText02 += AnsiString("; NasJ=") + AnsiString(mvControlled->MainCtrlPos);
         //      else
-        //          OutText2+= AnsiString("; nastawnik S") + mvControlled->MainCtrlPos;
-        OutText2 += AnsiString("(") + AnsiString(mvControlled->MainCtrlActualPos);
+        //          OutText02+= AnsiString("; nastawnik S") + mvControlled->MainCtrlPos;
+        OutText02 += AnsiString("(") + AnsiString(mvControlled->MainCtrlActualPos);
 
-        OutText2 += AnsiString("); NasB=") + AnsiString(mvControlled->ScndCtrlPos);
-        OutText2 += AnsiString("(") + AnsiString(mvControlled->ScndCtrlActualPos);
+        OutText02 += AnsiString("); NasB=") + AnsiString(mvControlled->ScndCtrlPos);
+        OutText02 += AnsiString("(") + AnsiString(mvControlled->ScndCtrlActualPos);
         if (mvControlled->TrainType == dt_EZT)
-            OutText2 += AnsiString("); I=") + AnsiString(int(mvControlled->ShowCurrent(0)));
+            OutText02 += AnsiString("); I=") + AnsiString(int(mvControlled->ShowCurrent(0)));
         else
-            OutText2 += AnsiString("); I=") + AnsiString(int(mvControlled->Im));
-        // OutText2+=AnsiString(";
+            OutText02 += AnsiString("); I=") + AnsiString(int(mvControlled->Im));
+        // OutText02+=AnsiString(";
         // I2=")+FloatToStrF(Controlled->NextConnected->MoverParameters->Im,ffFixed,6,2);
-        OutText2 += AnsiString("; U=") +
+        OutText02 += AnsiString("; U=") +
                     AnsiString(int(mvControlled->RunningTraction.TractionVoltage + 0.5));
-        // OutText2+=AnsiString("; rvent=")+FloatToStrF(mvControlled->RventRot,ffFixed,6,2);
-        OutText2 += AnsiString("; R=") +
+        // OutText02+=AnsiString("; rvent=")+FloatToStrF(mvControlled->RventRot,ffFixed,6,2);
+        OutText02 += AnsiString("; R=") +
                     FloatToStrF(Controlled->MoverParameters->RunningShape.R, ffFixed, 4, 1);
-        OutText2 += AnsiString(" An=") + FloatToStrF(Controlled->MoverParameters->AccN, ffFixed, 4,
+        OutText02 += AnsiString(" An=") + FloatToStrF(Controlled->MoverParameters->AccN, ffFixed, 4,
                                                      2); // przyspieszenie poprzeczne
-        OutText2 += AnsiString("; As=") + FloatToStrF(Controlled->MoverParameters->AccS, ffFixed, 4,
+        OutText02 += AnsiString("; As=") + FloatToStrF(Controlled->MoverParameters->AccS, ffFixed, 4,
                                                       2); // przyspieszenie wzd³u¿ne
-        // OutText2+=AnsiString("; P=")+FloatToStrF(mvControlled->EnginePower,ffFixed,6,1);
-        OutText3 += AnsiString("cyl.ham. ") +
+        // OutText02+=AnsiString("; P=")+FloatToStrF(mvControlled->EnginePower,ffFixed,6,1);
+        OutText03 += AnsiString("cyl.ham. ") +
                     FloatToStrF(Controlled->MoverParameters->BrakePress, ffFixed, 5, 2);
-        OutText3 += AnsiString("; prz.gl. ") +
+        OutText03 += AnsiString("; prz.gl. ") +
                     FloatToStrF(Controlled->MoverParameters->PipePress, ffFixed, 5, 2);
-        OutText3 += AnsiString("; zb.gl. ") +
+        OutText03 += AnsiString("; zb.gl. ") +
                     FloatToStrF(Controlled->MoverParameters->CompressedVolume, ffFixed, 6, 2);
         // youBy - drugi wezyk
-        OutText3 += AnsiString("; p.zas. ") +
+        OutText03 += AnsiString("; p.zas. ") +
                     FloatToStrF(Controlled->MoverParameters->ScndPipePress, ffFixed, 6, 2);
 
         if (Controlled->MoverParameters->EngineType == ElectricInductionMotor)
@@ -2573,95 +2589,95 @@ bool TWorld::Update()
             {
                 glRasterPos2f(-0.25f, 0.16f - 0.01f * i);
                 if (Controlled->MoverParameters->eimc[i] < 10)
-                    OutText4 = FloatToStrF(Controlled->MoverParameters->eimc[i], ffFixed, 6, 3);
+                    OutText04 = FloatToStrF(Controlled->MoverParameters->eimc[i], ffFixed, 6, 3);
                 else
-                    OutText4 = FloatToStrF(Controlled->MoverParameters->eimc[i], ffGeneral, 5, 3);
-                glPrint(OutText4.c_str());
+                    OutText04 = FloatToStrF(Controlled->MoverParameters->eimc[i], ffGeneral, 5, 3);
+                glPrint(OutText04.c_str());
             }
             for (int i = 0; i <= 20; i++)
             {
                 glRasterPos2f(-0.2f, 0.16f - 0.01f * i);
                 if (Controlled->MoverParameters->eimv[i] < 10)
-                    OutText4 = FloatToStrF(Controlled->MoverParameters->eimv[i], ffFixed, 6, 3);
+                    OutText04 = FloatToStrF(Controlled->MoverParameters->eimv[i], ffFixed, 6, 3);
                 else
-                    OutText4 = FloatToStrF(Controlled->MoverParameters->eimv[i], ffGeneral, 5, 3);
-                glPrint(OutText4.c_str());
+                    OutText04 = FloatToStrF(Controlled->MoverParameters->eimv[i], ffGeneral, 5, 3);
+                glPrint(OutText04.c_str());
             }
-            OutText4 = "";
+            OutText04 = "";
             // glTranslatef(0.0f,0.0f,+0.50f);
             glColor3f(1.0f, 0.0f, 0.0f); // a, damy czerwonym
         }
 
         // ABu: testy sprzegow-> (potem przeniesc te zmienne z public do protected!)
-        // OutText3+=AnsiString("; EnginePwr=")+FloatToStrF(mvControlled->EnginePower,ffFixed,1,5);
-        // OutText3+=AnsiString("; nn=")+FloatToStrF(Controlled->NextConnectedNo,ffFixed,1,0);
-        // OutText3+=AnsiString("; PR=")+FloatToStrF(Controlled->dPantAngleR,ffFixed,3,0);
-        // OutText3+=AnsiString("; PF=")+FloatToStrF(Controlled->dPantAngleF,ffFixed,3,0);
+        // OutText03+=AnsiString("; EnginePwr=")+FloatToStrF(mvControlled->EnginePower,ffFixed,1,5);
+        // OutText03+=AnsiString("; nn=")+FloatToStrF(Controlled->NextConnectedNo,ffFixed,1,0);
+        // OutText03+=AnsiString("; PR=")+FloatToStrF(Controlled->dPantAngleR,ffFixed,3,0);
+        // OutText03+=AnsiString("; PF=")+FloatToStrF(Controlled->dPantAngleF,ffFixed,3,0);
         // if(Controlled->bDisplayCab==true)
-        // OutText3+=AnsiString("; Wysw. kab");//+Controlled->mdKabina->GetSMRoot()->Name;
+        // OutText03+=AnsiString("; Wysw. kab");//+Controlled->mdKabina->GetSMRoot()->Name;
         // else
-        // OutText3+=AnsiString("; test:")+AnsiString(Controlled->MoverParameters->TrainType[1]);
+        // OutText03+=AnsiString("; test:")+AnsiString(Controlled->MoverParameters->TrainType[1]);
 
-        // OutText3+=FloatToStrF(Train->Dynamic()->MoverParameters->EndSignalsFlag,ffFixed,3,0);;
+        // OutText03+=FloatToStrF(Train->Dynamic()->MoverParameters->EndSignalsFlag,ffFixed,3,0);;
 
-        // OutText3+=FloatToStrF(Train->Dynamic()->MoverParameters->EndSignalsFlag&byte(((((1+Train->Dynamic()->MoverParameters->CabNo)/2)*30)+2)),ffFixed,3,0);;
+        // OutText03+=FloatToStrF(Train->Dynamic()->MoverParameters->EndSignalsFlag&byte(((((1+Train->Dynamic()->MoverParameters->CabNo)/2)*30)+2)),ffFixed,3,0);;
 
-        // OutText3+=AnsiString(";
+        // OutText03+=AnsiString(";
         // Ftmax=")+FloatToStrF(Controlled->MoverParameters->Ftmax,ffFixed,3,0);
-        // OutText3+=AnsiString(";
+        // OutText03+=AnsiString(";
         // FTotal=")+FloatToStrF(Controlled->MoverParameters->FTotal/1000.0f,ffFixed,3,2);
-        // OutText3+=AnsiString(";
+        // OutText03+=AnsiString(";
         // FTrain=")+FloatToStrF(Controlled->MoverParameters->FTrain/1000.0f,ffFixed,3,2);
         // Controlled->mdModel->GetSMRoot()->SetTranslate(vector3(0,1,0));
 
         // McZapkie: warto wiedziec w jakim stanie sa przelaczniki
         if (mvControlled->ConvOvldFlag)
-            OutText3 += " C! ";
+            OutText03 += " C! ";
         else if (mvControlled->FuseFlag)
-            OutText3 += " F! ";
+            OutText03 += " F! ";
         else if (!mvControlled->Mains)
-            OutText3 += " () ";
+            OutText03 += " () ";
         else
             switch (mvControlled->ActiveDir * (mvControlled->Imin == mvControlled->IminLo ? 1 : 2))
             {
             case 2:
             {
-                OutText3 += " >> ";
+                OutText03 += " >> ";
                 break;
             }
             case 1:
             {
-                OutText3 += " -> ";
+                OutText03 += " -> ";
                 break;
             }
             case 0:
             {
-                OutText3 += " -- ";
+                OutText03 += " -- ";
                 break;
             }
             case -1:
             {
-                OutText3 += " <- ";
+                OutText03 += " <- ";
                 break;
             }
             case -2:
             {
-                OutText3 += " << ";
+                OutText03 += " << ";
                 break;
             }
             }
-        // OutText3+=AnsiString("; dpLocal
+        // OutText03+=AnsiString("; dpLocal
         // ")+FloatToStrF(Controlled->MoverParameters->dpLocalValve,ffFixed,10,8);
-        // OutText3+=AnsiString("; dpMain
+        // OutText03+=AnsiString("; dpMain
         // ")+FloatToStrF(Controlled->MoverParameters->dpMainValve,ffFixed,10,8);
         // McZapkie: predkosc szlakowa
         if (Controlled->MoverParameters->RunningTrack.Velmax == -1)
         {
-            OutText3 += AnsiString(" Vtrack=Vmax");
+            OutText03 += AnsiString(" Vtrack=Vmax");
         }
         else
         {
-            OutText3 +=
+            OutText03 +=
                 AnsiString(" Vtrack ") +
                 FloatToStrF(Controlled->MoverParameters->RunningTrack.Velmax, ffFixed, 8, 2);
         }
@@ -2669,20 +2685,20 @@ bool TWorld::Update()
         if ((mvControlled->EnginePowerSource.SourceType == CurrentCollector) ||
             (mvControlled->TrainType == dt_EZT))
         {
-            OutText3 +=
+            OutText03 +=
                 AnsiString("; pant. ") + FloatToStrF(mvControlled->PantPress, ffFixed, 8, 2);
-            OutText3 += (mvControlled->bPantKurek3 ? "=ZG" : "|ZG");
+            OutText03 += (mvControlled->bPantKurek3 ? "=ZG" : "|ZG");
         }
         // McZapkie: komenda i jej parametry
         if (Controlled->MoverParameters->CommandIn.Command != AnsiString(""))
-            OutText4 = AnsiString("C:") +
+            OutText04 = AnsiString("C:") +
                        AnsiString(Controlled->MoverParameters->CommandIn.Command) +
                        AnsiString(" V1=") +
                        FloatToStrF(Controlled->MoverParameters->CommandIn.Value1, ffFixed, 5, 0) +
                        AnsiString(" V2=") +
                        FloatToStrF(Controlled->MoverParameters->CommandIn.Value2, ffFixed, 5, 0);
         if (Controlled->Mechanik && (Controlled->Mechanik->AIControllFlag == AIdriver))
-            OutText4 +=
+            OutText04 +=
                 AnsiString("AI: Vd=") +
                 FloatToStrF(Controlled->Mechanik->VelDesired, ffFixed, 4, 0) + AnsiString(" ad=") +
                 FloatToStrF(Controlled->Mechanik->AccDesired, ffFixed, 5, 2) + AnsiString(" Pd=") +
@@ -2698,15 +2714,15 @@ bool TWorld::Update()
         if (Global::iTextMode == VK_F9)
         { // informacja o wersji, sposobie wyœwietlania i b³êdach OpenGL
             // Global::iViewMode=VK_F9;
-            OutText1 = Global::asVersion; // informacja o wersji
-            OutText2 = AnsiString("Rendering mode: ") + (Global::bUseVBO ? "VBO" : "Display Lists");
+            OutText01 = Global::asVersion; // informacja o wersji
+            OutText02 = AnsiString("Rendering mode: ") + (Global::bUseVBO ? "VBO" : "Display Lists");
             if (Global::iMultiplayer)
-                OutText2 += ". Multiplayer is active";
-            OutText2 += ".";
+                OutText02 += ". Multiplayer is active";
+            OutText02 += ".";
             GLenum err = glGetError();
             if (err != GL_NO_ERROR)
             {
-                OutText3 = "OpenGL error " + AnsiString(err) + ": " +
+                OutText03 = "OpenGL error " + AnsiString(err) + ": " +
                            Global::Bezogonkow(AnsiString((char *)gluErrorString(err)));
             }
         }
@@ -2725,9 +2741,9 @@ bool TWorld::Update()
                         glColor3f(1.0f, 1.0f, 1.0f); // a, damy bia³ym
                         // glTranslatef(0.0f,0.0f,-0.50f);
                         glRasterPos2f(-0.25f, 0.20f);
-                        OutText1 = tmp->Mechanik->Relation() + " (" +
+                        OutText01 = tmp->Mechanik->Relation() + " (" +
                                    tmp->Mechanik->Timetable()->TrainName + ")";
-                        glPrint(Global::Bezogonkow(OutText1, true).c_str());
+                        glPrint(Global::Bezogonkow(OutText01, true).c_str());
                         glRasterPos2f(-0.25f, 0.19f);
                         // glPrint("|============================|=======|=======|=====|");
                         // glPrint("| Posterunek                 | Przyj.| Odjazd| Vmax|");
@@ -2737,22 +2753,22 @@ bool TWorld::Update()
                         for (int i = tmp->Mechanik->iStationStart; i <= tt->StationCount; ++i)
                         { // wyœwietlenie pozycji z rozk³adu
                             t = tt->TimeTable + i; // linijka rozk³adu
-                            OutText1 = AnsiString(AnsiString(t->StationName) +
+                            OutText01 = AnsiString(AnsiString(t->StationName) +
                                                   "                          ").SubString(1, 26);
-                            OutText2 = (t->Ah >= 0) ?
+                            OutText02 = (t->Ah >= 0) ?
                                            AnsiString(int(100 + t->Ah)).SubString(2, 2) + ":" +
                                                AnsiString(int(100 + t->Am)).SubString(2, 2) :
                                            AnsiString("     ");
-                            OutText3 = (t->Dh >= 0) ?
+                            OutText03 = (t->Dh >= 0) ?
                                            AnsiString(int(100 + t->Dh)).SubString(2, 2) + ":" +
                                                AnsiString(int(100 + t->Dm)).SubString(2, 2) :
                                            AnsiString("     ");
-                            OutText4 = "   " + FloatToStrF(t->vmax, ffFixed, 3, 0);
-                            OutText4 = OutText4.SubString(OutText4.Length() - 2,
+                            OutText04 = "   " + FloatToStrF(t->vmax, ffFixed, 3, 0);
+                            OutText04 = OutText04.SubString(OutText04.Length() - 2,
                                                           3); // z wyrównaniem do prawej
                             // if (AnsiString(t->StationWare).Pos("@"))
-                            OutText1 = "| " + OutText1 + " | " + OutText2 + " | " + OutText3 +
-                                       " | " + OutText4 + " | " + AnsiString(t->StationWare);
+                            OutText01 = "| " + OutText01 + " | " + OutText02 + " | " + OutText03 +
+                                       " | " + OutText04 + " | " + AnsiString(t->StationWare);
                             glRasterPos2f(-0.25f,
                                           0.18f - 0.02f * (i - tmp->Mechanik->iStationStart));
                             if ((tmp->Mechanik->iStationStart < tt->StationIndex) ?
@@ -2768,72 +2784,90 @@ bool TWorld::Update()
                                 // ustala
                                 // kolor,
                                 // dziwne...
-                                glPrint(Global::Bezogonkow(OutText1, true).c_str());
+                                glPrint(Global::Bezogonkow(OutText01, true).c_str());
                                 glColor3f(1.0f, 1.0f, 1.0f); // a reszta bia³ym
                             }
                             else // normalne wyœwietlanie, bez zmiany kolorów
-                                glPrint(Global::Bezogonkow(OutText1, true).c_str());
+                                glPrint(Global::Bezogonkow(OutText01, true).c_str());
                             glRasterPos2f(-0.25f,
                                           0.17f - 0.02f * (i - tmp->Mechanik->iStationStart));
                             glPrint("|----------------------------|-------|-------|-----|");
                         }
                     }
                 }
-            OutText1 = OutText2 = OutText3 = OutText4 = "";
+            OutText01 = OutText02 = OutText03 = OutText04 = "";
         }
-        else if (OutText1 != "")
+        else if (OutText01 != "")
         { // ABu: i od razu czyszczenie tego, co bylo napisane
             // glTranslatef(0.0f,0.0f,-0.50f);
             if (Global::iViewMode == VK_F8)       glColor3f(1.0f, 0.8f, 0.1f);
             glRasterPos2f(-0.25f, 0.20f);
-            glPrint(OutText1.c_str());
-            OutText1 = "";
-            if (OutText2 != "")
+            glPrint(OutText01.c_str());
+            OutText01 = "";
+            if (OutText02 != "")
             {
                 glRasterPos2f(-0.25f, 0.19f);
-                glPrint(OutText2.c_str());
-                OutText2 = "";
+                glPrint(OutText02.c_str());
+                OutText02 = "";
             }
-            if (OutText3 != "")
+            if (OutText03 != "")
             {
                 glRasterPos2f(-0.25f, 0.18f);
-                glPrint(OutText3.c_str());
-                OutText3 = "";
-            if (OutText4 != "")
+                glPrint(OutText03.c_str());
+                OutText03 = "";
+            if (OutText04 != "")
                 {
                     glRasterPos2f(-0.25f, 0.17f);
-                    glPrint(OutText4.c_str());
-                    OutText4 = "";
+                    glPrint(OutText04.c_str());
+                    OutText04 = "";
                 }
-            if (OutText5 != "")
+            if (OutText05 != "")
                 {
                     glRasterPos2f(-0.25f, 0.16f);
-                    glPrint(OutText5.c_str());
-                    OutText5 = "";
+                    glPrint(OutText05.c_str());
+                    OutText05 = "";
                 }
-            if (OutText6 != "")
+            if (OutText06 != "")
                 {
                     glRasterPos2f(-0.25f, 0.15f);
-                    glPrint(OutText6.c_str());
-                    OutText6 = "";
+                    glPrint(OutText06.c_str());
+                    OutText06 = "";
                 }
-            if (OutText7 != "")
+            if (OutText07 != "")
                 {
                     glRasterPos2f(-0.25f, 0.14f);
-                    glPrint(OutText7.c_str());
-                    OutText7 = "";
+                    glPrint(OutText07.c_str());
+                    OutText07 = "";
                 }
-            if (OutText8 != "")
+            if (OutText08 != "")
                 {
                     glRasterPos2f(-0.25f, 0.13f);
-                    glPrint(OutText8.c_str());
-                    OutText8 = "";
+                    glPrint(OutText08.c_str());
+                    OutText08 = "";
                 }
-            if (OutText9 != "")
+            if (OutText09 != "")
                 {
                     glRasterPos2f(-0.25f, 0.12f);
-                    glPrint(OutText9.c_str());
-                    OutText9 = "";
+                    glPrint(OutText09.c_str());
+                    OutText09 = "";
+                }
+            if (OutText10 != "")
+                {
+                    glRasterPos2f(-0.25f, 0.11f);
+                    glPrint(OutText10.c_str());
+                    OutText10 = "";
+                }
+            if (OutText11 != "")
+                {
+                    glRasterPos2f(-0.25f, 0.10f);
+                    glPrint(OutText11.c_str());
+                    OutText11 = "";
+                }
+            if (OutText12 != "")
+                {
+                    glRasterPos2f(-0.25f, 0.09f);
+                    glPrint(OutText12.c_str());
+                    OutText12 = "";
                 }
             }
         }
@@ -2868,11 +2902,6 @@ bool TWorld::Update()
 bool TWorld::Render()
 {
     glColor3b(255, 255, 255);
-
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    glMatrixMode(GL_MODELVIEW); // Select The Modelview Matrix
-//    glLoadIdentity();
-
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(TSCREEN::CFOV, (GLdouble)Global::iWindowWidth/(GLdouble)Global::iWindowHeight, 0.1f, 19961.0f);
@@ -2911,22 +2940,7 @@ bool TWorld::Render()
 
     if (tmp)
     {
-    getalphablendstate();
 
-    DO = tmp->DynamicObject;
-
-    vector3 test1;
-    test1 = DO->GetGlobalElementPositionB(vector3(-1.4, 1.35, 11.291), DO, 0.001);
-    draw_sphere(test1.x, test1.y, test1.z, 0.07, Color4(0.9, 0.0, 0.0, 0.9));
-
-    test1 = DO->GetGlobalElementPositionB(vector3(1.4, 1.35, 11.291), DO, 0.001);
-    draw_sphere(test1.x, test1.y, test1.z, 0.07, Color4(0.9, 0.0, 0.0, 0.9));
-
-    test1 = DO->GetGlobalElementPositionB(DO->pBogieA, DO, 0.001);
-    //draw_sphere(test1.x, test1.y, test1.z, 0.27, Color4(0.9, 0.0, 0.0, 0.9));
-    test1 = DO->GetGlobalElementPositionB(DO->pBogieB, DO, 0.001);
-    //draw_sphere(test1.x, test1.y, test1.z, 0.27, Color4(0.9, 0.0, 0.0, 0.9));
-    setalphablendstate();
     }
 
     TSubModel::iInstance = (int)(Train ? Train->Dynamic() : 0); //¿eby nie robiæ cudzych animacji
@@ -2934,13 +2948,10 @@ bool TWorld::Render()
     // if (Camera.Type==tp_Follow)
     if (Train)
         Train->Update();
-    // if (Global::bRenderAlpha)
-    // if (Controlled)
-    //  Train->RenderAlpha();
 
     if (!FreeFlyModeFlag)
-    if (QGlobal::bSHOWBRIEFING) RenderLoader(QGlobal::glHDC, 77, "Zakonczono wczytywanie, wcisnij spacjê");
-    //if (QGlobal::bSHOWBRIEFING) freetype::print(our_font14, 20, Global::iWindowHeight-930, "FPS: %7.2f", GetFPS());  // PO ZALADOWANIU SCN ALE PRZED WCISNIECIEM SPACJI
+     if (QGlobal::bSHOWBRIEFING) RenderLoader(QGlobal::glHDC, 77, "Zakonczono wczytywanie, wcisnij spacjê");
+   //if (QGlobal::bSHOWBRIEFING) freetype::print(our_font14, 20, Global::iWindowHeight-930, "FPS: %7.2f", GetFPS());  // PO ZALADOWANIU SCN ALE PRZED WCISNIECIEM SPACJI
 
     glFlush();
     // Global::bReCompile=false; //Ra: ju¿ zrobiona rekompilacja
@@ -2959,132 +2970,132 @@ void TWorld::ShowHints(void)
     glLoadIdentity();
     glTranslatef(0.0f, 0.0f, -0.50f);
     // glRasterPos2f(-0.25f, 0.20f);
-    // OutText1="Uruchamianie lokomotywy - pomoc dla niezaawansowanych";
-    // glPrint(OutText1.c_str());
+    // OutText01="Uruchamianie lokomotywy - pomoc dla niezaawansowanych";
+    // glPrint(OutText01.c_str());
 
     // if(TestFlag(Controlled->MoverParameters->SecuritySystem.Status,s_ebrake))
     // hunter-091012
     if (TestFlag(Controlled->MoverParameters->SecuritySystem.Status, s_SHPebrake) ||
         TestFlag(Controlled->MoverParameters->SecuritySystem.Status, s_CAebrake))
     {
-        OutText1 = "Gosciu, ale refleks to ty masz szachisty. Teraz zaczekaj.";
-        OutText2 = "W tej sytuacji czuwak mozesz zbic dopiero po zatrzymaniu pociagu. ";
+        OutText01 = "Gosciu, ale refleks to ty masz szachisty. Teraz zaczekaj.";
+        OutText02 = "W tej sytuacji czuwak mozesz zbic dopiero po zatrzymaniu pociagu. ";
         if (Controlled->MoverParameters->Vel == 0)
-            OutText3 = "   (mozesz juz nacisnac spacje)";
+            OutText03 = "   (mozesz juz nacisnac spacje)";
     }
     else
         // if(TestFlag(Controlled->MoverParameters->SecuritySystem.Status,s_alarm))
         if (TestFlag(Controlled->MoverParameters->SecuritySystem.Status, s_CAalarm) ||
             TestFlag(Controlled->MoverParameters->SecuritySystem.Status, s_SHPalarm))
     {
-        OutText1 = "Natychmiast zbij czuwak, bo pociag sie zatrzyma!";
-        OutText2 = "   (szybko nacisnij spacje!)";
+        OutText01 = "Natychmiast zbij czuwak, bo pociag sie zatrzyma!";
+        OutText02 = "   (szybko nacisnij spacje!)";
     }
     else if (TestFlag(Controlled->MoverParameters->SecuritySystem.Status, s_aware))
     {
-        OutText1 = "Zbij czuwak, zeby udowodnic, ze nie spisz :) ";
-        OutText2 = "   (nacisnij spacje)";
+        OutText01 = "Zbij czuwak, zeby udowodnic, ze nie spisz :) ";
+        OutText02 = "   (nacisnij spacje)";
     }
     else if (mvControlled->FuseFlag)
     {
-        OutText1 = "Czlowieku, delikatniej troche! Gdzie sie spieszysz?";
-        OutText2 = "Wybilo Ci bezpiecznik nadmiarowy, teraz musisz wlaczyc go ponownie.";
-        OutText3 = "   ('N', wczesniej nastawnik i boczniki na zero -> '-' oraz '*' do oporu)";
+        OutText01 = "Czlowieku, delikatniej troche! Gdzie sie spieszysz?";
+        OutText02 = "Wybilo Ci bezpiecznik nadmiarowy, teraz musisz wlaczyc go ponownie.";
+        OutText03 = "   ('N', wczesniej nastawnik i boczniki na zero -> '-' oraz '*' do oporu)";
     }
     else if (mvControlled->V == 0)
     {
         if ((mvControlled->PantFrontVolt == 0.0) || (mvControlled->PantRearVolt == 0.0))
         {
-            OutText1 = "Jezdziles juz kiedys lokomotywa? Pierwszy raz? Dobra, to zaczynamy.";
-            OutText2 = "No to co, trzebaby chyba podniesc pantograf?";
-            OutText3 = "   (wcisnij 'shift+P' - przedni, 'shift+O' - tylny)";
+            OutText01 = "Jezdziles juz kiedys lokomotywa? Pierwszy raz? Dobra, to zaczynamy.";
+            OutText02 = "No to co, trzebaby chyba podniesc pantograf?";
+            OutText03 = "   (wcisnij 'shift+P' - przedni, 'shift+O' - tylny)";
         }
         else if (!mvControlled->Mains)
         {
-            OutText1 = "Dobra, mozemy zalaczyc wylacznik szybki lokomotywy.";
-            OutText2 = "   (wcisnij 'shift+M')";
+            OutText01 = "Dobra, mozemy zalaczyc wylacznik szybki lokomotywy.";
+            OutText02 = "   (wcisnij 'shift+M')";
         }
         else if (!mvControlled->ConverterAllow)
         {
-            OutText1 = "Teraz wlacz przetwornice.";
-            OutText2 = "   (wcisnij 'shift+X')";
+            OutText01 = "Teraz wlacz przetwornice.";
+            OutText02 = "   (wcisnij 'shift+X')";
         }
         else if (!mvControlled->CompressorAllow)
         {
-            OutText1 = "Teraz wlacz sprezarke.";
-            OutText2 = "   (wcisnij 'shift+C')";
+            OutText01 = "Teraz wlacz sprezarke.";
+            OutText02 = "   (wcisnij 'shift+C')";
         }
         else if (mvControlled->ActiveDir == 0)
         {
-            OutText1 = "Ustaw nastawnik kierunkowy na kierunek, w ktorym chcesz jechac.";
-            OutText2 = "   ('d' - do przodu, 'r' - do tylu)";
+            OutText01 = "Ustaw nastawnik kierunkowy na kierunek, w ktorym chcesz jechac.";
+            OutText02 = "   ('d' - do przodu, 'r' - do tylu)";
         }
         else if (Controlled->GetFirstDynamic(1)->MoverParameters->BrakePress > 0)
         {
-            OutText1 = "Odhamuj sklad i zaczekaj az Ci powiem - to moze troche potrwac.";
-            OutText2 = "   ('.' na klawiaturze numerycznej)";
+            OutText01 = "Odhamuj sklad i zaczekaj az Ci powiem - to moze troche potrwac.";
+            OutText02 = "   ('.' na klawiaturze numerycznej)";
         }
         else if (Controlled->MoverParameters->BrakeCtrlPos != 0)
         {
-            OutText1 = "Przelacz kran hamulca w pozycje 'jazda'.";
-            OutText2 = "   ('4' na klawiaturze numerycznej)";
+            OutText01 = "Przelacz kran hamulca w pozycje 'jazda'.";
+            OutText02 = "   ('4' na klawiaturze numerycznej)";
         }
         else if (mvControlled->MainCtrlPos == 0)
         {
-            OutText1 = "Teraz juz mozesz ruszyc ustawiajac pierwsza pozycje na nastawniku jazdy.";
-            OutText2 = "   (jeden raz '+' na klawiaturze numerycznej)";
+            OutText01 = "Teraz juz mozesz ruszyc ustawiajac pierwsza pozycje na nastawniku jazdy.";
+            OutText02 = "   (jeden raz '+' na klawiaturze numerycznej)";
         }
         else if ((mvControlled->MainCtrlPos > 0) && (mvControlled->ShowCurrent(1) != 0))
         {
-            OutText1 = "Dobrze, mozesz teraz wlaczac kolejne pozycje nastawnika.";
-            OutText2 = "   ('+' na klawiaturze numerycznej, tylko z wyczuciem)";
+            OutText01 = "Dobrze, mozesz teraz wlaczac kolejne pozycje nastawnika.";
+            OutText02 = "   ('+' na klawiaturze numerycznej, tylko z wyczuciem)";
         }
         if ((mvControlled->MainCtrlPos > 1) && (mvControlled->ShowCurrent(1) == 0))
         {
-            OutText1 = "Spieszysz sie gdzies? Zejdz nastawnikiem na zero i probuj jeszcze raz!";
-            OutText2 = "   (teraz do oporu '-' na klawiaturze numerycznej)";
+            OutText01 = "Spieszysz sie gdzies? Zejdz nastawnikiem na zero i probuj jeszcze raz!";
+            OutText02 = "   (teraz do oporu '-' na klawiaturze numerycznej)";
         }
     }
     else
     {
-        OutText1 = "Aby przyspieszyc mozesz wrzucac kolejne pozycje nastawnika.";
+        OutText01 = "Aby przyspieszyc mozesz wrzucac kolejne pozycje nastawnika.";
         if (mvControlled->MainCtrlPos == 28)
         {
-            OutText1 = "Przy tym ustawienu mozesz bocznikowac silniki - sprobuj: '/' i '*' ";
+            OutText01 = "Przy tym ustawienu mozesz bocznikowac silniki - sprobuj: '/' i '*' ";
         }
         if (mvControlled->MainCtrlPos == 43)
         {
-            OutText1 = "Przy tym ustawienu mozesz bocznikowac silniki - sprobuj: '/' i '*' ";
+            OutText01 = "Przy tym ustawienu mozesz bocznikowac silniki - sprobuj: '/' i '*' ";
         }
 
-        OutText2 = "Aby zahamowac zejdz nastawnikiem do 0 ('-' do oporu) i ustaw kran hamulca";
-        OutText3 =
+        OutText02 = "Aby zahamowac zejdz nastawnikiem do 0 ('-' do oporu) i ustaw kran hamulca";
+        OutText03 =
             "w zaleznosci od sily hamowania, jakiej potrzebujesz ('2', '5' lub '8' na kl. num.)";
 
         // else
-        // if() OutText1="teraz mozesz ruszyc naciskajac jeden raz '+' na klawiaturze numerycznej";
+        // if() OutText01="teraz mozesz ruszyc naciskajac jeden raz '+' na klawiaturze numerycznej";
         // else
-        // if() OutText1="teraz mozesz ruszyc naciskajac jeden raz '+' na klawiaturze numerycznej";
+        // if() OutText01="teraz mozesz ruszyc naciskajac jeden raz '+' na klawiaturze numerycznej";
     }
-    // OutText3=FloatToStrF(Controlled->MoverParameters->SecuritySystem.Status,ffFixed,3,0);
+    // OutText03=FloatToStrF(Controlled->MoverParameters->SecuritySystem.Status,ffFixed,3,0);
 
-    if (OutText1 != "")
+    if (OutText01 != "")
     {
         glRasterPos2f(-0.25f, 0.19f);
-        glPrint(OutText1.c_str());
-        OutText1 = "";
+        glPrint(OutText01.c_str());
+        OutText01 = "";
     }
-    if (OutText2 != "")
+    if (OutText02 != "")
     {
         glRasterPos2f(-0.25f, 0.18f);
-        glPrint(OutText2.c_str());
-        OutText2 = "";
+        glPrint(OutText02.c_str());
+        OutText02 = "";
     }
-    if (OutText3 != "")
+    if (OutText03 != "")
     {
         glRasterPos2f(-0.25f, 0.17f);
-        glPrint(OutText3.c_str());
-        OutText3 = "";
+        glPrint(OutText03.c_str());
+        OutText03 = "";
     }
 };
 

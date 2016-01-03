@@ -173,6 +173,10 @@ class TDynamicObject
     int NextConnectedNo; // numer sprzêgu pod³¹czonego z ty³u
     int PrevConnectedNo; // numer sprzêgu pod³¹czonego z przodu
     double fScanDist; // odleg³oœæ skanowania torów na obecnoœæ innych pojazdów
+
+    bool bBogieA;
+    bool bBogieB;
+    bool bBogieC;
     vector3 pDoorFA;
     vector3 pDoorFB;
     vector3 pDoorRA;
