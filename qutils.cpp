@@ -297,6 +297,19 @@ AnsiString BoolToStr(bool value)
   if (value == false) return "0";
  }
 
+AnsiString BoolToYN(bool value)
+ {
+  if (value == true) return "tak";
+  if (value == false) return "nie";
+ }
+
+AnsiString StrToPERON(AnsiString value)
+ {
+  if (value == "l") return "P-l";
+  if (value == "r") return "P-r";
+  if (value == "lr") return "P-b";
+  if (value == "0") return "";
+ }
 
 // *****************************************************************************
 // GETCWD() - POBIERA SCIEZKE DO KATALOGU EXE
@@ -442,28 +455,28 @@ Windows Registry Editor Version 5.00
  QGlobal::SLTEMP->Clear();
  QGlobal::SLTEMP->Add("Windows Registry Editor Version 5.00");
  QGlobal::SLTEMP->Add("");
- QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\maszynamodelbin]");
- QGlobal::SLTEMP->Add("@=\"Binarny plik modelu MaSZyna\"");
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\" + key + "]");
+ QGlobal::SLTEMP->Add("@=\""+desc+"\"");
  QGlobal::SLTEMP->Add("");
 
  pathx = AnsiString(StringReplace( QGlobal::asAPPDIR, "\\", "\\\\", TReplaceFlags() << rfReplaceAll )).c_str();
- QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\maszynamodelbin\\DefaultIcon]");
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\" + key + "\\DefaultIcon]");
  QGlobal::SLTEMP->Add("@=\"" + pathx + "\data\\\\icons\\\\" + icon + ".ico,0\"");
  QGlobal::SLTEMP->Add("");
- QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\maszynamodelbin\\shell\\open]");
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\" + key + "\\shell\\open]");
  QGlobal::SLTEMP->Add("@=\"&Open\"");
  QGlobal::SLTEMP->Add("");
- QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\maszynamodelbin\\shell\\open]");
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\" + key + "\\shell\\open]");
  QGlobal::SLTEMP->Add("@=\"&Open\"");
  QGlobal::SLTEMP->Add("");
 
  pathx = AnsiString(StringReplace( ParamStr(0), "\\", "\\\\", TReplaceFlags() << rfReplaceAll )).c_str();
- QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\maszynamodelbin\\shell\\open\\command]");
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\" + key + "\\shell\\open\\command]");
  QGlobal::SLTEMP->Add("@=\"" + pathx + " %1\"");
  QGlobal::SLTEMP->Add("");
 
  QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\." + UpperCase(icon) + "]");
- QGlobal::SLTEMP->Add("@=\"maszynamodelbin\"");
+ QGlobal::SLTEMP->Add("@=\"" + key + "\"");
  QGlobal::SLTEMP->Add("");
 
  QGlobal::SLTEMP->SaveToFile(key + ".reg");
@@ -554,15 +567,12 @@ bool switch2dRender()
   int GWH = Global::iWindowHeight;
 //glViewport(0, 0, Global::iWindowWidth, Global::iWindowHeight);
 
-//  glOrtho(0, GWW, GWH, 0, -1, 1);
-//  glMatrixMode(GL_MODELVIEW);
-//  glLoadIdentity( );
-
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, Global::iWindowWidth, Global::iWindowHeight, 0, -100, 100);
+    glOrtho(0, Global::iWindowWidth, Global::iWindowHeight, 0, -1, 100);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity( );
+  //glClear(GL_COLOR_BUFFER_BIT);
 }
 
 float getRandomMinMax( float fMin, float fMax )

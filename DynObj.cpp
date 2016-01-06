@@ -47,7 +47,10 @@ http://mozilla.org/MPL/2.0/.
 
 #define M_2PI 6.283185307179586476925286766559;
 const float maxrot = (M_PI / 3.0); // 60°
+AnsiString X;
 
+float CONSISTLEN = 0.0f;
+float CONSISTMASS = 0.0f;
 //---------------------------------------------------------------------------
 void TAnimPant::AKP_4E()
 { // ustawienie wymiarów dla pantografu AKP-4E
@@ -257,6 +260,166 @@ TDynamicObject *__fastcall TDynamicObject::GetFirstDynamic(int cpl_type)
     // Ra: wystarczy jedna funkcja do szukania w obu kierunkach
     return FirstFind(cpl_type); // u¿ywa referencji
 };
+
+
+// *********************************************************************************************************
+// Q 040116: FUNKCJA WRZUCAJACA LOKOMOTYWE (POJAZD WZGLEDEM KTOREGO SA SZUKANE INNE) POMIEDZY POJAZDY PRZEDNIE I TYLNE
+// *********************************************************************************************************
+TDynamicObject* TDynamicObject::GetConsist_f(int cpl_type, TDynamicObject *lok)
+{
+// if (Global::bQueuedAdvLog) WriteLog("TDynamicObject::GetConsist_f(int cpl_type, TDynamicObject *lok)");
+
+ AnsiString DYNNAME, TYPENAME, TRAINTYPE, TRAINNAME, FILENAME, TRACK, BASEDIR0, BASEDIR1, BASEDIR2, TEXT, BODY;
+ TDynamicObject VECH ;
+
+ QGlobal::CONSISTF->Clear();
+ QGlobal::CONSISTB->Clear();
+ QGlobal::CONSISTA->Clear();
+
+ CONSISTLEN = 0.0f;
+ CONSISTMASS = 0.0f;
+
+ GetConsist_a(1, lok);      
+ GetConsist_b(1, lok);
+
+ for (int LOOP=0; LOOP<QGlobal::CONSISTA->Count; LOOP++) {QGlobal::CONSISTF->Add(QGlobal::CONSISTA->Strings[LOOP]); }
+                                                          QGlobal::CONSISTF->Add("++" + lok->MoverParameters->Name + ", " + lok->MyTrack->NameGet() +  ", " + lok->MoverParameters->TypeName + ", " + lok->asTrainNumber);
+ for (int LOOP=0; LOOP<QGlobal::CONSISTB->Count; LOOP++) {QGlobal::CONSISTF->Add(QGlobal::CONSISTB->Strings[LOOP]); }
+
+ QGlobal::consistlen = CONSISTLEN;
+ QGlobal::CONSISTF->Add("");
+ QGlobal::CONSISTF->Add("");
+ QGlobal::CONSISTF->Add("DLUGOSC: " + AnsiString(FormatFloat("0.00", (CONSISTLEN))) + "m");
+ QGlobal::CONSISTF->Add("MASA BR: " + AnsiString(FormatFloat("0.00", (CONSISTMASS/1000))) + "t" );
+ WriteLog("");
+ QGlobal::CONSISTF->SaveToFile("myconsist.txt");
+}
+
+
+// *****************************************************************************
+// Q 040116: FUNKCJA SZUKAJACA POJAZDY DOCZEPIONE Z TYLU LOKA, WYWOLYWANA Z OnUpdate() ^^^
+// *****************************************************************************
+TDynamicObject* TDynamicObject::GetConsist_b(int cpl_type, TDynamicObject *lok)
+{
+   TDynamicObject* temp = lok;
+   int coupler_nr = 1;
+
+   for(int i=0;i<100;i++) //tak na wszelki wypadek :)
+   {
+      if (temp->MoverParameters->Couplers[coupler_nr].CouplingFlag==0) return temp;
+      if (coupler_nr == 0)
+         {
+            if (temp->PrevConnectedNo==coupler_nr)
+                coupler_nr = 1-coupler_nr;
+                temp = temp->PrevConnected;
+
+                CONSISTLEN = CONSISTLEN + temp->MoverParameters->Dim.L;
+                CONSISTMASS = CONSISTMASS + temp->MoverParameters->Mass;
+                temp->asTrainNumber = lok->asTrainNumber;
+                
+                X =
+                ""  + temp->MoverParameters->Name +                      // NAME
+//              ", " + FloatToStr(temp->MoverParameters->Vel) +           // VELOCITY
+//              ", " + temp->MoverParameters->filename +
+                ", " + temp->MoverParameters->TypeName +                  // TYPE
+//              ","  + FloatToStr(temp->MoverParameters->BrakePress) +    // BRAKE PRESS
+                ", " + FloatToStr(temp->MoverParameters->Mass) +          // MASS
+                ", " + FloatToStr(temp->MoverParameters->Dim.L) +        // LENGTH
+                ", " + temp->asTrainNumber;
+//              ", " + temp->MyTrack->NameGet();
+
+                QGlobal::CONSISTB->Add(X);
+         }
+      else
+         {
+            if (temp->NextConnectedNo==coupler_nr) coupler_nr=1-coupler_nr;
+
+                temp = temp->NextConnected;
+                temp->asTrainNumber = lok->asTrainNumber;
+
+                CONSISTLEN = CONSISTLEN + temp->MoverParameters->Dim.L;
+                CONSISTMASS = CONSISTMASS + temp->MoverParameters->Mass;
+
+                X =
+                "  "  + temp->MoverParameters->Name +                      // NAME
+//              ", " + FloatToStr(temp->MoverParameters->Vel) +           // VELOCITY
+//              ", " + temp->MoverParameters->filename +
+                ", " + temp->MoverParameters->TypeName +                  // TYPE
+//              ", " + FloatToStr(temp->MoverParameters->BrakePress) +    // BRAKE PRESS
+                ", " + FloatToStr(temp->MoverParameters->Mass) +          // MASS
+                ", " + FloatToStr(temp->MoverParameters->Dim.L) +         // LENGTH
+                ", " + temp->asTrainNumber;
+//              ", " + temp->MyTrack->NameGet();
+
+                QGlobal::CONSISTB->Add(X);
+         }
+   }
+}
+
+
+// *****************************************************************************
+// FUNKCJA SZUKAJACA POJAZDY DOCZEPIONE Z PRZODU LOKA, WYWOLYWANA Z OnUpdate() ^
+// *****************************************************************************
+
+TDynamicObject* TDynamicObject::GetConsist_a(int cpl_type, TDynamicObject *lok)
+{
+ TDynamicObject* temp = lok;
+ int coupler_nr = 0;
+
+ for(int i=0;i<100;i++) //tak na wszelki wypadek :)
+  {
+
+      if (temp->MoverParameters->Couplers[coupler_nr].CouplingFlag==0)
+         return temp;
+        if (coupler_nr == 0)
+         {
+            if (temp->PrevConnectedNo == coupler_nr)
+               coupler_nr = 1-coupler_nr;
+               temp = temp->PrevConnected;
+               temp->asTrainNumber = lok->asTrainNumber;
+
+               CONSISTLEN = CONSISTLEN + temp->MoverParameters->Dim.L;
+               CONSISTMASS = CONSISTMASS + temp->MoverParameters->Mass;
+
+              X =
+              "  "  + temp->MoverParameters->Name +                      // NAME
+//            ", " + FloatToStr(temp->MoverParameters->Vel) +           // VELOCITY
+//            ", " + temp->MoverParameters->filename +
+              ", " + temp->MoverParameters->TypeName +                  // TYPE
+//            ", " + FloatToStr(temp->MoverParameters->BrakePress) +    // BRAKE PRESS
+              ", " + FloatToStr(temp->MoverParameters->Mass) +          // MASS
+              ", " + FloatToStr(temp->MoverParameters->Dim.L) +          // LENGTH
+              ", " + temp->asTrainNumber;
+//            ", " + temp->MyTrack->NameGet();
+
+              QGlobal::CONSISTF->Add(X);
+         }
+      else
+         {
+            if (temp->NextConnectedNo==coupler_nr)
+               coupler_nr = 1-coupler_nr;
+               temp = temp->NextConnected;
+               temp->asTrainNumber = lok->asTrainNumber;
+
+               CONSISTLEN = CONSISTLEN + temp->MoverParameters->Dim.L;
+               CONSISTMASS = CONSISTMASS + temp->MoverParameters->Mass;
+
+              X =
+              ""  + temp->MoverParameters->Name +                               // NAME
+//            ", " + FloatToStr(temp->MoverParameters->Vel) +                    // VELOCITY
+//            ", " + temp->MoverParameters->filename +
+              ", " + temp->MoverParameters->TypeName +                           // TYPE
+//            ", " + FloatToStr(temp->MoverParameters->BrakePress) +             // BRAKE PRESS
+              ", " + FloatToStr(temp->MoverParameters->Mass) +                   // MASS
+              ", " + FloatToStr(temp->MoverParameters->Dim.L) +                   // LENGTH
+              ", " + temp->asTrainNumber;
+//            ", " + temp->MyTrack->NameGet();
+
+              QGlobal::CONSISTF->Add(X);
+         }
+    }
+}
+
 
 /*
 TDynamicObject* TDynamicObject::GetFirstCabDynamic(int cpl_type)
@@ -1593,6 +1756,7 @@ double TDynamicObject::Init(
     iDirection = (Reversed ? 0 : 1); // Ra: 0, jeœli ma byæ wstawiony jako obrócony ty³em
     asBaseDir = "dynamic\\" + BaseDir + "\\"; // McZapkie-310302
     asName = Name;
+    asTrainNumber = TrainName;
     AnsiString asAnimName = ""; // zmienna robocza do wyszukiwania osi i wózków
     // Ra: zmieniamy znaczenie obsady na jednoliterowe, ¿eby dosadziæ kierownika
     if (DriverType == "headdriver")
@@ -3192,9 +3356,9 @@ void TDynamicObject::Render()
     //draw_sphere(test1.x, test1.y, test1.z, 0.07, Color4(0.9, 0.0, 0.0, 0.9));
 
     test1 = GetGlobalElementPositionB(pBogieA, this, 0.001);                    // Wozek A
-    if (bBogieA) draw_sphere(test1.x, test1.y, test1.z, 0.4, Color4(0.9, 0.0, 0.0, 0.9));
+    //if (bBogieA) draw_sphere(test1.x, test1.y, test1.z, 0.4, Color4(0.9, 0.0, 0.0, 0.9));
     test1 = GetGlobalElementPositionB(pBogieB, this, 0.001);
-    if (bBogieB) draw_sphere(test1.x, test1.y, test1.z, 0.4, Color4(0.9, 0.0, 0.0, 0.9));   // Wozek B
+    //if (bBogieB) draw_sphere(test1.x, test1.y, test1.z, 0.4, Color4(0.9, 0.0, 0.0, 0.9));   // Wozek B
     setalphablendstate();
     setlightstate(0);
 
@@ -3871,6 +4035,7 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
             asModel = BaseDir +
                       asModel; // McZapkie 2002-07-20: dynamics maja swoje modele w dynamics/basedir
             Global::asCurrentTexturePath = BaseDir; // biezaca sciezka do tekstur to dynamic/...
+
             mdModel = TModelsManager::GetModel(asModel.c_str(), true);
             if (ReplacableSkin != AnsiString("none"))
             { // tekstura wymienna jest raczej jedynie w "dynamic\"
@@ -4133,6 +4298,7 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
                         asAnimName = str + AnsiString(i + 1);
                         pAnimations[i].smAnimated =
                             mdModel->GetFromName(asAnimName.c_str()); // ustalenie submodelu
+
                         if (pAnimations[i].smAnimated)
                         { //++iAnimatedAxles;
                             pAnimations[i].smAnimated->WillBeAnimated(); // wy³¹czenie optymalizacji

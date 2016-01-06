@@ -155,6 +155,7 @@ TModel3d *__fastcall TModelsManager::GetModel(const char *Name, bool dynamic)
             Global::asCurrentTexturePath = Global::asCurrentTexturePath + AnsiString(Name);
             Global::asCurrentTexturePath.Delete(Global::asCurrentTexturePath.Pos("/") + 1,
                                                 Global::asCurrentTexturePath.Length());
+
         }
     }
     else
@@ -174,11 +175,13 @@ TModel3d *__fastcall TModelsManager::GetModel(const char *Name, bool dynamic)
         if (strcmp(buf, Models[i].Name) == 0)
         {
             Global::asCurrentTexturePath = buftp;
+
             return (Models[i].Model);
         }
     };
     TModel3d *tmpModel = LoadModel(buf, dynamic); // model nie znaleziony, to wczytaæ
     Global::asCurrentTexturePath = buftp; // odtworzenie œcie¿ki do tekstur
+
     return (tmpModel); // NULL jeœli b³¹d
 };
 

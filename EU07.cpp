@@ -912,6 +912,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  BOOL openlogonx = false;
  BOOL rege3dt3d = false;
  BOOL done = FALSE; // bool variable to exit loop
+ BOOL bISDYNAMIC = false;
  fullscreen = true;
  DecimalSeparator = '.';
 
@@ -947,6 +948,8 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  commandline = StringReplace( commandline, "e3d", "t3d", TReplaceFlags() << rfReplaceAll ); /* ZAMIENIA 'e3d' na 't3d'    */
  commandline = StringReplace( commandline, "E3D", "t3d", TReplaceFlags() << rfReplaceAll );
  commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );    // np: C:/MaSzyna_15_04/models/ip/wloclawek/wwek_przychodniak.t3d
+
+ if ((commandline.Pos("dynamic") > 0)) QGlobal::bISDYNAMIC = true;
 
  if ((commandline.Pos("T3D") > 0) || (commandline.Pos("t3d") > 0))
  {
@@ -999,6 +1002,12 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
     //WriteLog("mfn: [" + mfn + "]");  // tu juz jest e3d
 
     WriteLog(commandline.c_str());
+
+    QGlobal::asDynamicTexturePath = ExtractFilePath(commandline.c_str());
+
+    if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
+
+   
 
     ftocopy = StringReplace( ftocopy, "t3d", "e3d", TReplaceFlags() << rfReplaceAll );
 
@@ -1293,6 +1302,8 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
     if (Bpp != 32)
         Bpp = 16;
 
+    WriteLog(".");
+
     if (getscreenb) // JEZELI OPCJA ROZDZIELCZOSCI IDENTYCZNEJ JAK PULPIT
         {
          GetDesktopResolution(sh, sv); // USTAW ROZDZIELCZOSC TAKA JAK PULPIT
@@ -1412,11 +1423,12 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
     SystemParametersInfo(SPI_SETKEYBOARDSPEED, iOldSpeed, NULL, 0);
     SystemParametersInfo(SPI_SETKEYBOARDDELAY, iOldDelay, NULL, 0);
 
- char logfile[200];
- sprintf(logfile,"%s%s", appath.c_str() , QGlobal::logfilenm1.c_str());
- if (openlogonx) ShellExecute(0, "open", logfile, NULL, NULL, SW_MAXIMIZE);
- DeleteFile("templog.txt"); // usuniêcie starego
- DeleteFile(AnsiString(QGlobal::asAPPDIR + "models\\temp\\temp.e3d").c_str());
+    char logfile[200];
+    sprintf(logfile,"%s%s", appath.c_str() , QGlobal::logfilenm1.c_str());
+    if (openlogonx) ShellExecute(0, "open", logfile, NULL, NULL, SW_MAXIMIZE);
+    DeleteFile("templog.txt"); // usuniêcie starego
+    DeleteFile("myconsist.txt"); // usuniêcie starego
+    DeleteFile(AnsiString(QGlobal::asAPPDIR + "models\\temp\\temp.e3d").c_str());
 
     delete pConsole; // deaktywania sterownika
     // shutdown

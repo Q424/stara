@@ -1738,7 +1738,7 @@ lineplus(15);
          //BFONT->Print_scale(2,0,AnsiString("7: ").c_str(), 1,0.9,0.9);
          glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_COLOR);
          glEnable(GL_TEXTURE_2D);
-         BFONT->Print_scale(2,i++,AnsiString("ZAMYKANIE PROGRAMU - POTWIERDZNIE").c_str(), 0, 1.1, 1.1);
+         BFONT->Print_scale(2,i++,AnsiString("ZAMYKANIE PROGRAMU - POTWIERDZNIE ").c_str(), 0, 1.1, 1.1);
 
          BFONT->End();
         }
@@ -3176,7 +3176,6 @@ bool __fastcall TWorld::RenderFILTER(double alpha)
 }
 
 
-
 bool __fastcall TWorld::RenderEXITQUERY(double alpha)
 {
     QGlobal::bTUTORIAL = false;
@@ -3199,12 +3198,115 @@ bool __fastcall TWorld::RenderEXITQUERY(double alpha)
     glEnd( );
 
     glColor4f(0.8f, 0.8f, 0.8f, 0.7f);
-    freetype::print(our_font18, 10, Global::iWindowHeight-20, "ZAMYKANIE PROGRAMU - POTWIERDZENIE");
+    freetype::print(our_font18, 10, Global::iWindowHeight-20, "ZAMYKANIE PROGRAMU - POTWIERDZENIE ");
     freetype::print(our_font18, 120, Global::iWindowHeight-220, "Czy na pewno chesz zakonczyc dzialanie programu? [Y]/[N]");
 
     glEnable( GL_TEXTURE_2D );
     glEnable( GL_FOG );
     glEnable( GL_LIGHTING );
+}
+
+
+bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
+{
+  QGlobal::bTUTORIAL = false;
+  QGlobal::bKEYBOARD = false;
+
+  float margin = 1;
+  int lc = QGlobal::CONSISTF->Count;
+  int iWH = Global::iWindowHeight;
+
+  glDisable( GL_LIGHTING );
+  glDisable( GL_FOG );
+  glEnable( GL_TEXTURE_2D );
+
+
+
+  glColor4f(0.1,0.1,0.1, alpha);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glBindTexture(GL_TEXTURE_2D, QGlobal::splashscreen);
+  glBegin( GL_QUADS );
+  glTexCoord2f(0, 1); glVertex3i(margin-0,   margin, 0);   // GORNY LEWY
+  glTexCoord2f(0, 0); glVertex3i(margin-0,   iWH-margin, 0); // DOLY LEWY
+  glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+0, iWH-margin, 0); // DOLNY PRAWY
+  glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+0, margin, 0);   // GORNY PRAWY
+  glEnd( );
+
+  // TLO BOCZNE
+  glColor4f(0.0,0.0,0.0, 0.3);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glBindTexture(GL_TEXTURE_2D, QGlobal::splashscreen);
+  glBegin( GL_QUADS );
+  glTexCoord2f(0, 1); glVertex3i(margin-0,   40+margin, 0);   // GORNY LEWY
+  glTexCoord2f(0, 0); glVertex3i(margin-0,   iWH-margin, 0); // DOLY LEWY
+  glTexCoord2f(1, 0); glVertex3i(280-margin+0, iWH-margin, 0); // DOLNY PRAWY
+  glTexCoord2f(1, 1); glVertex3i(280-margin+0, 40+margin, 0);   // GORNY PRAWY
+  glEnd( );
+
+  // ETYKIETA PANELU
+  glColor4f(0.0,0.0,0.0, 0.3);
+  glBegin( GL_QUADS );
+  glTexCoord2f(0, 1); glVertex3i(margin-0,   margin, 0);   // GORNY LEWY
+  glTexCoord2f(0, 0); glVertex3i(margin-0,   40, 0); // DOLY LEWY
+  glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+0, 40-margin, 0); // DOLNY PRAWY
+  glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+0, margin, 0);   // GORNY PRAWY
+  glEnd( );
+
+  if (num == 1)
+   {
+    int posy = 60;
+    for (int l = 0; l<lc; l++)
+    {
+     glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+     freetype::print(our_font16, 10, Global::iWindowHeight-20, AnsiString("INFORMACJE O SKLADZIE POCIAGU " + Controlled->asTrainNumber).c_str());
+     freetype::print(our_font10, 20, Global::iWindowHeight-posy, QGlobal::CONSISTF->Strings[l].c_str());
+     posy+= 20;
+    }
+   }
+
+  if (num == 2)
+   {
+    int posy = 160;
+    glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+    freetype::print(our_font16, 10, Global::iWindowHeight-20, "INFORMACJE O STACJI");
+
+    if (QGlobal::iSTATIONPOSINTAB > -1)
+     {
+       freetype::print(our_font16, 10, Global::iWindowHeight-20, "INFORMACJE O STACJI");
+       freetype::print(our_font10, 20, iWH- 60, AnsiString("ST Name     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name).c_str());
+       freetype::print(our_font10, 20, iWH- 80, AnsiString("ST Info     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Info).c_str());
+       freetype::print(our_font10, 20, iWH-100, AnsiString("ST Type     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Type).c_str());
+       freetype::print(our_font10, 20, iWH-120, AnsiString("ST SubT     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].SubType).c_str());
+       freetype::print(our_font10, 20, iWH-140, AnsiString("ST Platforms: " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].platforms)).c_str());
+       freetype::print(our_font10, 20, iWH-160, AnsiString("ST edges    : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].platformedges)).c_str());
+       freetype::print(our_font10, 20, iWH-180, AnsiString("ST tracks n : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].tracksnum)).c_str());
+
+       int id = Global::findstationbyname(QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name);
+
+       posy = 220;
+       int stracks = QGlobal::station[id].tracksnum;
+     //  WriteLog(QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name + ", " + IntToStr(id) + ", " + IntToStr(QGlobal::station[id].tracksnum) ) ;
+
+     freetype::print(our_font10, 10, Global::iWindowHeight-posy, "numer   | dlugosc | elektr. | peron i dlugosc");
+     posy = 240;
+       for (int j = 1; j < stracks+1; j++)
+         {
+          AnsiString ELECTRIFIED = BoolToYN(QGlobal::station[id].trackinfo[j].electrified);
+          AnsiString LENGTH = IntToStr(QGlobal::station[id].trackinfo[j].len);
+          AnsiString NUMBER = QGlobal::station[id].trackinfo[j].number.c_str();
+          AnsiString PERON = StrToPERON(QGlobal::station[id].trackinfo[j].platformav.c_str());
+          AnsiString PERONL = IntToStr(QGlobal::station[id].trackinfo[j].platformlen) + "m";
+
+          freetype::print(our_font10, 20, iWH-posy, AnsiString("  tor " + NUMBER + " : " + LENGTH + "m,   " + ELECTRIFIED  + ",     " + PERON + " " + PERONL).c_str());
+          posy+=20;
+         }
+     }
+   }
+   
+  glEnable( GL_TEXTURE_2D );
+  glEnable( GL_FOG );
+  glEnable( GL_LIGHTING );
+  true;
 }
 
 
@@ -3729,10 +3831,10 @@ bool __fastcall TWorld::LOADLOADERFONTS()
 {
  WriteLog("LOADING LOADER FONTS...");
  our_font10.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\arial.ttf").c_str(), 10);
- our_font12.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\creditvz.ttf").c_str(), 12);
+ our_font12.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\arial.ttf").c_str(), 12);
  our_font14.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\creditvz.ttf").c_str(), 14);
- our_font16.init("data\\fonts\\creditvz.ttf", 16);
- our_font18.init("data\\fonts\\creditvz.ttf", 18);			        //Build the freetype font
+ our_font16.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\creditvz.ttf").c_str(), 16);
+ our_font18.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\creditvz.ttf").c_str(), 18);			        //Build the freetype font
 
  if (!floaded) BFONT = new Font();
  if (!floaded) BFONT->init("none");

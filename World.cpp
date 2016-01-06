@@ -116,6 +116,10 @@ TWorld::TWorld()
     consolebackg = NULL;
 
     Controlled = NULL; // pojazd, który prowadzimy
+
+    QGlobal::CONSISTF = new TStringList;
+    QGlobal::CONSISTB = new TStringList;
+    QGlobal::CONSISTA = new TStringList;
 }
 
 
@@ -852,6 +856,8 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     QGlobal::SLTEMP->Add(IntToStr(QGlobal::iNODES));
     QGlobal::SLTEMP->SaveToFile("data\\pbars\\" + AnsiString(Global::szSceneryFile));
     Global::iPause = true;
+
+    if (mvControlled) Controlled->GetConsist_f(1, Controlled);
     return true;
 };
 
@@ -892,15 +898,34 @@ void TWorld::OnKeyDown(int cKey)
 //         Global::iTextMode = -999;  // resetuj flage textmode
 //        }
 
- if (Global::iPause && Global::iTextMode==VK_F10) if (Console::Pressed(VkKeyScan('y')) || Console::Pressed(VkKeyScan('n')))
-      {
-       //--Global::bAPPDONE = true;
-       Global::iPause = false;
-       Global::iTextMode = 0;
-       Global::iTextMode=(cKey=='Y')?-1:0; //flaga wyjœcia z programu
-       return; //nie przekazujemy do poci¹gu
-      }
-      
+// if (Global::iPause && Global::iTextMode==VK_F10) if (Console::Pressed(VkKeyScan('y')) || Console::Pressed(VkKeyScan('n')))
+//      {
+//       //--Global::bAPPDONE = true;
+//       Global::iPause = false;
+//       Global::iTextMode = 0;
+//       Global::iTextMode=(cKey=='Y')?-1:0; //flaga wyjœcia z programu
+//       return; //nie przekazujemy do poci¹gu
+//      }
+
+ if (Global::iTextMode == VK_F10)
+  {
+     WriteLog("PAUSED I EXIT QUERY");
+     Global::iPause = true;
+
+     if (Console::Pressed(VkKeyScan('n'))) { Global::iTextMode = -999; Global::iPause = false; }
+     // else
+     if (Console::Pressed(VkKeyScan('y')))
+         {
+           DeleteFile("templog.txt"); // usuniêcie starego
+           DeleteFile("myconsist.txt"); // usuniêcie starego
+           DeleteFile(AnsiString(QGlobal::asAPPDIR + "models\\temp\\temp.e3d").c_str());
+
+           exit(0);
+         }
+
+  }
+  else
+  {
     if (!Global::iPause)
     { // podczas pauzy klawisze nie dzia³aj¹
         AnsiString info = "Key pressed: [";
@@ -935,8 +960,23 @@ void TWorld::OnKeyDown(int cKey)
         else if (cKey > 'Z') //¿eby nie logowaæ kursorów
             WriteLog(info + AnsiString(cKey) + "]"); // numer klawisza
     }
+
+
+
     if ((cKey <= '9') ? (cKey >= '0') : false) // klawisze cyfrowe
     {
+      if (Console::Pressed(VK_LBUTTON) && cKey == '0') QGlobal::infotype = 0;
+      if (Console::Pressed(VK_LBUTTON) && cKey == '1') QGlobal::infotype = 1;
+      if (Console::Pressed(VK_LBUTTON) && cKey == '2') QGlobal::infotype = 2;
+      if (Console::Pressed(VK_LBUTTON) && cKey == '3') QGlobal::infotype = 3;
+      if (Console::Pressed(VK_LBUTTON) && cKey == '4') QGlobal::infotype = 4;
+      if (Console::Pressed(VK_LBUTTON) && cKey == '5') QGlobal::infotype = 5;
+      if (Console::Pressed(VK_LBUTTON) && cKey == '6') QGlobal::infotype = 6;
+      if (Console::Pressed(VK_LBUTTON) && cKey == '7') QGlobal::infotype = 7;
+      if (Console::Pressed(VK_LBUTTON) && cKey == '8') QGlobal::infotype = 8;
+      if (Console::Pressed(VK_LBUTTON) && cKey == '9') QGlobal::infotype = 9;
+      if (Console::Pressed(VK_LBUTTON) && cKey  > '0') Global::iTextMode = -999;
+
         int i = cKey - '0'; // numer klawisza
         if (Console::Pressed(VK_SHIFT))
         { // z [Shift] uruchomienie eventu
@@ -946,7 +986,7 @@ void TWorld::OnKeyDown(int cKey)
         }
         else // zapamiêtywanie kamery mo¿e dzia³aæ podczas pauzy
             if (FreeFlyModeFlag) // w trybie latania mo¿na przeskakiwaæ do ustawionych kamer
-            if ((Global::iTextMode != VK_F12) && (Global::iTextMode != VK_F3)) // ograniczamy u¿ycie kamer
+            if ((Global::iTextMode != VK_F12) && (Global::iTextMode != VK_F3) && (QGlobal::infotype ==0)) // ograniczamy u¿ycie kamer
             {
                 if ((!Global::pFreeCameraInit[i].x && !Global::pFreeCameraInit[i].y && !Global::pFreeCameraInit[i].z))
                 { // jeœli kamera jest w punkcie zerowym, zapamiêtanie wspó³rzêdnych i k¹tów
@@ -972,9 +1012,16 @@ void TWorld::OnKeyDown(int cKey)
         // bêdzie jeszcze za³¹czanie sprzêgów z [Ctrl]
     } //if ((cKey<='9')?(cKey>='0'):false)
 
+
+
+
 // KLAWISZE FUNKCYJNE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     else if ((cKey >= VK_F1) ? (cKey <= VK_F12) : false)
     {
+     QGlobal::infotype = 0;   // Coby wylaczyc panele informacyjne Q
+     
+     if (mvControlled) Controlled->GetConsist_f(1, Controlled);  // Q 040116: Tworzenie listy pojazdow w skladzie, liczenie masy brutto i dlugosci
+                                                                 //            Liste te docelowo mozna wyswietlic na jakims panelu informacyjnym
         switch (cKey)
         {
         case VK_F1: // czas i relacja
@@ -985,8 +1032,7 @@ void TWorld::OnKeyDown(int cKey)
         case VK_F10:
             if (Global::iTextMode == cKey)
                 Global::iTextMode =
-                    (Global::iPause && (cKey != VK_F1) ? VK_F1 :
-                                                         0); // wy³¹czenie napisów, chyba ¿e pauza
+                    (Global::iPause && (cKey != VK_F1) ? VK_F1 : 0); // wy³¹czenie napisów, chyba ¿e pauza
             else
                 Global::iTextMode = cKey;
             break;
@@ -1051,10 +1097,12 @@ void TWorld::OnKeyDown(int cKey)
            WriteLog(tmptrk->pTrack->NameGet() + " switched to " + IntToStr(state) + " " + statestr);
      }
 
-
     if (Global::iTextMode == VK_F10) // wyœwietlone napisy klawiszem F10
     { // i potwierdzenie
+        Global::iPause = false;
+        Global::iTextMode = 0;
         Global::iTextMode = (cKey == 'Y') ? -1 : 0; // flaga wyjœcia z programu
+
         return; // nie przekazujemy do poci¹gu
     }
     else if ((Global::iTextMode == VK_F12) ? (cKey >= '0') && (cKey <= '9') : false)
@@ -1190,6 +1238,8 @@ void TWorld::OnKeyDown(int cKey)
             }
         }
     }
+
+  }   //q
     // switch (cKey)
     //{case 'a': //ignorowanie repetycji
     // case 'A': Global::iKeyLast=cKey; break;
@@ -1769,191 +1819,10 @@ bool TWorld::Update()
     if (!Render())
         return false;
 
-    //**********************************************************************************************************
+//**********************************************************************************************************
+// Q: TU BYLO RENDEROWANIE KABINY, PRZENIOSLEM DO OSOBNEJ FUNKCJI I WOLAM Z TWorld::Render()
 
-    if (Train)
-    { // rendering kabiny gdy jest oddzielnym modelem i ma byc wyswietlana
-        glPushMatrix();
-        // ABu: Rendering kabiny jako ostatniej, zeby bylo widac przez szyby, tylko w widoku ze
-        // srodka
-        if ((Train->Dynamic()->mdKabina != Train->Dynamic()->mdModel) &&
-            Train->Dynamic()->bDisplayCab && !FreeFlyModeFlag)
-        {
-            vector3 pos = Train->Dynamic()->GetPosition(); // wszpó³rzêdne pojazdu z kabin¹
-            // glTranslatef(pos.x,pos.y,pos.z); //przesuniêcie o wektor (tak by³o i trzês³o)
-            // aby pozbyæ siê choæ trochê trzêsienia, trzeba by nie przeliczaæ kabiny do punktu
-            // zerowego scenerii
-            glLoadIdentity(); // zacz¹æ od macierzy jedynkowej
-            Camera.SetCabMatrix(pos); // widok z kamery po przesuniêciu
-            glMultMatrixd(Train->Dynamic()->mMatrix.getArray()); // ta macierz nie ma przesuniêcia
 
-            //*yB: moje smuuugi 1
-            if (Global::bSmudge)
-            { // Ra: uwzglêdni³em zacienienie pojazdu przy zapalaniu smug
-                // 1. warunek na smugê wyznaczyc wczeœniej
-                // 2. jeœli smuga w³¹czona, nie renderowaæ pojazdu u¿ytkownika w DynObj
-                // 3. jeœli smuga w³aczona, wyrenderowaæ pojazd u¿ytkownia po dodaniu smugi do sceny
-                if (Train->Controlled()->Battery)
-                { // trochê na skróty z t¹ bateri¹
-                    glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_ONE);
-                    //    glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_DST_COLOR);
-                    //    glBlendFunc(GL_SRC_ALPHA_SATURATE,GL_ONE);
-                    glDisable(GL_DEPTH_TEST);
-                    glDisable(GL_LIGHTING);
-                    glDisable(GL_FOG);
-                    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-                    glBindTexture(GL_TEXTURE_2D, light); // Select our texture
-                    glBegin(GL_QUADS);
-                    float fSmudge =
-                        Train->Dynamic()->MoverParameters->DimHalf.y + 7; // gdzie zaczynaæ smugê
-                    if (Train->Controlled()->iLights[0] & 21)
-                    { // wystarczy jeden zapalony z przodu
-                        glTexCoord2f(0, 0);
-                        glVertex3f(15.0, 0.0, +fSmudge); // rysowanie wzglêdem po³o¿enia modelu
-                        glTexCoord2f(1, 0);
-                        glVertex3f(-15.0, 0.0, +fSmudge);
-                        glTexCoord2f(1, 1);
-                        glVertex3f(-15.0, 2.5, 250.0);
-                        glTexCoord2f(0, 1);
-                        glVertex3f(15.0, 2.5, 250.0);
-                    }
-                    if (Train->Controlled()->iLights[1] & 21)
-                    { // wystarczy jeden zapalony z ty³u
-                        glTexCoord2f(0, 0);
-                        glVertex3f(-15.0, 0.0, -fSmudge);
-                        glTexCoord2f(1, 0);
-                        glVertex3f(15.0, 0.0, -fSmudge);
-                        glTexCoord2f(1, 1);
-                        glVertex3f(15.0, 2.5, -250.0);
-                        glTexCoord2f(0, 1);
-                        glVertex3f(-15.0, 2.5, -250.0);
-                    }
-                    glEnd();
-
-                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                    glEnable(GL_DEPTH_TEST);
-                    // glEnable(GL_LIGHTING); //i tak siê w³¹czy potem
-                    glEnable(GL_FOG);
-                }
-                glEnable(GL_LIGHTING); // po renderowaniu smugi jest to wy³¹czone
-                // Ra: pojazd u¿ytkownika nale¿a³o by renderowaæ po smudze, aby go nie rozœwietla³a
-                Global::bSmudge = false; // aby model u¿ytkownika siê teraz wyrenderowa³
-                Train->Dynamic()->Render();
-                Train->Dynamic()->RenderAlpha(); // przezroczyste fragmenty pojazdów na torach
-            } // yB: moje smuuugi 1 - koniec*/
-            else
-                glEnable(GL_LIGHTING); // po renderowaniu drutów mo¿e byæ to wy³¹czone
-
-            if (Train->Dynamic()->mdKabina) // bo mog³a znikn¹æ przy przechodzeniu do innego pojazdu
-            { // oswietlenie kabiny
-                GLfloat ambientCabLight[4] = {0.5f, 0.5f, 0.5f, 1.0f};
-                GLfloat diffuseCabLight[4] = {0.5f, 0.5f, 0.5f, 1.0f};
-                GLfloat specularCabLight[4] = {0.5f, 0.5f, 0.5f, 1.0f};
-                for (int li = 0; li < 3; li++)
-                { // przyciemnienie standardowe
-                    ambientCabLight[li] = Global::ambientDayLight[li] * 0.9;
-                    diffuseCabLight[li] = Global::diffuseDayLight[li] * 0.5;
-                    specularCabLight[li] = Global::specularDayLight[li] * 0.5;
-                }
-                switch (Train->Dynamic()->MyTrack->eEnvironment)
-                { // wp³yw œwiet³a zewnêtrznego
-                case e_canyon:
-                {
-                    for (int li = 0; li < 3; li++)
-                    {
-                        diffuseCabLight[li] *= 0.6;
-                        specularCabLight[li] *= 0.7;
-                    }
-                }
-                break;
-                case e_tunnel:
-                {
-                    for (int li = 0; li < 3; li++)
-                    {
-                        ambientCabLight[li] *= 0.3;
-                        diffuseCabLight[li] *= 0.1;
-                        specularCabLight[li] *= 0.2;
-                    }
-                }
-                break;
-                }
-                switch (Train->iCabLightFlag) // Ra: uzele¿nic od napiêcia w obwodzie sterowania
-                { // hunter-091012: uzaleznienie jasnosci od przetwornicy
-                case 0: //œwiat³o wewnêtrzne zgaszone
-                    break;
-                case 1: //œwiat³o wewnêtrzne przygaszone (255 216 176)
-                    if (Train->Dynamic()->MoverParameters->ConverterFlag ==
-                        true) // jasnosc dla zalaczonej przetwornicy
-                    {
-                        ambientCabLight[0] = Max0R(0.700, ambientCabLight[0]) * 0.75; // R
-                        ambientCabLight[1] = Max0R(0.593, ambientCabLight[1]) * 0.75; // G
-                        ambientCabLight[2] = Max0R(0.483, ambientCabLight[2]) * 0.75; // B
-
-                        for (int i = 0; i < 3; i++)
-                            if (ambientCabLight[i] <= (Global::ambientDayLight[i] * 0.9))
-                                ambientCabLight[i] = Global::ambientDayLight[i] * 0.9;
-                    }
-                    else
-                    {
-                        ambientCabLight[0] = Max0R(0.700, ambientCabLight[0]) * 0.375; // R
-                        ambientCabLight[1] = Max0R(0.593, ambientCabLight[1]) * 0.375; // G
-                        ambientCabLight[2] = Max0R(0.483, ambientCabLight[2]) * 0.375; // B
-
-                        for (int i = 0; i < 3; i++)
-                            if (ambientCabLight[i] <= (Global::ambientDayLight[i] * 0.9))
-                                ambientCabLight[i] = Global::ambientDayLight[i] * 0.9;
-                    }
-                    break;
-                case 2: //œwiat³o wewnêtrzne zapalone (255 216 176)
-                    if (Train->Dynamic()->MoverParameters->ConverterFlag ==
-                        true) // jasnosc dla zalaczonej przetwornicy
-                    {
-                        ambientCabLight[0] = Max0R(1.000, ambientCabLight[0]); // R
-                        ambientCabLight[1] = Max0R(0.847, ambientCabLight[1]); // G
-                        ambientCabLight[2] = Max0R(0.690, ambientCabLight[2]); // B
-
-                        for (int i = 0; i < 3; i++)
-                            if (ambientCabLight[i] <= (Global::ambientDayLight[i] * 0.9))
-                                ambientCabLight[i] = Global::ambientDayLight[i] * 0.9;
-                    }
-                    else
-                    {
-                        ambientCabLight[0] = Max0R(1.000, ambientCabLight[0]) * 0.5; // R
-                        ambientCabLight[1] = Max0R(0.847, ambientCabLight[1]) * 0.5; // G
-                        ambientCabLight[2] = Max0R(0.690, ambientCabLight[2]) * 0.5; // B
-
-                        for (int i = 0; i < 3; i++)
-                            if (ambientCabLight[i] <= (Global::ambientDayLight[i] * 0.9))
-                                ambientCabLight[i] = Global::ambientDayLight[i] * 0.9;
-                    }
-                    break;
-                }
-                glLightfv(GL_LIGHT0, GL_AMBIENT, ambientCabLight);
-                glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseCabLight);
-                glLightfv(GL_LIGHT0, GL_SPECULAR, specularCabLight);
-                if (Global::bUseVBO)
-                { // renderowanie z u¿yciem VBO
-                    Train->Dynamic()->mdKabina->RaRender(0.0, Train->Dynamic()->ReplacableSkinID,
-                                                         Train->Dynamic()->iAlpha);
-                    Train->Dynamic()->mdKabina->RaRenderAlpha(
-                        0.0, Train->Dynamic()->ReplacableSkinID, Train->Dynamic()->iAlpha);
-                }
-                else
-                { // renderowanie z Display List
-                    Train->Dynamic()->mdKabina->Render(0.0, Train->Dynamic()->ReplacableSkinID,
-                                                       Train->Dynamic()->iAlpha);
-                    Train->Dynamic()->mdKabina->RenderAlpha(0.0, Train->Dynamic()->ReplacableSkinID,
-                                                            Train->Dynamic()->iAlpha);
-                }
-                // przywrócenie standardowych, bo zawsze s¹ zmieniane
-                glLightfv(GL_LIGHT0, GL_AMBIENT, Global::ambientDayLight);
-                glLightfv(GL_LIGHT0, GL_DIFFUSE, Global::diffuseDayLight);
-                glLightfv(GL_LIGHT0, GL_SPECULAR, Global::specularDayLight);
-            }
-        } // koniec: if (Train->Dynamic()->mdKabina)
-        glPopMatrix();
-        //**********************************************************************************************************
-    } // koniec: if (Train)
     if (DebugModeFlag && !Global::iTextMode)
     {
         OutText01 = "  FPS: ";
@@ -2527,6 +2396,7 @@ bool TWorld::Update()
         // return false;
         OutText01 = AnsiString("To quit press [Y] key.");
         OutText03 = AnsiString("Aby zakonczyc program, przycisnij klawisz [Y].");
+        Global::iPause = true;
     }
     else if (Controlled && DebugModeFlag && !Global::iTextMode)
     {
@@ -2945,19 +2815,237 @@ bool TWorld::Render()
 
     TSubModel::iInstance = (int)(Train ? Train->Dynamic() : 0); //¿eby nie robiæ cudzych animacji
 
-    // if (Camera.Type==tp_Follow)
-    if (Train)
-        Train->Update();
+    if (Train) Train->Update();
+
+    if (!FreeFlyModeFlag) RenderCab(false);  // RENDEROWANIE KABINY GDY W KABINIE, RENDEROWANIE W TRYBIE FREEFLY REALIZOWANE JEST W DYNOBJ.CPP
 
     if (!FreeFlyModeFlag)
-     if (QGlobal::bSHOWBRIEFING) RenderLoader(QGlobal::glHDC, 77, "Zakonczono wczytywanie, wcisnij spacjê");
-   //if (QGlobal::bSHOWBRIEFING) freetype::print(our_font14, 20, Global::iWindowHeight-930, "FPS: %7.2f", GetFPS());  // PO ZALADOWANIU SCN ALE PRZED WCISNIECIEM SPACJI
+    if (QGlobal::bSHOWBRIEFING) RenderLoader(QGlobal::glHDC, 77, "Zakonczono wczytywanie, wcisnij spacjê");
 
-    glFlush();
+    if (QGlobal::bscrnoise ||
+        QGlobal::bTUTORIAL ||
+        QGlobal::bKEYBOARD ||
+        QGlobal::bSHOWBRIEFING ||
+        QGlobal::bscrfilter ||
+        Global::iTextMode == VK_F10 ||
+        QGlobal::infotype > 0 ||
+        QGlobal::mousemode){
+
+        switch2dRender();
+      //if (QGlobal::bscrfilter) RenderFILTER(0.25f);              // WYSYPUJE SIE NA TYM ZARAZ NA STARCIE, CZEMU?!
+        if (Global::iTextMode == VK_F10) RenderEXITQUERY(0.30f);
+
+        if (QGlobal::infotype > 0) RenderINFOPANEL(QGlobal::infotype, 0.25f);
+     }
+
+
+     
+    if ((Console::Pressed(VK_DELETE)) || (Console::Pressed(VK_INSERT)))
+     if (mvControlled) Controlled->GetConsist_f(1, Controlled);  // Q 040116: Tworzenie listy pojazdow w skladzie, liczenie masy brutto i dlugosci
+
+
     // Global::bReCompile=false; //Ra: ju¿ zrobiona rekompilacja
     ResourceManager::Sweep(Timer::GetSimulationTime());
+
+    glFlush();
+
     return true;
 };
+
+
+// *****************************************************************************
+// RenderCab()
+// *****************************************************************************
+
+bool TWorld::RenderCab(bool colormode)
+{
+
+    if (Train)
+    { // rendering kabiny gdy jest oddzielnym modelem i ma byc wyswietlana
+        glPushMatrix();
+        // ABu: Rendering kabiny jako ostatniej, zeby bylo widac przez szyby, tylko w widoku ze
+        // srodka
+        if ((Train->Dynamic()->mdKabina != Train->Dynamic()->mdModel) &&
+            Train->Dynamic()->bDisplayCab && !FreeFlyModeFlag)
+        {
+            vector3 pos = Train->Dynamic()->GetPosition(); // wszpó³rzêdne pojazdu z kabin¹
+            // glTranslatef(pos.x,pos.y,pos.z); //przesuniêcie o wektor (tak by³o i trzês³o)
+            // aby pozbyæ siê choæ trochê trzêsienia, trzeba by nie przeliczaæ kabiny do punktu
+            // zerowego scenerii
+            glLoadIdentity(); // zacz¹æ od macierzy jedynkowej
+            Camera.SetCabMatrix(pos); // widok z kamery po przesuniêciu
+            glMultMatrixd(Train->Dynamic()->mMatrix.getArray()); // ta macierz nie ma przesuniêcia
+
+            //*yB: moje smuuugi 1
+            if (Global::bSmudge)
+            { // Ra: uwzglêdni³em zacienienie pojazdu przy zapalaniu smug
+                // 1. warunek na smugê wyznaczyc wczeœniej
+                // 2. jeœli smuga w³¹czona, nie renderowaæ pojazdu u¿ytkownika w DynObj
+                // 3. jeœli smuga w³aczona, wyrenderowaæ pojazd u¿ytkownia po dodaniu smugi do sceny
+                if (Train->Controlled()->Battery)
+                { // trochê na skróty z t¹ bateri¹
+                    glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_ONE);
+                    //    glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_DST_COLOR);
+                    //    glBlendFunc(GL_SRC_ALPHA_SATURATE,GL_ONE);
+                    glDisable(GL_DEPTH_TEST);
+                    glDisable(GL_LIGHTING);
+                    glDisable(GL_FOG);
+                    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+                    glBindTexture(GL_TEXTURE_2D, light); // Select our texture
+                    glBegin(GL_QUADS);
+                    float fSmudge =
+                        Train->Dynamic()->MoverParameters->DimHalf.y + 7; // gdzie zaczynaæ smugê
+                    if (Train->Controlled()->iLights[0] & 21)
+                    { // wystarczy jeden zapalony z przodu
+                        glTexCoord2f(0, 0);
+                        glVertex3f(15.0, 0.0, +fSmudge); // rysowanie wzglêdem po³o¿enia modelu
+                        glTexCoord2f(1, 0);
+                        glVertex3f(-15.0, 0.0, +fSmudge);
+                        glTexCoord2f(1, 1);
+                        glVertex3f(-15.0, 2.5, 250.0);
+                        glTexCoord2f(0, 1);
+                        glVertex3f(15.0, 2.5, 250.0);
+                    }
+                    if (Train->Controlled()->iLights[1] & 21)
+                    { // wystarczy jeden zapalony z ty³u
+                        glTexCoord2f(0, 0);
+                        glVertex3f(-15.0, 0.0, -fSmudge);
+                        glTexCoord2f(1, 0);
+                        glVertex3f(15.0, 0.0, -fSmudge);
+                        glTexCoord2f(1, 1);
+                        glVertex3f(15.0, 2.5, -250.0);
+                        glTexCoord2f(0, 1);
+                        glVertex3f(-15.0, 2.5, -250.0);
+                    }
+                    glEnd();
+
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                    glEnable(GL_DEPTH_TEST);
+                    // glEnable(GL_LIGHTING); //i tak siê w³¹czy potem
+                    glEnable(GL_FOG);
+                }
+                glEnable(GL_LIGHTING); // po renderowaniu smugi jest to wy³¹czone
+                // Ra: pojazd u¿ytkownika nale¿a³o by renderowaæ po smudze, aby go nie rozœwietla³a
+                Global::bSmudge = false; // aby model u¿ytkownika siê teraz wyrenderowa³
+                Train->Dynamic()->Render();
+                Train->Dynamic()->RenderAlpha(); // przezroczyste fragmenty pojazdów na torach
+            } // yB: moje smuuugi 1 - koniec*/
+            else
+                glEnable(GL_LIGHTING); // po renderowaniu drutów mo¿e byæ to wy³¹czone
+
+            if (Train->Dynamic()->mdKabina) // bo mog³a znikn¹æ przy przechodzeniu do innego pojazdu
+            { // oswietlenie kabiny
+                GLfloat ambientCabLight[4] = {0.5f, 0.5f, 0.5f, 1.0f};
+                GLfloat diffuseCabLight[4] = {0.5f, 0.5f, 0.5f, 1.0f};
+                GLfloat specularCabLight[4] = {0.5f, 0.5f, 0.5f, 1.0f};
+                for (int li = 0; li < 3; li++)
+                { // przyciemnienie standardowe
+                    ambientCabLight[li] = Global::ambientDayLight[li] * 0.9;
+                    diffuseCabLight[li] = Global::diffuseDayLight[li] * 0.5;
+                    specularCabLight[li] = Global::specularDayLight[li] * 0.5;
+                }
+                switch (Train->Dynamic()->MyTrack->eEnvironment)
+                { // wp³yw œwiet³a zewnêtrznego
+                case e_canyon:
+                {
+                    for (int li = 0; li < 3; li++)
+                    {
+                        diffuseCabLight[li] *= 0.6;
+                        specularCabLight[li] *= 0.7;
+                    }
+                }
+                break;
+                case e_tunnel:
+                {
+                    for (int li = 0; li < 3; li++)
+                    {
+                        ambientCabLight[li] *= 0.3;
+                        diffuseCabLight[li] *= 0.1;
+                        specularCabLight[li] *= 0.2;
+                    }
+                }
+                break;
+                }
+                switch (Train->iCabLightFlag) // Ra: uzele¿nic od napiêcia w obwodzie sterowania
+                { // hunter-091012: uzaleznienie jasnosci od przetwornicy
+                case 0: //œwiat³o wewnêtrzne zgaszone
+                    break;
+                case 1: //œwiat³o wewnêtrzne przygaszone (255 216 176)
+                    if (Train->Dynamic()->MoverParameters->ConverterFlag ==
+                        true) // jasnosc dla zalaczonej przetwornicy
+                    {
+                        ambientCabLight[0] = Max0R(0.700, ambientCabLight[0]) * 0.75; // R
+                        ambientCabLight[1] = Max0R(0.593, ambientCabLight[1]) * 0.75; // G
+                        ambientCabLight[2] = Max0R(0.483, ambientCabLight[2]) * 0.75; // B
+
+                        for (int i = 0; i < 3; i++)
+                            if (ambientCabLight[i] <= (Global::ambientDayLight[i] * 0.9))
+                                ambientCabLight[i] = Global::ambientDayLight[i] * 0.9;
+                    }
+                    else
+                    {
+                        ambientCabLight[0] = Max0R(0.700, ambientCabLight[0]) * 0.375; // R
+                        ambientCabLight[1] = Max0R(0.593, ambientCabLight[1]) * 0.375; // G
+                        ambientCabLight[2] = Max0R(0.483, ambientCabLight[2]) * 0.375; // B
+
+                        for (int i = 0; i < 3; i++)
+                            if (ambientCabLight[i] <= (Global::ambientDayLight[i] * 0.9))
+                                ambientCabLight[i] = Global::ambientDayLight[i] * 0.9;
+                    }
+                    break;
+                case 2: //œwiat³o wewnêtrzne zapalone (255 216 176)
+                    if (Train->Dynamic()->MoverParameters->ConverterFlag ==
+                        true) // jasnosc dla zalaczonej przetwornicy
+                    {
+                        ambientCabLight[0] = Max0R(1.000, ambientCabLight[0]); // R
+                        ambientCabLight[1] = Max0R(0.847, ambientCabLight[1]); // G
+                        ambientCabLight[2] = Max0R(0.690, ambientCabLight[2]); // B
+
+                        for (int i = 0; i < 3; i++)
+                            if (ambientCabLight[i] <= (Global::ambientDayLight[i] * 0.9))
+                                ambientCabLight[i] = Global::ambientDayLight[i] * 0.9;
+                    }
+                    else
+                    {
+                        ambientCabLight[0] = Max0R(1.000, ambientCabLight[0]) * 0.5; // R
+                        ambientCabLight[1] = Max0R(0.847, ambientCabLight[1]) * 0.5; // G
+                        ambientCabLight[2] = Max0R(0.690, ambientCabLight[2]) * 0.5; // B
+
+                        for (int i = 0; i < 3; i++)
+                            if (ambientCabLight[i] <= (Global::ambientDayLight[i] * 0.9))
+                                ambientCabLight[i] = Global::ambientDayLight[i] * 0.9;
+                    }
+                    break;
+                }
+                glLightfv(GL_LIGHT0, GL_AMBIENT, ambientCabLight);
+                glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseCabLight);
+                glLightfv(GL_LIGHT0, GL_SPECULAR, specularCabLight);
+                if (Global::bUseVBO)
+                { // renderowanie z u¿yciem VBO
+                    Train->Dynamic()->mdKabina->RaRender(0.0, Train->Dynamic()->ReplacableSkinID,
+                                                         Train->Dynamic()->iAlpha);
+                    Train->Dynamic()->mdKabina->RaRenderAlpha(
+                        0.0, Train->Dynamic()->ReplacableSkinID, Train->Dynamic()->iAlpha);
+                }
+                else
+                { // renderowanie z Display List
+                    Train->Dynamic()->mdKabina->Render(0.0, Train->Dynamic()->ReplacableSkinID,
+                                                       Train->Dynamic()->iAlpha);
+                    Train->Dynamic()->mdKabina->RenderAlpha(0.0, Train->Dynamic()->ReplacableSkinID,
+                                                            Train->Dynamic()->iAlpha);
+                }
+                // przywrócenie standardowych, bo zawsze s¹ zmieniane
+                glLightfv(GL_LIGHT0, GL_AMBIENT, Global::ambientDayLight);
+                glLightfv(GL_LIGHT0, GL_DIFFUSE, Global::diffuseDayLight);
+                glLightfv(GL_LIGHT0, GL_SPECULAR, Global::specularDayLight);
+            }
+        } // koniec: if (Train->Dynamic()->mdKabina)
+        glPopMatrix();
+        //**********************************************************************************************************
+    } // koniec: if (Train)
+    
+  return true;
+}
 
 
 // *****************************************************************************

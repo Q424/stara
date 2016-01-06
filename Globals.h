@@ -402,6 +402,9 @@ class QGlobal
  static TStringList *LOKTUT;
  static TStringList *LOKKBD;
  static TStringList *MBRIEF;
+ static TStringList *CONSISTF;
+ static TStringList *CONSISTB;
+ static TStringList *CONSISTA;
 
  static AnsiString USERPID;
  static AnsiString asCurrentSceneryPath;
@@ -437,6 +440,7 @@ class QGlobal
  static AnsiString globalstr;
  static AnsiString asINCLUDETYPE;
  static AnsiString asINCLUDEFILE;
+ static AnsiString asDynamicTexturePath;
 
  static GLblendstate GLBLENDSTATE;
  static GLlightstate GLLIGHTSTATE;
@@ -478,6 +482,7 @@ class QGlobal
  static bool bRENDERGUI;
  static bool bSENDLOGFTP;
  static bool breplacescn;
+ static bool bISDYNAMIC;  // Q 040116: dla zmiany sciezki tekstur dla modelviewera
 
  static int objectid;
  static int cabelementid;
@@ -509,7 +514,8 @@ class QGlobal
  static float GUITUTOPAC;
  static float ffovblocktime;
  static float ftrwiresize;
-
+ static float consistlen;
+ 
  static GLuint reflecttex;
  static GLuint mousesymbol;
  static GLuint mousepoint;

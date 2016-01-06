@@ -28,6 +28,8 @@ void GetOSVersionVCL(TStringList *lines);
 AnsiString GetMachineID(LPCTSTR HDD);
 bool StrToBool(AnsiString str);
 AnsiString BoolToStr(bool value);
+AnsiString BoolToYN(bool value);
+AnsiString StrToPERON(AnsiString value);
 char* stdstrtocharc(std::string var);
 int ParseCommandline();
 AnsiString __fastcall GETCWD();

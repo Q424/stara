@@ -165,6 +165,7 @@ class TDynamicObject
     AnsiString asDestination; // dok¹d pojazd ma byæ kierowany "(stacja):(tor)"
     AnsiString asStation;   // aktualna stacja na ktorej znajduje sie pojazd (pobierane z parametru toru 'stationname')
     AnsiString asTrackNum;  // aktualny numer toru
+    AnsiString asTrainNumber; //
     matrix4x4 mMatrix; // macierz przekszta³cenia do renderowania modeli
     TMoverParameters *MoverParameters; // parametry fizyki ruchu oraz przeliczanie
     // TMoverParameters *pControlled; //wskaŸnik do sterowanego cz³onu silnikowego
@@ -392,9 +393,12 @@ class TDynamicObject
     // float EmR;
     // vector3 smokeoffset;
 
-    TDynamicObject *__fastcall ABuScanNearestObject(TTrack *Track, double ScanDir, double ScanDist,
-                                                    int &CouplNr);
+    TDynamicObject *__fastcall ABuScanNearestObject(TTrack *Track, double ScanDir, double ScanDist, int &CouplNr);
     TDynamicObject *__fastcall GetFirstDynamic(int cpl_type);
+    TDynamicObject* GetConsist_f(int cpl_type, TDynamicObject *lok);
+    TDynamicObject* GetConsist_a(int cpl_type, TDynamicObject *lok);
+    TDynamicObject* GetConsist_b(int cpl_type, TDynamicObject *lok);
+
     // TDynamicObject* GetFirstCabDynamic(int cpl_type);
     void ABuSetModelShake(vector3 mShake);
 

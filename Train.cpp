@@ -1620,6 +1620,7 @@ void TTrain::OnKeyDown(int cKey)
                                             Connect); // aktualizacja flag kierunku w sk³adzie
                                     dsbCouplerAttach->SetVolume(DSBVOLUME_MAX);
                                     dsbCouplerAttach->Play(0, 0, 0);
+
                                 }
                                 else
                                     WriteLog("Mechanical coupling failed.");
@@ -1706,6 +1707,7 @@ void TTrain::OnKeyDown(int cKey)
                                 }
                         }
                     }
+
                 }
             }
         }
@@ -1741,6 +1743,7 @@ void TTrain::OnKeyDown(int cKey)
                                 { // dŸwiêk odczepiania
                                     dsbCouplerDetach->SetVolume(DSBVOLUME_MAX);
                                     dsbCouplerDetach->Play(0, 0, 0);
+
                                 }
                     }
                 }

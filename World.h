@@ -73,6 +73,7 @@ class TWorld
     bool __fastcall RenderMOUSE(double alpha);
     bool __fastcall RenderSPLASHSCR(HDC hDC, int node, AnsiString text, double alpha);
     bool __fastcall RenderEXITQUERY(double alpha);
+    bool __fastcall RenderINFOPANEL(int num, double alpha);
     bool __fastcall RenderConsole(double speed, double dt);
     bool __fastcall RenderConsoleText();
     bool __fastcall RenderIRCEU07Text();
@@ -119,6 +120,7 @@ class TWorld
     AnsiString OutText12;
     void ShowHints();
     bool Render();
+    bool RenderCab(bool colormode);
     TCamera Camera;
     TGround Ground;
     TTrain *Train;

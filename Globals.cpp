@@ -85,12 +85,16 @@ AnsiString QGlobal::objectidinfo = "none";
 AnsiString QGlobal::globalstr = "?";
 AnsiString QGlobal::asINCLUDETYPE = "?";
 AnsiString QGlobal::asINCLUDEFILE = "?";
+AnsiString QGlobal::asDynamicTexturePath = "";
 
 TStringList *QGlobal::SLTEMP;
 TStringList *QGlobal::CONFIG;
 TStringList *QGlobal::LOKTUT;
 TStringList *QGlobal::LOKKBD;
 TStringList *QGlobal::MBRIEF;
+TStringList *QGlobal::CONSISTF;
+TStringList *QGlobal::CONSISTB;
+TStringList *QGlobal::CONSISTA;
 
 GLblendstate QGlobal::GLBLENDSTATE;
 GLlightstate QGlobal::GLLIGHTSTATE;
@@ -132,6 +136,7 @@ bool QGlobal::bADVDEBUG1 = false;
 bool QGlobal::bRENDERGUI = false;
 bool QGlobal::bSENDLOGFTP = false;
 bool QGlobal::breplacescn = false;
+bool QGlobal::bISDYNAMIC = false;
 
 int QGlobal::objectid = 0;
 int QGlobal::cabelementid = 0;
@@ -163,6 +168,8 @@ double QGlobal::fscreenfade = 1.0;
 double QGlobal::fscreenfade2 = 1.0;
 float QGlobal::ffovblocktime = 0.0;
 float QGlobal::ftrwiresize = 1.2f;
+float QGlobal::consistlen = 0.0;
+
 GLuint QGlobal::reflecttex;
 GLuint QGlobal::mousesymbol;
 GLuint QGlobal::mousepoint;
@@ -1049,7 +1056,7 @@ AnsiString Global::LoadStationsBase()
  WriteLog("");
  WriteLog("Loading station base...");
  int fn = 1;
- int tn = 1;
+ int tn = 0;
  int pos1 = 0;
  int pos2 = 0;
  bool trackinfo = false;
@@ -1067,7 +1074,7 @@ AnsiString Global::LoadStationsBase()
       {
        WriteLog("Retrieving station info from " + slFiles->Strings[i]);
        slFile->Clear();
-       slFile->LoadFromFile("stations\\" + slFiles->Strings[i]);
+       slFile->LoadFromFile(QGlobal::asAPPDIR + "stations\\" + slFiles->Strings[i]);
 
        for (int j = 0; j< slFile->Count-1; j++)  // PARSOWANIE PLIKU ...
           {
@@ -1092,15 +1099,15 @@ AnsiString Global::LoadStationsBase()
            // czytanie wlasnosci torow
            if (QGlobal::station[i].tracksnum > 0)
                {
-                if (test == "track-" + IntToStr(tn)) trackinfo = true;
+                if (test.Pos("{") > 0) tn++;
+              //  if (test == "track-" + IntToStr(tn)) trackinfo = true;
 
                 if (test == "len") QGlobal::station[i].trackinfo[tn].len = StrToInt(par1);    // dlugosc pomiedzy semaforami wyjazdowymi
                 if (test == "number") QGlobal::station[i].trackinfo[tn].number = par1.c_str();    // kolejowa numeracja torow - parzyste po lewej, nieparzyste po prawej  (w kierunku rosnacym kilometrarza)
                 if (test == "platformav") QGlobal::station[i].trackinfo[tn].platformav = par1.c_str();  // lr, l, r, none
-                if (test == "platformlen") QGlobal::station[i].trackinfo[tn].electrified = StrToInt(par1);  // dlugosc peronu
+                if (test == "platformlen") QGlobal::station[i].trackinfo[tn].platformlen = StrToInt(par1);  // dlugosc peronu
                 if (test == "electrified") QGlobal::station[i].trackinfo[tn].electrified = StrToInt(par1);  // 1 - zelektryfikowany, 0 - nie,
 
-                if (trackinfo) tn++;
                 trackinfo = false;
                }
           }
