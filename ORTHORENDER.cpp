@@ -3233,18 +3233,18 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   glEnd( );
 
   // TLO BOCZNE
-  glColor4f(0.0,0.0,0.0, 0.3);
+  glColor4f(0.0,0.0,0.0, 0.4);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glBindTexture(GL_TEXTURE_2D, QGlobal::splashscreen);
   glBegin( GL_QUADS );
   glTexCoord2f(0, 1); glVertex3i(margin-0,   40+margin, 0);   // GORNY LEWY
   glTexCoord2f(0, 0); glVertex3i(margin-0,   iWH-margin, 0); // DOLY LEWY
-  glTexCoord2f(1, 0); glVertex3i(280-margin+0, iWH-margin, 0); // DOLNY PRAWY
-  glTexCoord2f(1, 1); glVertex3i(280-margin+0, 40+margin, 0);   // GORNY PRAWY
+  glTexCoord2f(1, 0); glVertex3i(300-margin+0, iWH-margin, 0); // DOLNY PRAWY
+  glTexCoord2f(1, 1); glVertex3i(300-margin+0, 40+margin, 0);   // GORNY PRAWY
   glEnd( );
 
   // ETYKIETA PANELU
-  glColor4f(0.0,0.0,0.0, 0.3);
+  glColor4f(0.0,0.0,0.0, 0.4);
   glBegin( GL_QUADS );
   glTexCoord2f(0, 1); glVertex3i(margin-0,   margin, 0);   // GORNY LEWY
   glTexCoord2f(0, 0); glVertex3i(margin-0,   40, 0); // DOLY LEWY
@@ -3259,7 +3259,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
     {
      glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
      freetype::print(our_font16, 10, Global::iWindowHeight-20, AnsiString("INFORMACJE O SKLADZIE POCIAGU " + Controlled->asTrainNumber).c_str());
-     freetype::print(our_font10, 20, Global::iWindowHeight-posy, QGlobal::CONSISTF->Strings[l].c_str());
+     freetype::print(our_font10, 10, Global::iWindowHeight-posy, QGlobal::CONSISTF->Strings[l].c_str());
      posy+= 20;
     }
    }
@@ -3300,9 +3300,11 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
           freetype::print(our_font10, 20, iWH-posy, AnsiString("  tor " + NUMBER + " : " + LENGTH + "m,   " + ELECTRIFIED  + ",     " + PERON + " " + PERONL).c_str());
           posy+=20;
          }
+     posy+=20;
+     freetype::print(our_font10, 12, Global::iWindowHeight-posy, "linie wychodzace i pierwsza stacja na nich");
      }
    }
-   
+
   glEnable( GL_TEXTURE_2D );
   glEnable( GL_FOG );
   glEnable( GL_LIGHTING );

@@ -407,8 +407,7 @@ class TModel3d : public CMesh
     AnsiString asName;
     AnsiString asNodeName;
     AnsiString asFileInc;
-    AnsiString asDest;
-    AnsiString asTrainNumber;
+
     double posx;
     double posy;
     double posz;

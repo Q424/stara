@@ -41,6 +41,7 @@ http://mozilla.org/MPL/2.0/.
 #include "Console.h"
 #include "Names.h"
 #include "World.h"
+#include "qutils.h"
 
 #define _PROBLEND 1
 //---------------------------------------------------------------------------
@@ -77,8 +78,12 @@ TGroundNode::TGroundNode()
     DisplayListID = 0;
     Pointer = NULL; // zerowanie wskaŸnika kontekstowego
     bVisible = false; // czy widoczny
+    bINTRAIN = false;
     fSquareRadius = 10000 * 10000;
     fSquareMinRadius = 0;
+    fPassengerSpeed = 0.6;
+    fPassengerDDelay = 1.5;
+    fPassengerCDelay = 0.0;
     asName = "";
     // Color= TMaterialColor(1);
     // fAngle=0; //obrót dla modelu
@@ -147,6 +152,7 @@ TGroundNode::~TGroundNode()
 void TGroundNode::Init(int n)
 { // utworzenie tablicy wierzcho³ków
     bVisible = false;
+    bINTRAIN = false;
     iNumVerts = n;
     Vertices = new TGroundVertex[iNumVerts];
 }
@@ -549,8 +555,18 @@ void TGroundNode::RenderHidden()
     }
 };
 
+AnsiString TGroundNode::GetPosStr()
+{
+ return  AnsiString(FloatToStr(pCenter.x) + " " + FloatToStr(pCenter.y) + " " + FloatToStr(pCenter.z));
+}
+
 void TGroundNode::RenderDL()
 { // wyœwietlanie obiektu przez Display List
+  // WriteLog(asName + ", " + GetPosStr());
+
+ if (iSubType == 101) Global::findpassengerdynamic(pCenter, asName, asTrainNumber, asDest, this);    // Q 060116: JEZELI PASAZER TO SZUKANIE WLASCIWEGO WAGONU
+
+
     switch (iType)
     { // obiekty renderowane niezale¿nie od odleg³oœci
     case TP_SUBMODEL:
@@ -569,7 +585,7 @@ void TGroundNode::RenderDL()
     case TP_TRACK:
         return pTrack->Render();
     case TP_MODEL:
-        return Model->RenderDL(&pCenter);
+        if (!bINTRAIN) return Model->RenderDL(&pCenter);  // Q 070116: !bINTRAIN bo model moze byc pasazerem ktory moze wejsc do wagonu - wtedy nie renderujemy
     }
     // TODO: sprawdzic czy jest potrzebny warunek fLineThickness < 0
     // if ((iNumVerts&&(iFlags&0x10))||(iNumPts&&(fLineThickness<0)))
@@ -1426,6 +1442,25 @@ TGroundNode *__fastcall TGround::FindGroundNodeDist(float dist, TGroundNodeType 
     return NULL;
 }
 
+
+// *****************************************************************************
+//
+TGroundNode *__fastcall TGround::FindGroundNodeDYND(vector3 PPos, AnsiString REL, AnsiString DST, TGroundNodeType iNodeType)
+{
+    float dist = 500.0f;
+    //vector3 vtmp = vector3(px,py,pz);
+    TGroundNode *Current;
+    for (Current = nRootOfType[iNodeType]; Current; Current = Current->nNext)
+    {
+     if ((Current->iType == TP_DYNAMIC) )
+     {
+      float fSquareDist = SquareMagnitude(vector3(Current->DynamicObject->GetPosition()) - vector3(PPos));
+      if (fSquareDist < dist) return Current;
+     }
+    }
+  return NULL;
+}
+
 double fTrainSetVel = 0;
 double fTrainSetDir = 0;
 double fTrainSetDist = 0; // odleg³oœæ sk³adu od punktu 1 w stronê punktu 2
@@ -1568,6 +1603,7 @@ void TGround::RaTriangleDivider(TGroundNode *node)
 
 TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
 { // wczytanie wpisu typu "node"
+   WriteLog("+");
     // parser->LoadTraction=Global::bLoadTraction; //Ra: tu nie potrzeba powtarzaæ
     AnsiString str, str1, str2, str3, str4, Skin, DriverType, asNodeName;
     int nv, ti, i, n;
@@ -2002,10 +2038,15 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
         */
         tmp->Model = new TAnimModel();
         tmp->Model->RaAnglesSet(aRotate.x, tf1 + aRotate.y, aRotate.z); // dostosowanie do pochylania linii
-        if (tmp->Model->Load(parser, tmp->iType == TP_TERRAIN)) // wczytanie modelu, tekstury i stanu œwiate³...
 
-            tmp->iFlags =
-                tmp->Model->Flags() | 0x200; // ustalenie, czy przezroczysty; flaga usuwania
+        if (tmp->Model->Load(parser, tmp->iType == TP_TERRAIN)) // wczytanie modelu, tekstury i stanu œwiate³...
+         {
+            tmp->iFlags = tmp->Model->Flags() | 0x200; // ustalenie, czy przezroczysty; flaga usuwania
+            tmp->Model->iTYPE = 0;
+            tmp->asTrainNumber = QGlobal::asPASSTRAINNUMBER.c_str();     // Dla modeli pasazerow numer pociagu na ktory czekaja
+            tmp->asDest = QGlobal::asPASSDESTINATION.c_str();     // i nazwa stacji docelowej
+          //WriteLog("xxx : [" + AnsiString(AnsiString(tmp->Model->asTRAINNUMBER.c_str()) + "], [" + AnsiString(tmp->Model->asDESTINATION.c_str()) + "]"));
+         }
         else if (tmp->iType != TP_TERRAIN)
         { // model nie wczyta³ siê - ignorowanie node
             delete tmp;
@@ -2505,8 +2546,17 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
         if (str == AnsiString("node"))
         {
             LastNode = AddGroundNode(&parser); // rozpoznanie wêz³a
+
+            if (QGlobal::asINCLUDETYPE == "posers") LastNode->iSubType = 101; //Q 070116: wedlug typu obiektu ustalamy jego kod cyfrowy
+            if (QGlobal::asINCLUDETYPE == "posers") LastNode->fPassengerSpeed = getRandomMinMax( 0.45f, 0.60f );
+            if (QGlobal::asINCLUDETYPE == "posers") LastNode->fPassengerDDelay = getRandomMinMax( 0.30f, 4.00f );
+            if (QGlobal::asINCLUDETYPE == "posers") LastNode->fPassengerCDelay = 0.0;
+            
+            if (LastNode->asName == "") LastNode->asName = QGlobal::asINCLUDETYPE + "-" + LastNode->asTrainNumber + "-" + LastNode->asDest;
             if (LastNode)
             { // je¿eli przetworzony poprawnie
+             WriteLog(IntToStr(LastNode->iType) + " [" + LastNode->asTrainNumber + "]:[" + LastNode->asDest + "]");
+             WriteLog("---------------------------------------------------------");
                 if (LastNode->iType == GL_TRIANGLES)
                 {
                     if (!LastNode->Vertices)

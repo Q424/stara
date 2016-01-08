@@ -196,8 +196,9 @@ std::string cParser::readToken(bool ToLower, const char *Break)
 
         QGlobal::asINCLUDETYPE = AnsiString(includetype.c_str());   //Q 010116: trzymamy w globalnej do przypisania objektowi TModel3d
         QGlobal::asINCLUDEFILE = AnsiString(includefile.c_str());
-
-        WriteLog("INCTYPE: " + QGlobal::asINCLUDETYPE);
+        QGlobal::asPASSTRAINNUMBER = "";
+        QGlobal::asPASSDESTINATION = "";
+      //WriteLog("INCTYPE: " + QGlobal::asINCLUDETYPE);
 
         AnsiString test = LowerCase(QGlobal::asINCLUDETYPE);
 
@@ -225,9 +226,9 @@ std::string cParser::readToken(bool ToLower, const char *Break)
                 par = parameter.c_str();
                 tst = par.SubString(1,4);
 
-                if ( tst == "rel-") trainnumber = AnsiString(parameter.c_str()); // WriteLog("TRAINNUMBER " + AnsiString(parameter.c_str()));
-                if ( tst == "dst-") stationname = AnsiString(parameter.c_str()); //WriteLog("DESTINATION " + AnsiString(parameter.c_str()));
-                if ( tst == "dst-") Global::setpassengerdest(trainnumber, stationname);
+                if ( tst == "rel-") QGlobal::asPASSTRAINNUMBER = Trim(AnsiString(parameter.c_str()).SubString(5, 255)); // WriteLog("TRAINNUMBER " + AnsiString(parameter.c_str()));
+                if ( tst == "dst-") QGlobal::asPASSDESTINATION = Trim(AnsiString(parameter.c_str()).SubString(5, 255)); //WriteLog("DESTINATION " + AnsiString(parameter.c_str()));
+                if ( tst == "dst-") Global::setpassengerdest(QGlobal::asPASSTRAINNUMBER, QGlobal::asPASSDESTINATION);
 
                 parameters.push_back(parameter);
                 parameter = readToken(ToLower);

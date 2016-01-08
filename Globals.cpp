@@ -14,6 +14,11 @@ http://mozilla.org/MPL/2.0/.
 
 #include "system.hpp"
 #include "classes.hpp"
+#include<iostream>
+#include<vector.h>
+#include<algorithm>
+#include "assert.h"
+
 #pragma hdrstop
 
 #include "Globals.h"
@@ -24,8 +29,15 @@ http://mozilla.org/MPL/2.0/.
 #include "Console.h"
 #include <Controls.hpp> //do odczytu daty
 #include "World.h"
-
+#include "model3d.h"
+#include "dumb3d.h"
+#include "dynobj.h"
+#include "qutils.h"
+#include "world.h"
+#include "timer.h"
 // namespace Global {
+
+//using namespace Math3d
 
 // *****************************************************************************
 // Q Globals
@@ -86,6 +98,8 @@ AnsiString QGlobal::globalstr = "?";
 AnsiString QGlobal::asINCLUDETYPE = "?";
 AnsiString QGlobal::asINCLUDEFILE = "?";
 AnsiString QGlobal::asDynamicTexturePath = "";
+AnsiString QGlobal::asPASSTRAINNUMBER = "";
+AnsiString QGlobal::asPASSDESTINATION = "";
 
 TStringList *QGlobal::SLTEMP;
 TStringList *QGlobal::CONFIG;
@@ -184,8 +198,10 @@ GLfloat QGlobal::selcolor[4];
 
 char **QGlobal::argv = NULL;
 
+a QGlobal::array[256];
 stationscontainer QGlobal::station[MAXSTATIONS];
-
+pentrypointscontainer QGlobal::PEP[MAXPASSENGERENTYPOINTS];
+int QGlobal::currententrypoint = 0;
 
 // parametry do u¿ytku wewnêtrznego
 // double Global::tSinceStart=0;
@@ -1130,14 +1146,110 @@ int Global::findstationbyname(AnsiString name)
  return -1;
 }
 
-
-int Global::setpassengerdest(AnsiString train, AnsiString station)
+// **********************************************************************************************************
+// USTAWIANIE PASAZEROWI NUMERU POCIAGU I MIEJSCA DOCELOWEGO
+// **********************************************************************************************************
+int Global::setpassengerdest(AnsiString train, AnsiString station)   // Wywolywane z parser.cpp
 {
  train = Trim(train);
  station = Trim(station);
- //WriteLog(train.SubString(5,255) + " : " + station.SubString(5,255));
+ WriteLog("DESTSTR: [" + train + "]:[" + station + "]");
  return 0;
 }
+
+
+// **********************************************************************************************************
+// Wolane z ground.cpp w TGroundNode::RenderDL()  !! PRZENIESC DO TGroundNode::Update() !!
+// **********************************************************************************************************
+int Global::findpassengerdynamic(vector3 PPos, AnsiString asName, AnsiString Prel, AnsiString DST, TGroundNode *GN)
+{
+ AnsiString Drel, Ddst, Dnam;
+ vector3 dpnt, vstart, vend, dnorm;
+ TDynamicObject *DO;
+ TGroundNode *pdyn;
+ float elapsed = 0.003f;
+ float distance = 0;
+ float distance2 = 0;
+ float walkdelay = 0;
+        
+ for (int l = 0; l<255-1; l++)    // Jedziemy po tablicy entrypointow...
+     {
+      Drel = QGlobal::PEP[l].dyntrainnumber;
+      Ddst = QGlobal::PEP[l].dyndestination;
+      dpnt = QGlobal::PEP[l].point;
+      Dnam = QGlobal::PEP[l].dynname;
+
+      float fSquareDist = SquareMagnitude(dpnt - vector3(PPos)); // porownywanie pozycji aktualnego posera z pozycjami wszystkich pojazdow
+
+      if ((!GN->bINTRAIN) && (fSquareDist < 1700))   // Jezeli odleglosc pasazera do pojadu mniejsza niz 300...
+        {
+          if (Prel == Drel) // Gdy relacja pasazera zgadza sie z numerem pociagu...
+           {
+           // Sortowanie punktow wejsciowych aby najblizszy pasazerowi byl na pierwszym miejscu listy
+            for (int j = 0; j < 255 - 1; j++)
+             {
+              QGlobal::array[j].num1 = SquareMagnitude(QGlobal::PEP[j].point - GN->pCenter);
+              QGlobal::array[j].num2 = QGlobal::PEP[j].point;
+             }
+            a::sort_by = 1;
+            std::sort(QGlobal::array, QGlobal::array + 255);                    // sortowanie po odleglosci pomiedzy pasazerem a punktem wejscia
+
+            pdyn = Global::pGround->DynamicFindAny(Dnam);                     // znajdz wskaznik na pojazd znajac nazwe z tablicy entrypointow
+            if (!GN->bINTRAIN && pdyn != NULL) DO = pdyn->DynamicObject;
+           
+            
+            if (DO->MoverParameters->Vel < 4.0)
+            {
+             GN->fPassengerCDelay += 0.004;
+            }
+
+            if (GN->fPassengerCDelay >= GN->fPassengerDDelay)
+            {
+            dpnt = QGlobal::array[0].num2;                                      // pierwszy item zawsze jest najmniejsza wartoscia (najblizsze drzwi)
+            distance = SquareMagnitude(dpnt - vector3(PPos));                   // dystans do przebycia
+            vector3 direction = Normalize(dpnt - vector3(PPos));
+            GN->pCenter += (direction * GN->fPassengerSpeed) * elapsed;         // aktualizacja pozycji
+
+            distance2 = SquareMagnitude(dpnt - GN->pCenter);                    // dystans pomiedzy pasazerem a drzwiami
+            }
+
+
+            // Wejscie pasazera do wagonu
+            if ((distance2 > 0) && (distance2 < 0.3))                           // jezeli dystans pomiedzy pasazerem a drzwiami wiekszy od 0 i mniejszy niz 10cm...
+             {
+
+
+              if (!GN->bINTRAIN && pdyn != NULL)   // JEZELI JESCZE NIE W POJEZDZIE TO...
+                 {
+                  if (DO->MoverParameters->Vel < 0.4) // ...GDY PREDKOSC MNIEJSZA OD 0.5km/h
+                    {
+                     DO->MoverParameters->Mass += 80; // zwiekszenie masy wagonu o 80kg (random cos nie dziala) //getRandomMinMax( 60.0f, 100.0f );    // Zwiekszyc wage wagonu o wage pasazera
+                     GN->bINTRAIN = true;           // Wlazi do pociagu     // Ustawienie flagi noda pasazera ze w pociagu
+                    }
+                  }
+              Global::pWorld->Controlled->GetConsist_f(1, Global::pWorld->Controlled); // odswiezenie danych na liscie skladu
+             }
+
+             //glEnable(GL_LINE_SMOOTH);
+             //glLineWidth(1.62);
+             //glColor3ub(150,10,10);
+             //glBegin(GL_LINES);
+             //glVertex3f(dpnt.x, dpnt.y+0.2, dpnt.z);
+             //glVertex3f(PPos.x, PPos.y+0.2, PPos.z);
+             //glEnd();
+             //WriteLog("POSER " + asName + ": " + REL + ", " + DST + ", train: " + drel + " wagon: " + dnam);
+           }
+           Global::pWorld->Controlled->GetConsist_f(1, Global::pWorld->Controlled);
+        }
+     }
+ return 0;
+}
+ 
+   //SLDOORS->Add(FloatToStr(array[0].num1) + ", " + FloatToStr(array[0].num2.x)+ ", " + FloatToStr(array[0].num2.y)+ ", " + FloatToStr(array[0].num2.z));
+   //SLDOORS->Add(FloatToStr(array[1].num1) + ", " + FloatToStr(array[1].num2.x)+ ", " + FloatToStr(array[1].num2.y)+ ", " + FloatToStr(array[1].num2.z));
+   //SLDOORS->Add(FloatToStr(array[2].num1) + ", " + FloatToStr(array[2].num2.x)+ ", " + FloatToStr(array[2].num2.y)+ ", " + FloatToStr(array[2].num2.z));
+   //SLDOORS->Add(FloatToStr(array[3].num1) + ", " + FloatToStr(array[3].num2.x)+ ", " + FloatToStr(array[3].num2.y)+ ", " + FloatToStr(array[3].num2.z));
+
 
 
 #pragma package(smart_init)

@@ -1657,7 +1657,7 @@ TModel3d::TModel3d()
     Root = NULL;
     iFlags = 0;
     iSubModelsCount = 0;
-    asName = "?";
+    asName = QGlobal::asNODENAME;
     asFile = "?";
     asType = "?";
     iModel = NULL; // tylko jak wczytany model binarny
@@ -2236,12 +2236,9 @@ void TModel3d::Render(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSki
       QModelInfo::iNI_submodels      = iSubModelsCount;
       QModelInfo::iNI_numtri         = iNumFaces;
       QModelInfo::iNI_numverts       = iNumVerts;
-//    QModelInfo::fNI_angle          = Global::fNI_angle;
-//    QModelInfo::fNI_posx           = posx;
-//    QModelInfo::fNI_posy           = posy;
-//    QModelInfo::fNI_posz           = posz;
       QModelInfo::bnearestobjengaged = true;
      }
+
     // odwrócenie flag, aby wy³apaæ nieprzezroczyste
     Root->ReplacableSet(ReplacableSkinId, iAlpha ^ 0x0F0F000F);
     Root->RenderDL();
@@ -2260,8 +2257,10 @@ void TModel3d::RenderAlpha(vector3 *vPosition, vector3 *vAngle, GLuint *Replacab
         glRotated(vAngle->x, 1.0, 0.0, 0.0);
     if (vAngle->z != 0.0)
         glRotated(vAngle->z, 0.0, 0.0, 1.0);
-    TSubModel::fSquareDist =
-        SquareMagnitude(*vPosition - Global::GetCameraPosition()); // zmienna globalna!
+
+//--    if (iTYPE == 101) Global::findpassengerdynamic(vPosition, QGlobal::asPASSTRAINNUMBER, QGlobal::asPASSDESTINATION);   // Q 060116: JEZELI PASAZER TO SZUKANIE WLASCIWEGO WAGONU
+
+    TSubModel::fSquareDist = SquareMagnitude(*vPosition - Global::GetCameraPosition()); // zmienna globalna!
     Root->ReplacableSet(ReplacableSkinId, iAlpha);
     Root->RenderAlphaDL();
     glPopMatrix();

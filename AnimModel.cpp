@@ -416,6 +416,11 @@ TAnimModel::TAnimModel()
     ReplacableSkinId[2] = 0;
     ReplacableSkinId[3] = 0;
     ReplacableSkinId[4] = 0;
+    bISLAMP = false;
+    iTYPE = 0;
+    asTRAINNUMBER = "";
+    asDESTINATION = "";
+
     for (int i = 0; i < iMaxNumLights; i++)
     {
         LightsOn[i] = LightsOff[i] = NULL; // normalnie nie ma
@@ -623,6 +628,8 @@ void TAnimModel::RenderAlphaVBO(vector3 pPosition, double fAngle)
 
 void TAnimModel::RenderDL(vector3 pPosition, double fAngle)
 {
+    QGlobal::asPASSTRAINNUMBER = asTRAINNUMBER.c_str();
+    QGlobal::asPASSDESTINATION = asDESTINATION.c_str();
     RaAnimate(); // jednorazowe przeliczenie animacji
     RaPrepare();
     if (pModel) // renderowanie rekurencyjne submodeli
@@ -631,6 +638,8 @@ void TAnimModel::RenderDL(vector3 pPosition, double fAngle)
 
 void TAnimModel::RenderAlphaDL(vector3 pPosition, double fAngle)
 {
+    QGlobal::asPASSTRAINNUMBER = asTRAINNUMBER.c_str();
+    QGlobal::asPASSDESTINATION = asDESTINATION.c_str();
     RaPrepare();
     if (pModel)
         pModel->RenderAlpha(pPosition, fAngle, ReplacableSkinId, iTexAlpha);
@@ -656,6 +665,8 @@ int TAnimModel::Flags()
 
 void TAnimModel::RenderDL(vector3 *vPosition)
 {
+    QGlobal::asPASSTRAINNUMBER = asTRAINNUMBER.c_str();
+    QGlobal::asPASSDESTINATION = asDESTINATION.c_str();
     RaAnimate(); // jednorazowe przeliczenie animacji
     RaPrepare();
     if (pModel) // renderowanie rekurencyjne submodeli
@@ -663,6 +674,8 @@ void TAnimModel::RenderDL(vector3 *vPosition)
 };
 void TAnimModel::RenderAlphaDL(vector3 *vPosition)
 {
+    QGlobal::asPASSTRAINNUMBER = asTRAINNUMBER.c_str();
+    QGlobal::asPASSDESTINATION = asDESTINATION.c_str();
     RaPrepare();
     if (pModel) // renderowanie rekurencyjne submodeli
         pModel->RenderAlpha(vPosition, &vAngle, ReplacableSkinId, iTexAlpha);

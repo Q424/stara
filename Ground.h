@@ -88,6 +88,13 @@ class TGroundNode : public Resource
   private:
   public:
     TGroundNodeType iType; // typ obiektu
+    AnsiString asName; // nazwa (nie zawsze ma znaczenie)
+    AnsiString asDest;
+    AnsiString asTrainNumber;
+    int iSubType;
+    float fPassengerSpeed;
+    float fPassengerDDelay;
+    float fPassengerCDelay;
     union
     { // Ra: wska¿niki zale¿ne od typu - zrobiæ klasy dziedziczone zamiast
         void *Pointer; // do przypisywania NULL
@@ -104,7 +111,7 @@ class TGroundNode : public Resource
         TTextSound *tsStaticSound; // dŸwiêk przestrzenny
         TGroundNode *nNode; // obiekt renderuj¹cy grupowo ma tu wskaŸnik na listê obiektów
     };
-    AnsiString asName; // nazwa (nie zawsze ma znaczenie)
+
     union
     {
         int iNumVerts; // dla trójk¹tów
@@ -132,6 +139,8 @@ class TGroundNode : public Resource
     int iFlags; // tryb przezroczystoœci: 0x10-nieprz.,0x20-przezroczysty,0x30-mieszany
     int Ambient[4], Diffuse[4], Specular[4]; // oœwietlenie
     bool bVisible;
+    bool bINTRAIN; // flaga dla modelu pasazera okreslajaca czy jest w pociagu
+    bool bMOVING;
     TGroundNode *nNext; // lista wszystkich w scenerii, ostatni na pocz¹tku
     TGroundNode *nNext2; // lista obiektów w sektorze
     TGroundNode *nNext3; // lista obiektów renderowanych we wspólnym cyklu
@@ -153,7 +162,7 @@ class TGroundNode : public Resource
             return nNext->Find(asNameToFind, iNodeType);
         return NULL;
     };
-
+    AnsiString GetPosStr();
     void Compile(bool many = false);
     void Release();
     bool GetTraction();
@@ -349,6 +358,7 @@ class TGround
     void DynamicList(bool all = false);
     TGroundNode *__fastcall FindGroundNode(AnsiString asNameToFind, TGroundNodeType iNodeType);
     TGroundNode *__fastcall FindGroundNodeDist(float dist, TGroundNodeType iNodeType);          //Q 020116: do wyszukiwania rozjazdu w celu przelozenia
+    TGroundNode *__fastcall FindGroundNodeDYND(vector3 PPos, AnsiString REL, AnsiString DST, TGroundNodeType iNodeType);
     TGroundRect *__fastcall GetRect(double x, double z)
     {
         return &Rects[GetColFromX(x) / iNumSubRects][GetRowFromZ(z) / iNumSubRects];

@@ -19,12 +19,17 @@ http://mozilla.org/MPL/2.0/.
 #include "opengl/glew.h"
 #include "dumb3d.h"
 #include "Logs.h"
+#include "model3d.h"
+#include "ground.h"
 //#include "world.h"
 
 #define PI 3.1415926535897f
 #define DTOR (PI/180.0f)
 #define SQR(x) (x*x)
 #define MAXSTATIONS 64
+#define MAXPASSENGERENTYPOINTS 256
+
+using namespace Math3D;
 
 typedef struct {
 	GLboolean blendEnabled;
@@ -58,7 +63,28 @@ struct stationscontainer
   trackinfocontainer trackinfo[50];
 };
 
-using namespace Math3D;
+struct pentrypointscontainer
+{
+ vector3 point;
+ AnsiString dynname;
+ AnsiString dyntrainnumber;
+ AnsiString dyndestination;
+};
+
+struct a
+{
+    static int sort_by;// determines which member to sort by
+    float num1;
+    vector3 num2;
+    bool operator<(const a& rhs) const
+    {
+        if( sort_by == 1) return num1 < rhs.num1;// sort by num1
+        if( sort_by == 2) return num2 < rhs.num2;// sort by num1
+      //  return num2 < rhs.num2;// sort by num2
+    }
+};
+
+int a::sort_by = 1;// default will be to sort by num1
 
 
 // DEFINICJE ELEMENTOW KABINY
@@ -440,6 +466,8 @@ class QGlobal
  static AnsiString globalstr;
  static AnsiString asINCLUDETYPE;
  static AnsiString asINCLUDEFILE;
+ static AnsiString asPASSTRAINNUMBER;
+ static AnsiString asPASSDESTINATION;
  static AnsiString asDynamicTexturePath;
 
  static GLblendstate GLBLENDSTATE;
@@ -528,7 +556,10 @@ class QGlobal
  static GLuint SCRFILTER;
  static GLfloat selcolor[4];
 
+ static a array[256];
  static stationscontainer station[MAXSTATIONS];     // POWODUJE KRZACZENIE PODCZAS WYCHODZENIA???
+ static pentrypointscontainer PEP[MAXPASSENGERENTYPOINTS];
+ static int currententrypoint;
 };
 
 class Global
@@ -692,6 +723,7 @@ class Global
     static double Min0RSpeed(double vel1, double vel2);
     static AnsiString LoadStationsBase();
     static int findstationbyname(AnsiString name);
+    static int findpassengerdynamic(vector3 PPos, AnsiString asName, AnsiString REL, AnsiString DST, TGroundNode *GN);
     static int listdir(const char *szDir, bool bCountHidden, AnsiString ext, TStringList &SL );
     static int setpassengerdest(AnsiString train, AnsiString station);
 };

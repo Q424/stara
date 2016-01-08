@@ -148,6 +148,10 @@ class TAnimModel
     void RaAnimate(); // przeliczenie animacji egzemplarza
     void RaPrepare(); // ustawienie animacji egzemplarza na wzorcu
   public:
+    bool bISLAMP;    //Q 060116:
+    int iTYPE;       //Q 060116:
+    std::string asTRAINNUMBER;  //Q 060116:
+    std::string asDESTINATION;  //Q 060116:
     GLuint ReplacableSkinId[5]; // McZapkie-020802: zmienialne skory
     static TAnimContainer *acAnimList; // lista animacji z eventem, które musz¹ byæ przeliczane
     // równie¿ bez wyœwietlania

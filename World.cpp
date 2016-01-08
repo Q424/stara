@@ -1018,7 +1018,7 @@ void TWorld::OnKeyDown(int cKey)
 // KLAWISZE FUNKCYJNE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     else if ((cKey >= VK_F1) ? (cKey <= VK_F12) : false)
     {
-     QGlobal::infotype = 0;   // Coby wylaczyc panele informacyjne Q
+     if ((cKey == VK_F1)) QGlobal::infotype = 0;   // Coby wylaczyc panele informacyjne Q
      
      if (mvControlled) Controlled->GetConsist_f(1, Controlled);  // Q 040116: Tworzenie listy pojazdow w skladzie, liczenie masy brutto i dlugosci
                                                                  //            Liste te docelowo mozna wyswietlic na jakims panelu informacyjnym
@@ -1484,6 +1484,9 @@ bool TWorld::Update()
     if (Controlled) QGlobal::iSTATIONPOSINTAB = Global::findstationbyname(Trim(Controlled->asStation)); // Q 030116: Pobieranie pozycji itemu stacji na liscie
 
     UpdateTimers(Global::iPause);
+
+    //WriteLog("----------------------------------");
+    QGlobal::currententrypoint = 0;
     
     if (!Global::iPause)
     { // jak pauza, to nie ma po co tego przeliczaæ
@@ -1842,6 +1845,7 @@ bool TWorld::Update()
 
     if (Global::iTextMode == VK_F8)
     {
+        bool ctr = Controlled;
         OutText01 = "";
         OutText02 = "";
         OutText03 = "";
@@ -1861,8 +1865,8 @@ bool TWorld::Update()
             OutText01 += " (slowmotion " + AnsiString(Global::iSlowMotion) + ")";
         OutText01 += ", sectors: ";
         OutText01 += AnsiString(Ground.iRendered);
-        OutText02 = "STATION NAME: " + Controlled->asStation;
-        OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
+if(ctr) OutText02 = "STATION NAME: " + Controlled->asStation;
+if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
 
         if (QModelInfo::bnearestobjengaged)
         {

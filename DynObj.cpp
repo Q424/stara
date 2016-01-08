@@ -261,16 +261,14 @@ TDynamicObject *__fastcall TDynamicObject::GetFirstDynamic(int cpl_type)
     return FirstFind(cpl_type); // u¿ywa referencji
 };
 
-
+int doorcount;
+int vechcount;
 // *********************************************************************************************************
 // Q 040116: FUNKCJA WRZUCAJACA LOKOMOTYWE (POJAZD WZGLEDEM KTOREGO SA SZUKANE INNE) POMIEDZY POJAZDY PRZEDNIE I TYLNE
 // *********************************************************************************************************
 TDynamicObject* TDynamicObject::GetConsist_f(int cpl_type, TDynamicObject *lok)
 {
-// if (Global::bQueuedAdvLog) WriteLog("TDynamicObject::GetConsist_f(int cpl_type, TDynamicObject *lok)");
-
  AnsiString DYNNAME, TYPENAME, TRAINTYPE, TRAINNAME, FILENAME, TRACK, BASEDIR0, BASEDIR1, BASEDIR2, TEXT, BODY;
- TDynamicObject VECH ;
 
  QGlobal::CONSISTF->Clear();
  QGlobal::CONSISTB->Clear();
@@ -278,21 +276,24 @@ TDynamicObject* TDynamicObject::GetConsist_f(int cpl_type, TDynamicObject *lok)
 
  CONSISTLEN = 0.0f;
  CONSISTMASS = 0.0f;
+ doorcount = 0;
+ vechcount = 0;
 
  GetConsist_a(1, lok);      
  GetConsist_b(1, lok);
 
  for (int LOOP=0; LOOP<QGlobal::CONSISTA->Count; LOOP++) {QGlobal::CONSISTF->Add(QGlobal::CONSISTA->Strings[LOOP]); }
-                                                          QGlobal::CONSISTF->Add("++" + lok->MoverParameters->Name + ", " + lok->MyTrack->NameGet() +  ", " + lok->MoverParameters->TypeName + ", " + lok->asTrainNumber);
+                                                          QGlobal::CONSISTF->Add("++" + lok->MoverParameters->Name + ", " + lok->MoverParameters->TypeName + ", " + lok->asTrainNumber + ", doors=" + IntToStr(doorcount));
  for (int LOOP=0; LOOP<QGlobal::CONSISTB->Count; LOOP++) {QGlobal::CONSISTF->Add(QGlobal::CONSISTB->Strings[LOOP]); }
 
  QGlobal::consistlen = CONSISTLEN;
  QGlobal::CONSISTF->Add("");
- QGlobal::CONSISTF->Add("");
+ QGlobal::CONSISTF->Add("-----------------------------------------------------------------------------");
+ QGlobal::CONSISTF->Add("WAGONOW: " + AnsiString(vechcount));
  QGlobal::CONSISTF->Add("DLUGOSC: " + AnsiString(FormatFloat("0.00", (CONSISTLEN))) + "m");
  QGlobal::CONSISTF->Add("MASA BR: " + AnsiString(FormatFloat("0.00", (CONSISTMASS/1000))) + "t" );
- WriteLog("");
- QGlobal::CONSISTF->SaveToFile("myconsist.txt");
+ //WriteLog("");
+ //QGlobal::CONSISTF->SaveToFile("myconsist.txt");
 }
 
 
@@ -309,22 +310,22 @@ TDynamicObject* TDynamicObject::GetConsist_b(int cpl_type, TDynamicObject *lok)
       if (temp->MoverParameters->Couplers[coupler_nr].CouplingFlag==0) return temp;
       if (coupler_nr == 0)
          {
-            if (temp->PrevConnectedNo==coupler_nr)
-                coupler_nr = 1-coupler_nr;
+            if (temp->PrevConnectedNo==coupler_nr) coupler_nr = 1-coupler_nr;
                 temp = temp->PrevConnected;
-
+                temp->asTrainNumber = lok->asTrainNumber;
+                doorcount += temp->iDOORS;
                 CONSISTLEN = CONSISTLEN + temp->MoverParameters->Dim.L;
                 CONSISTMASS = CONSISTMASS + temp->MoverParameters->Mass;
-                temp->asTrainNumber = lok->asTrainNumber;
-                
+                vechcount ++;
+
                 X =
-                ""  + temp->MoverParameters->Name +                      // NAME
-//              ", " + FloatToStr(temp->MoverParameters->Vel) +           // VELOCITY
+                ""  + temp->MoverParameters->Name +                             // NAME
+//              ", " + FloatToStr(temp->MoverParameters->Vel) +                 // VELOCITY
 //              ", " + temp->MoverParameters->filename +
-                ", " + temp->MoverParameters->TypeName +                  // TYPE
-//              ","  + FloatToStr(temp->MoverParameters->BrakePress) +    // BRAKE PRESS
-                ", " + FloatToStr(temp->MoverParameters->Mass) +          // MASS
-                ", " + FloatToStr(temp->MoverParameters->Dim.L) +        // LENGTH
+                ", " + temp->MoverParameters->TypeName +                        // TYPE
+//              ","  + FloatToStr(temp->MoverParameters->BrakePress) +          // BRAKE PRESS
+                ", " + FormatFloat("0.00", (temp->MoverParameters->Mass)) +     // MASS
+                ", " + FloatToStr(temp->MoverParameters->Dim.L) +               // LENGTH
                 ", " + temp->asTrainNumber;
 //              ", " + temp->MyTrack->NameGet();
 
@@ -333,21 +334,21 @@ TDynamicObject* TDynamicObject::GetConsist_b(int cpl_type, TDynamicObject *lok)
       else
          {
             if (temp->NextConnectedNo==coupler_nr) coupler_nr=1-coupler_nr;
-
                 temp = temp->NextConnected;
                 temp->asTrainNumber = lok->asTrainNumber;
-
+                doorcount += temp->iDOORS;
                 CONSISTLEN = CONSISTLEN + temp->MoverParameters->Dim.L;
                 CONSISTMASS = CONSISTMASS + temp->MoverParameters->Mass;
+                vechcount ++;
 
                 X =
-                "  "  + temp->MoverParameters->Name +                      // NAME
-//              ", " + FloatToStr(temp->MoverParameters->Vel) +           // VELOCITY
+                "  "  + temp->MoverParameters->Name +                           // NAME
+//              ", " + FloatToStr(temp->MoverParameters->Vel) +                 // VELOCITY
 //              ", " + temp->MoverParameters->filename +
-                ", " + temp->MoverParameters->TypeName +                  // TYPE
-//              ", " + FloatToStr(temp->MoverParameters->BrakePress) +    // BRAKE PRESS
-                ", " + FloatToStr(temp->MoverParameters->Mass) +          // MASS
-                ", " + FloatToStr(temp->MoverParameters->Dim.L) +         // LENGTH
+                ", " + temp->MoverParameters->TypeName +                        // TYPE
+//              ", " + FloatToStr(temp->MoverParameters->BrakePress) +          // BRAKE PRESS
+                ", " + FormatFloat("0.00", (temp->MoverParameters->Mass)) +     // MASS
+                ", " + FloatToStr(temp->MoverParameters->Dim.L) +               // LENGTH
                 ", " + temp->asTrainNumber;
 //              ", " + temp->MyTrack->NameGet();
 
@@ -368,27 +369,25 @@ TDynamicObject* TDynamicObject::GetConsist_a(int cpl_type, TDynamicObject *lok)
 
  for(int i=0;i<100;i++) //tak na wszelki wypadek :)
   {
-
-      if (temp->MoverParameters->Couplers[coupler_nr].CouplingFlag==0)
-         return temp;
+     if (temp->MoverParameters->Couplers[coupler_nr].CouplingFlag==0) return temp;
         if (coupler_nr == 0)
          {
-            if (temp->PrevConnectedNo == coupler_nr)
-               coupler_nr = 1-coupler_nr;
-               temp = temp->PrevConnected;
-               temp->asTrainNumber = lok->asTrainNumber;
-
-               CONSISTLEN = CONSISTLEN + temp->MoverParameters->Dim.L;
-               CONSISTMASS = CONSISTMASS + temp->MoverParameters->Mass;
+          if (temp->PrevConnectedNo == coupler_nr) coupler_nr = 1-coupler_nr;
+              temp = temp->PrevConnected;
+              temp->asTrainNumber = lok->asTrainNumber;
+              doorcount += temp->iDOORS;
+              CONSISTLEN = CONSISTLEN + temp->MoverParameters->Dim.L;
+              CONSISTMASS = CONSISTMASS + temp->MoverParameters->Mass;
+              vechcount ++;
 
               X =
-              "  "  + temp->MoverParameters->Name +                      // NAME
-//            ", " + FloatToStr(temp->MoverParameters->Vel) +           // VELOCITY
+              "  "  + temp->MoverParameters->Name +                             // NAME
+//            ", " + FloatToStr(temp->MoverParameters->Vel) +                   // VELOCITY
 //            ", " + temp->MoverParameters->filename +
-              ", " + temp->MoverParameters->TypeName +                  // TYPE
-//            ", " + FloatToStr(temp->MoverParameters->BrakePress) +    // BRAKE PRESS
-              ", " + FloatToStr(temp->MoverParameters->Mass) +          // MASS
-              ", " + FloatToStr(temp->MoverParameters->Dim.L) +          // LENGTH
+              ", " + temp->MoverParameters->TypeName +                          // TYPE
+//            ", " + FloatToStr(temp->MoverParameters->BrakePress) +            // BRAKE PRESS
+              ", " + FormatFloat("0.00", (temp->MoverParameters->Mass)) +       // MASS
+              ", " + FloatToStr(temp->MoverParameters->Dim.L) +                 // LENGTH
               ", " + temp->asTrainNumber;
 //            ", " + temp->MyTrack->NameGet();
 
@@ -396,22 +395,22 @@ TDynamicObject* TDynamicObject::GetConsist_a(int cpl_type, TDynamicObject *lok)
          }
       else
          {
-            if (temp->NextConnectedNo==coupler_nr)
-               coupler_nr = 1-coupler_nr;
-               temp = temp->NextConnected;
-               temp->asTrainNumber = lok->asTrainNumber;
-
-               CONSISTLEN = CONSISTLEN + temp->MoverParameters->Dim.L;
-               CONSISTMASS = CONSISTMASS + temp->MoverParameters->Mass;
-
+          if (temp->NextConnectedNo==coupler_nr) coupler_nr = 1-coupler_nr;
+              temp = temp->NextConnected;
+              temp->asTrainNumber = lok->asTrainNumber;
+              doorcount += temp->iDOORS;
+              CONSISTLEN = CONSISTLEN + temp->MoverParameters->Dim.L;
+              CONSISTMASS = CONSISTMASS + temp->MoverParameters->Mass;
+              vechcount ++;
+              
               X =
               ""  + temp->MoverParameters->Name +                               // NAME
-//            ", " + FloatToStr(temp->MoverParameters->Vel) +                    // VELOCITY
+//            ", " + FloatToStr(temp->MoverParameters->Vel) +                   // VELOCITY
 //            ", " + temp->MoverParameters->filename +
-              ", " + temp->MoverParameters->TypeName +                           // TYPE
-//            ", " + FloatToStr(temp->MoverParameters->BrakePress) +             // BRAKE PRESS
-              ", " + FloatToStr(temp->MoverParameters->Mass) +                   // MASS
-              ", " + FloatToStr(temp->MoverParameters->Dim.L) +                   // LENGTH
+              ", " + temp->MoverParameters->TypeName +                          // TYPE
+//            ", " + FloatToStr(temp->MoverParameters->BrakePress) +            // BRAKE PRESS
+              ", " + FormatFloat("0.00", (temp->MoverParameters->Mass)) +       // MASS
+              ", " + FloatToStr(temp->MoverParameters->Dim.L) +                 // LENGTH
               ", " + temp->asTrainNumber;
 //            ", " + temp->MyTrack->NameGet();
 
@@ -1713,6 +1712,7 @@ TDynamicObject::TDynamicObject()
     tmpTraction.TractionVoltage =
         0; // Ra 2F1H: prowizorka, trzeba przechowaæ napiêcie, ¿eby nie wywala³o WS pod izolatorem
     fAdjustment = 0.0; // korekcja odleg³oœci pomiêdzy wózkami (np. na ³ukach)
+    iDOORS = 0;
 }
 
 TDynamicObject::~TDynamicObject()
@@ -2495,8 +2495,46 @@ bool TDynamicObject::Update(double dt, double dt1)
     if (!bEnabled)
         return false; // a normalnie powinny mieæ bEnabled==false
 
+
     if (MyTrack->asStationName != "") asStation = MyTrack->asStationName;       // Q 020116: Nazwa stacji na ktorej znajduje sie pojazd...
     if (MyTrack->asTrackNumber != "") asTrackNum = MyTrack->asTrackNumber;      // ...i numer toru
+
+    
+// Generowanie danych dla 'entrypointow' potrzebnych pasazerom do wsiadania do wagonow
+// tutaj sa przeliczane pozycje wzgledne wszystkich drzwi pojazdu na globalne w swiecie
+// zapisywane sa one do tablicy PEP[] - passengers entry points. Wpis punktu wejsciowego
+// opisany jest pozycja bezwzgledna drzwi, nazwa pojazdu, numerem pociagu i stacja koncowa
+
+   if (MoverParameters->Power == 0)  // Tylko do wagonow wsiadaja
+    if (MoverParameters->Vel < 4.5)  // Q 060116: Liste punktow wejsciowych aktualizujemy gdy predkosc mniejsza niz 0.3km/h
+     {
+      PEP[0].point = GetGlobalElementPositionB(pDoorFA, this, 0.001);
+      PEP[1].point = GetGlobalElementPositionB(pDoorFB, this, 0.001);
+      PEP[2].point = GetGlobalElementPositionB(pDoorRA, this, 0.001);
+      PEP[3].point = GetGlobalElementPositionB(pDoorRB, this, 0.001);
+
+      // DODAWANIE DO GLOBALNEJ LISTY PUNKTOW WEJSCIOWYCH AKTUALNIE ZATR ZYMANYCH POJAZDOW
+      QGlobal::PEP[QGlobal::currententrypoint].point = PEP[0].point;
+      QGlobal::PEP[QGlobal::currententrypoint].dynname = this->asName;
+      QGlobal::PEP[QGlobal::currententrypoint].dyntrainnumber = this->asTrainNumber;
+      QGlobal::PEP[QGlobal::currententrypoint].dyndestination = this->asDestination;
+      QGlobal::currententrypoint++;
+      QGlobal::PEP[QGlobal::currententrypoint].point = PEP[1].point;
+      QGlobal::PEP[QGlobal::currententrypoint].dynname = this->asName;
+      QGlobal::PEP[QGlobal::currententrypoint].dyntrainnumber = this->asTrainNumber;
+      QGlobal::PEP[QGlobal::currententrypoint].dyndestination = this->asDestination;
+      QGlobal::currententrypoint++;
+      QGlobal::PEP[QGlobal::currententrypoint].point = PEP[2].point;
+      QGlobal::PEP[QGlobal::currententrypoint].dynname = this->asName;
+      QGlobal::PEP[QGlobal::currententrypoint].dyntrainnumber = this->asTrainNumber;
+      QGlobal::PEP[QGlobal::currententrypoint].dyndestination = this->asDestination;
+      QGlobal::currententrypoint++;
+      QGlobal::PEP[QGlobal::currententrypoint].point = PEP[3].point;
+      QGlobal::PEP[QGlobal::currententrypoint].dynname = this->asName;
+      QGlobal::PEP[QGlobal::currententrypoint].dyntrainnumber = this->asTrainNumber;
+      QGlobal::PEP[QGlobal::currententrypoint].dyndestination = this->asDestination;
+      QGlobal::currententrypoint++;
+     }
 
     // Ra: przenios³em - no ju¿ lepiej tu, ni¿ w wyœwietlaniu!
     // if ((MoverParameters->ConverterFlag==false) && (MoverParameters->TrainType!=dt_ET22))
@@ -3345,8 +3383,8 @@ void TDynamicObject::Render()
         }
 #endif
 
-    getalphablendstate();
-    getlightstate(0);
+    //getalphablendstate();
+    //getlightstate(0);
     //DO = tmp->DynamicObject;
 
     vector3 test1;
@@ -3359,10 +3397,26 @@ void TDynamicObject::Render()
     //if (bBogieA) draw_sphere(test1.x, test1.y, test1.z, 0.4, Color4(0.9, 0.0, 0.0, 0.9));
     test1 = GetGlobalElementPositionB(pBogieB, this, 0.001);
     //if (bBogieB) draw_sphere(test1.x, test1.y, test1.z, 0.4, Color4(0.9, 0.0, 0.0, 0.9));   // Wozek B
-    setalphablendstate();
-    setlightstate(0);
 
-        glPushMatrix();
+    //float emm1[] = {1, 1, 1, 0};
+    //float emm2[] = {0, 0, 0, 1};
+
+    //glColorMaterial(GL_FRONT, GL_EMISSION);
+    //glMaterialfv(GL_FRONT, GL_EMISSION, emm1);
+
+    //if (MoverParameters->Vel < 0.5)  // Q 060116: Liste punktow wejsciowych aktualizujemy gdy predkosc mniejsza niz 0.3km/h
+    // {
+      //draw_sphere(PEP[0].point.x, PEP[0].point.y, PEP[0].point.z, 0.15, Color4(1.0, 0.0, 0.0, 1.0));
+      //draw_sphere(PEP[1].point.x, PEP[1].point.y, PEP[1].point.z, 0.15, Color4(1.0, 0.0, 0.0, 1.0));
+      //draw_sphere(PEP[2].point.x, PEP[2].point.y, PEP[2].point.z, 0.15, Color4(1.0, 0.0, 0.0, 1.0));
+      //draw_sphere(PEP[3].point.x, PEP[3].point.y, PEP[3].point.z, 0.15, Color4(1.0, 0.0, 0.0, 1.0));
+    // }
+
+     //glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE); // co ma ustawiaæ glColor
+     //glMaterialfv(GL_FRONT, GL_EMISSION, emm2); // bez tego s³upy siê œwiec¹
+     //setalphablendstate();     // Q: przywrocenie poprzednich opcji alfa blendingu
+
+     glPushMatrix();
         // vector3 pos= vPosition;
         // double ObjDist= SquareMagnitude(Global::pCameraPosition-pos);
         if (this == Global::pUserDynamic)
@@ -4970,24 +5024,28 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
                  pDoorFA.x = Parser->GetNextSymbol().ToDouble();
                  pDoorFA.y = Parser->GetNextSymbol().ToDouble();
                  pDoorFA.z = Parser->GetNextSymbol().ToDouble();
+                 iDOORS++;
                 }
                 else if (str == "doorpos_fb:")
                 {
                  pDoorFB.x = Parser->GetNextSymbol().ToDouble();
                  pDoorFB.y = Parser->GetNextSymbol().ToDouble();
                  pDoorFB.z = Parser->GetNextSymbol().ToDouble();
+                 iDOORS++;
                 }
                 else if (str == "doorpos_ra:")
                 {
                  pDoorRA.x = Parser->GetNextSymbol().ToDouble();
                  pDoorRA.y = Parser->GetNextSymbol().ToDouble();
                  pDoorRA.z = Parser->GetNextSymbol().ToDouble();
+                 iDOORS++;
                 }
                 else if (str == "doorpos_rb:")
                 {
                  pDoorRB.x = Parser->GetNextSymbol().ToDouble();
                  pDoorRB.y = Parser->GetNextSymbol().ToDouble();
                  pDoorRB.z = Parser->GetNextSymbol().ToDouble();
+                 iDOORS++;
                 }
                 else if (str == "bogieapos:")     // Q 010116: Pozycja wozka przedniego
                 {

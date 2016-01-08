@@ -21,6 +21,7 @@ http://mozilla.org/MPL/2.0/.
 #include "AdvSound.h"
 #include "Button.h"
 #include "AirCoupler.h"
+#include "globals.h"
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -175,6 +176,7 @@ class TDynamicObject
     int PrevConnectedNo; // numer sprzêgu pod³¹czonego z przodu
     double fScanDist; // odleg³oœæ skanowania torów na obecnoœæ innych pojazdów
 
+    bool bISLOCO;
     bool bBogieA;
     bool bBogieB;
     bool bBogieC;
@@ -194,7 +196,9 @@ class TDynamicObject
     vector3 GetGlobalElementPositionB(vector3 localpos, TDynamicObject *DO, double dt);
 
     AnsiString asBogieAModel, asBogieBModel, asBogieCModel;
-
+    pentrypointscontainer PEP[4];    // Q 060116:        Passengers entry point
+    int iDOORS;                     // Q 060116: Ilosc drzwi w wagonie  (zliczane przy parsowaniu pozycji drzwi z .mmd)
+    
   public: // modele sk³adowe pojazdu
     TModel3d *mdModel; // model pud³a
     TModel3d *mdLoad; // model zmiennego ³adunku
@@ -261,8 +265,7 @@ class TDynamicObject
 
     TButton btCoupler1; // sprzegi
     TButton btCoupler2;
-    TAirCoupler
-        btCPneumatic1; // sprzegi powietrzne //yB - zmienione z Button na AirCoupler - krzyzyki
+    TAirCoupler btCPneumatic1; // sprzegi powietrzne //yB - zmienione z Button na AirCoupler - krzyzyki
     TAirCoupler btCPneumatic2;
     TAirCoupler btCPneumatic1r; // ABu: to zeby nie bylo problemow przy laczeniu wagonow,
     TAirCoupler btCPneumatic2r; //     jesli beda polaczone sprzegami 1<->1 lub 0<->0
@@ -349,6 +352,7 @@ class TDynamicObject
 
   public:
     void ABuScanObjects(int ScanDir, double ScanDist);
+    void CreatePassengerEntryPoints();
 
   protected:
     TDynamicObject *__fastcall ABuFindObject(TTrack *Track, int ScanDir, Byte &CouplFound,
