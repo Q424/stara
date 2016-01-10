@@ -110,6 +110,7 @@ USELIB("freetype.lib");
 USEUNIT("screen.cpp");
 USEUNIT("menu\bitmap_Font.cpp");
 USEUNIT("orthorender.cpp");
+USEUNIT("effects2d.cpp");
 USEFORM("frm_debugger.cpp", DEBUGGER);
 //---------------------------------------------------------------------------
 #include "World.h"
@@ -198,6 +199,7 @@ int InitGL(GLvoid) // All Setup For OpenGL Goes Here
 
     return World.Init(hWnd, hDC); // true jeœli wszystko pójdzie dobrze
 }
+
 
 //---------------------------------------------------------------------------
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // resize and initialize the GL Window
@@ -350,8 +352,7 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
         {
             // If the mode fails, offer two options.  Quit or use windowed mode.
             ErrorLog("Fail: full screen");
-            if (MessageBox(NULL, "The requested fullscreen mode is not supported by\nyour video "
-                                 "card. Use windowed mode instead?",
+            if (MessageBox(NULL, AnsiString("The requested fullscreen mode is not supported by\nyour video card. Use windowed mode instead? (" + IntToStr(width) + "x" + IntToStr(height) + ")").c_str() ,
                            "EU07", MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
             {
                 fullscreen = FALSE; // Windowed Mode Selected.  Fullscreen = FALSE
@@ -626,8 +627,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
         // m_y= HIWORD(lParam);
         GetCursorPos(&mouse);
         
-        QGlobal::iMPX = LOWORD(lParam);
-        QGlobal::iMPY = HIWORD(lParam);
+       //-- QGlobal::iMPX = LOWORD(lParam);
+       //-- QGlobal::iMPY = HIWORD(lParam);
 
         if (Global::bActive && ((mouse.x != mx) || (mouse.y != my)))
         {
@@ -799,7 +800,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
 // *****************************************************************************
 // WYSYLANIE PLIKU LOG.TXT NA SERVER FTP
 // *****************************************************************************
-int SENDLOGTOFTP()
+SENDLOGTOFTP()
 {
 
     FDT = FormatDateTime("ddmmyy-hhmmss", Now());
@@ -857,22 +858,22 @@ int SENDLOGTOFTP()
                 }
             else {                             
                 WriteLog("FTP: Error during log upload");
-                return -1;
+              //  return -1;
             }  
            
 
         }
        
-        else return -1;
+      //  else return -1;
        
 
     }
 
-    else  return -1;
+   // else  return -1;
 
     WriteLog("Wyslano Plik.");
 
-    return 0;
+  //  return 0;
 
 };
 
@@ -901,7 +902,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  char szFILE[200];
  char szCFGFILE[200];
  std::string line, tocut;
- AnsiString ftocopy;
+ AnsiString ftocopy, fext;
  WORD vmajor, vminor, vbuild, vrev;
  char    buff[BUFSIZ];
  FILE    *in, *out;
@@ -928,7 +929,6 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  DeleteFile("errors.txt"); // usuniêcie starego
  DeleteFile("templog.txt"); // usuniêcie starego
  DeleteFile("models\\temp.e3d");
-// DeleteFile(AnsiString(QGlobal::asAPPDIR + "models\\temp.e3d").c_str());
 
  GetDesktopResolution(sh, sv);
  SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());  // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
@@ -944,6 +944,8 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  commandline = Trim(lpCmdLine);
 
  ftocopy = commandline.c_str();
+
+ fext = ExtractFileExt(ftocopy);
 
  commandline = StringReplace( commandline, "e3d", "t3d", TReplaceFlags() << rfReplaceAll ); /* ZAMIENIA 'e3d' na 't3d'    */
  commandline = StringReplace( commandline, "E3D", "t3d", TReplaceFlags() << rfReplaceAll );
@@ -971,9 +973,8 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
 
  AnsiString testp1 = commandline.SubString(1, commandline.Pos("models")-1);
-// WriteLog("TESTP1=" + testp1);
  AnsiString testp2 = StringReplace( QGlobal::asAPPDIR, "\\", "/", TReplaceFlags() << rfReplaceAll );
-// WriteLog("TESTP2=" + testp2);
+
 
  
  // OTWIERANIE PODGLADU MODELU GDY KLIKNIETO NA PLIK MODELU W KATALOGU MODELS\ Z KATALOGU TEJ MASZYNY...
@@ -1052,10 +1053,11 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 		test = line.substr(0, pos1);
                 par1 = line.substr(pos2+1, 20);
 
-		if (test == "texpath") QGlobal::asCurrentTexturePath = par1.c_str();
+		if (test == "texpath")  Global::asCurrentTexturePath = par1.c_str();
 		if (test == "mdlpath") QGlobal::asCurrentModelsPath = par1.c_str();
-		if (test == "scnpath") QGlobal::asCurrentSceneryPath = par1.c_str();
-	        if (test == "sndpath") QGlobal::asCurrentSoundPath = par1.c_str();
+		if (test == "scnpath")  Global::asCurrentSceneryPath = par1.c_str();
+	        if (test == "sndpath")  Global::asCurrentSoundPath = par1.c_str();
+                if (test == "dynpath")  Global::asCurrentDynamicPath = par1.c_str();
 
                 if (DirectoryExists(QGlobal::asAPPDIR + par1.c_str()))
                 WriteLog("varname: " + AnsiString(test.c_str()) + ", " + AnsiString(par1.c_str())  + ", OK");
@@ -1116,7 +1118,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
                 if (test == "askforfull") askforfull = atoi(par1.c_str());
                 if (test == "aspectratio") QGlobal::aspectratio = atoi(par1.c_str());
               //if (test == "debugmode1") DebugMode1 = atoi(par1.c_str());
-	        if (test == "openlogonx") openlogonx = atoi(par1.c_str());
+	        if (test == "openlogonx") QGlobal::bOPENLOGONX = atoi(par1.c_str());
           	if (test == "logfilenm1") QGlobal::logfilenm1 = par1;
 	        if (test == "exitlogons") QGlobal::logwinname = par1;
                 if (test == "sendlogftp") QGlobal::bSENDLOGFTP = atoi(par1.c_str());
@@ -1140,11 +1142,14 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
                 if (test == "env_sun") QGlobal::bRENDERSUN = atoi(par1.c_str());
                 if (test == "env_moon") QGlobal::bRENDERMOON = atoi(par1.c_str());
                 if (test == "trwiresize") QGlobal::ftrwiresize = StrToFloat(Trim(par1));
+                if (test == "noisealpha") QGlobal::fnoisealpha = StrToFloat(Trim(par1));
               //if (test == "deftextext") Global::szDefaultExt = par1;
 
 
                Global::iWindowWidth = sh;
                Global::iWindowHeight = sv;
+               WindowWidth = sh;
+               WindowHeight = sv;
                Global::bFullScreen = fullscreen;
         }
 
@@ -1179,7 +1184,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  sprintf(apppath, "apppath: [%s]", appath.c_str());
  WriteLog(apppath);
 
- sprintf(shotdir, "shotdir: [%s]", QGlobal::asSSHOTDIR.c_str());
+ sprintf(shotdir, "shotdir: [%s\%s]", appath.c_str(), QGlobal::asSSHOTDIR.c_str());
  WriteLog(shotdir);
 
  sprintf(cmdline, "aparams: [%s]", commandline);
@@ -1257,6 +1262,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
             { // nazwa scenerii
                 str = Parser->GetNextSymbol().LowerCase();
                 strcpy(Global::szSceneryFile, str.c_str());
+                QGlobal::bRAINSTED = true;
             }
             else if (str == AnsiString("-v"))
             { // nazwa wybranego pojazdu
@@ -1298,6 +1304,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
     //fullscreen = Global::bFullScreen;
     WindowWidth = Global::iWindowWidth;
     WindowHeight = Global::iWindowHeight;
+
     Bpp = Global::iBpp;
     if (Bpp != 32)
         Bpp = 16;
@@ -1320,8 +1327,9 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
          else Global::bFullScreen  = true;
          fullscreen = Global::bFullScreen;
         }
-
- 
+        
+   if (sv > 0) Global::iWindowHeight  = sv;
+   if (sh > 0) Global::iWindowWidth = sh;
 
    if (QGlobal::bSENDLOGFTP)  // Jezeli wysylanie logu na ftp wlaczone to pokaz okienko debuggera i polacz z serwerem FTP
     {
@@ -1339,7 +1347,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
     }
 
     // create our OpenGL window
-    if (!CreateGLWindow(Global::asHumanCtrlVehicle.c_str(), WindowWidth, WindowHeight, Bpp, fullscreen))
+    if (!CreateGLWindow(Global::asHumanCtrlVehicle.c_str(), Global::iWindowWidth, Global::iWindowHeight, Bpp, fullscreen))
         return 0; // quit if window was not created
 
     SetForegroundWindow(hWnd);
@@ -1381,7 +1389,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
     SENDLOGTOFTP();
 
-    Application->ProcessMessages();
+   // Application->ProcessMessages();
 
     //DEBUGGER->FTP->LocalFileName = appath + "templog.txt";
     //DEBUGGER->FTP->HostDirName = QGlobal::USERPID;
@@ -1423,9 +1431,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
     SystemParametersInfo(SPI_SETKEYBOARDSPEED, iOldSpeed, NULL, 0);
     SystemParametersInfo(SPI_SETKEYBOARDDELAY, iOldDelay, NULL, 0);
 
-    char logfile[200];
-    sprintf(logfile,"%s%s", appath.c_str() , QGlobal::logfilenm1.c_str());
-    if (openlogonx) ShellExecute(0, "open", logfile, NULL, NULL, SW_MAXIMIZE);
+
     DeleteFile("templog.txt"); // usuniêcie starego
     DeleteFile("myconsist.txt"); // usuniêcie starego
     DeleteFile(AnsiString(QGlobal::asAPPDIR + "models\\temp\\temp.e3d").c_str());
@@ -1435,5 +1441,9 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
     KillGLWindow(); // kill the window
     return (msg.wParam); // exit the program
 }
+
+
+
+
 
 

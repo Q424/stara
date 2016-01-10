@@ -400,7 +400,7 @@ class TModel3d : public CMesh
   public: // Ra: tymczasowo
     int iNumVerts; // iloœæ wierzcho³ków (gdy nie ma VBO, to m_nVertexCount=0)
     int iNumFaces;
-    int iSubModelsCount; // Ra: u¿ywane do tworzenia binarnych
+
     int iTYPE; //Q 311215: w przyszlosci do ulatwienia klasyfikacji modeli w edytorze, typ modelu bedzie brany z pierwszego parametru wpisu incfile
     AnsiString asFile;
     AnsiString asType;
@@ -408,14 +408,14 @@ class TModel3d : public CMesh
     AnsiString asNodeName;
     AnsiString asFileInc;
 
-    double posx;
-    double posy;
-    double posz;
+   // double posx;
+   // double posy;
+   // double posz;
   private:
     TStringPack Textures; // nazwy tekstur
     TStringPack Names; // nazwy submodeli
     int *iModel; // zawartoœæ pliku binarnego
-
+    int iSubModelsCount; // Ra: u¿ywane do tworzenia binarnych
     AnsiString asBinary; // nazwa pod któr¹ zapisaæ model binarny
   public:
     inline TSubModel *__fastcall GetSMRoot()

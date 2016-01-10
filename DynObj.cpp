@@ -2153,6 +2153,11 @@ double TDynamicObject::Init(
        RaAxleEvent(Track->Event0); //dodanie eventu stania do kolejki
     */
     vFloor = vector3(0, 0, MoverParameters->Floor); // wektor pod³ogi dla wagonów, przesuwa ³adunek
+
+    AnsiString LA = LowerCase(MoverParameters->LoadAccepted);
+
+    if (LA.Pos("passengers") > 0) iLOADACCEPTED = 1; // Q 100116: Coby odsiac wagony towarowe przy wrzucaniu do listy entrypointow
+
     return MoverParameters->Dim.L; // d³ugoœæ wiêksza od zera oznacza OK; 2mm docisku?
 }
 
@@ -2499,42 +2504,43 @@ bool TDynamicObject::Update(double dt, double dt1)
     if (MyTrack->asStationName != "") asStation = MyTrack->asStationName;       // Q 020116: Nazwa stacji na ktorej znajduje sie pojazd...
     if (MyTrack->asTrackNumber != "") asTrackNum = MyTrack->asTrackNumber;      // ...i numer toru
 
-    
+
 // Generowanie danych dla 'entrypointow' potrzebnych pasazerom do wsiadania do wagonow
 // tutaj sa przeliczane pozycje wzgledne wszystkich drzwi pojazdu na globalne w swiecie
 // zapisywane sa one do tablicy PEP[] - passengers entry points. Wpis punktu wejsciowego
 // opisany jest pozycja bezwzgledna drzwi, nazwa pojazdu, numerem pociagu i stacja koncowa
 
-   if (MoverParameters->Power == 0)  // Tylko do wagonow wsiadaja
-    if (MoverParameters->Vel < 4.5)  // Q 060116: Liste punktow wejsciowych aktualizujemy gdy predkosc mniejsza niz 0.3km/h
-     {
-      PEP[0].point = GetGlobalElementPositionB(pDoorFA, this, 0.001);
-      PEP[1].point = GetGlobalElementPositionB(pDoorFB, this, 0.001);
-      PEP[2].point = GetGlobalElementPositionB(pDoorRA, this, 0.001);
-      PEP[3].point = GetGlobalElementPositionB(pDoorRB, this, 0.001);
+   if (iLOADACCEPTED == 1)
+    if (MoverParameters->Power == 0)  // Tylko do wagonow wsiadaja
+     if (MoverParameters->Vel < 2.5)  // Q 060116: Liste punktow wejsciowych aktualizujemy gdy predkosc mniejsza niz 0.3km/h
+      {
+       PEP[0].point = GetGlobalElementPositionB(pDoorFA, this, 0.001);
+       PEP[1].point = GetGlobalElementPositionB(pDoorFB, this, 0.001);
+       PEP[2].point = GetGlobalElementPositionB(pDoorRA, this, 0.001);
+       PEP[3].point = GetGlobalElementPositionB(pDoorRB, this, 0.001);
 
-      // DODAWANIE DO GLOBALNEJ LISTY PUNKTOW WEJSCIOWYCH AKTUALNIE ZATR ZYMANYCH POJAZDOW
-      QGlobal::PEP[QGlobal::currententrypoint].point = PEP[0].point;
-      QGlobal::PEP[QGlobal::currententrypoint].dynname = this->asName;
-      QGlobal::PEP[QGlobal::currententrypoint].dyntrainnumber = this->asTrainNumber;
-      QGlobal::PEP[QGlobal::currententrypoint].dyndestination = this->asDestination;
-      QGlobal::currententrypoint++;
-      QGlobal::PEP[QGlobal::currententrypoint].point = PEP[1].point;
-      QGlobal::PEP[QGlobal::currententrypoint].dynname = this->asName;
-      QGlobal::PEP[QGlobal::currententrypoint].dyntrainnumber = this->asTrainNumber;
-      QGlobal::PEP[QGlobal::currententrypoint].dyndestination = this->asDestination;
-      QGlobal::currententrypoint++;
-      QGlobal::PEP[QGlobal::currententrypoint].point = PEP[2].point;
-      QGlobal::PEP[QGlobal::currententrypoint].dynname = this->asName;
-      QGlobal::PEP[QGlobal::currententrypoint].dyntrainnumber = this->asTrainNumber;
-      QGlobal::PEP[QGlobal::currententrypoint].dyndestination = this->asDestination;
-      QGlobal::currententrypoint++;
-      QGlobal::PEP[QGlobal::currententrypoint].point = PEP[3].point;
-      QGlobal::PEP[QGlobal::currententrypoint].dynname = this->asName;
-      QGlobal::PEP[QGlobal::currententrypoint].dyntrainnumber = this->asTrainNumber;
-      QGlobal::PEP[QGlobal::currententrypoint].dyndestination = this->asDestination;
-      QGlobal::currententrypoint++;
-     }
+       // DODAWANIE DO GLOBALNEJ LISTY PUNKTOW WEJSCIOWYCH AKTUALNIE ZATR ZYMANYCH POJAZDOW
+       QGlobal::PEP[QGlobal::currententrypoint].point = PEP[0].point;
+       QGlobal::PEP[QGlobal::currententrypoint].dynname = this->asName;
+       QGlobal::PEP[QGlobal::currententrypoint].dyntrainnumber = this->asTrainNumber;
+       QGlobal::PEP[QGlobal::currententrypoint].dyndestination = this->asDestination;
+       QGlobal::currententrypoint++;
+       QGlobal::PEP[QGlobal::currententrypoint].point = PEP[1].point;
+       QGlobal::PEP[QGlobal::currententrypoint].dynname = this->asName;
+       QGlobal::PEP[QGlobal::currententrypoint].dyntrainnumber = this->asTrainNumber;
+       QGlobal::PEP[QGlobal::currententrypoint].dyndestination = this->asDestination;
+       QGlobal::currententrypoint++;
+       QGlobal::PEP[QGlobal::currententrypoint].point = PEP[2].point;
+       QGlobal::PEP[QGlobal::currententrypoint].dynname = this->asName;
+       QGlobal::PEP[QGlobal::currententrypoint].dyntrainnumber = this->asTrainNumber;
+       QGlobal::PEP[QGlobal::currententrypoint].dyndestination = this->asDestination;
+       QGlobal::currententrypoint++;
+       QGlobal::PEP[QGlobal::currententrypoint].point = PEP[3].point;
+       QGlobal::PEP[QGlobal::currententrypoint].dynname = this->asName;
+       QGlobal::PEP[QGlobal::currententrypoint].dyntrainnumber = this->asTrainNumber;
+       QGlobal::PEP[QGlobal::currententrypoint].dyndestination = this->asDestination;
+       QGlobal::currententrypoint++;
+      }
 
     // Ra: przenios³em - no ju¿ lepiej tu, ni¿ w wyœwietlaniu!
     // if ((MoverParameters->ConverterFlag==false) && (MoverParameters->TrainType!=dt_ET22))

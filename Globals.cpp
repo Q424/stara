@@ -151,6 +151,8 @@ bool QGlobal::bRENDERGUI = false;
 bool QGlobal::bSENDLOGFTP = false;
 bool QGlobal::breplacescn = false;
 bool QGlobal::bISDYNAMIC = false;
+bool QGlobal::bRAINSTED = false;
+bool QGlobal::bOPENLOGONX = false;
 
 int QGlobal::objectid = 0;
 int QGlobal::cabelementid = 0;
@@ -183,6 +185,7 @@ double QGlobal::fscreenfade2 = 1.0;
 float QGlobal::ffovblocktime = 0.0;
 float QGlobal::ftrwiresize = 1.2f;
 float QGlobal::consistlen = 0.0;
+float QGlobal::fnoisealpha = 0.06f;
 
 GLuint QGlobal::reflecttex;
 GLuint QGlobal::mousesymbol;
@@ -198,7 +201,7 @@ GLfloat QGlobal::selcolor[4];
 
 char **QGlobal::argv = NULL;
 
-a QGlobal::array[256];
+a QGlobal::array[MAXPASSENGERENTYPOINTS];
 stationscontainer QGlobal::station[MAXSTATIONS];
 pentrypointscontainer QGlobal::PEP[MAXPASSENGERENTYPOINTS];
 int QGlobal::currententrypoint = 0;
@@ -214,6 +217,7 @@ TGround *Global::pGround = NULL;
 AnsiString Global::asCurrentSceneryPath = "scenery/";
 AnsiString Global::asCurrentTexturePath = AnsiString(szTexturePath);
 AnsiString Global::asCurrentDynamicPath = "";
+AnsiString Global::asCurrentSoundPath = "sounds/";
 int Global::iSlowMotion =
     0; // info o malym FPS: 0-OK, 1-wy³¹czyæ multisampling, 3-promieñ 1.5km, 7-1km
 TDynamicObject *Global::changeDynObj = NULL; // info o zmianie pojazdu
@@ -376,22 +380,27 @@ AnsiString Global::GetNextSymbol()
 
 void Global::LoadIniFile(AnsiString asFileName)
 {
+ WriteLog("LoadIniFile() - 1");
     int i;
     for (i = 0; i < 10; ++i)
     { // zerowanie pozycji kamer
         pFreeCameraInit[i] = vector3(0, 0, 0); // wspó³rzêdne w scenerii
         pFreeCameraInitAngle[i] = vector3(0, 0, 0); // k¹ty obrotu w radianach
     }
+  WriteLog("LoadIniFile() - 2");
     TFileStream *fs;
-    fs = new TFileStream(asFileName, fmOpenRead | fmShareCompat);
+
+    fs = new TFileStream(Trim(QGlobal::asAPPDIR + asFileName), fmOpenRead | fmShareCompat);
     if (!fs)
         return;
+  WriteLog("LoadIniFile() - 3");
     AnsiString str = "";
     int size = fs->Size;
     str.SetLength(size);
     fs->Read(str.c_str(), size);
     // str+="";
     delete fs;
+  WriteLog("LoadIniFile() - 4");
     TQueryParserComp *Parser;
     Parser = new TQueryParserComp(NULL);
     Parser->TextToParse = str;
@@ -399,10 +408,12 @@ void Global::LoadIniFile(AnsiString asFileName)
     Parser->First();
     ConfigParse(Parser);
     delete Parser; // Ra: tego jak zwykle nie by³o wczeœniej :]
+  WriteLog("LoadIniFile() - 5");
 };
 
 void Global::ConfigParse(TQueryParserComp *qp, cParser *cp)
 { // Ra: trzeba by przerobiæ na cParser, ¿eby to dzia³a³o w scenerii
+ WriteLog("Config parsing...");
     pParser = cp;
     qParser = qp;
     AnsiString str;
@@ -684,10 +695,12 @@ void Global::ConfigParse(TQueryParserComp *qp, cParser *cp)
                 fDistanceFactor; // do kwadratu, bo wiêkszoœæ odleg³oœci to ich kwadraty
         }
     }
+   WriteLog("OK.");
 }
 
 void Global::InitKeys(AnsiString asFileName)
 {
+ WriteLog("Keys init...");
     //    if (FileExists(asFileName))
     //    {
     //       Error("Chwilowo plik keys.ini nie jest obs³ugiwany. £adujê standardowe
@@ -810,6 +823,7 @@ void Global::InitKeys(AnsiString asFileName)
         Keys[k_Univ3] = VkKeyScan(';');
         Keys[k_Univ4] = VkKeyScan('\'');
     }
+   WriteLog("Keys init OK."); 
 }
 /*
 vector3 Global::GetCameraPosition()
@@ -1026,6 +1040,9 @@ double Global::Min0RSpeed(double vel1, double vel2)
 }
 
 
+// *****************************************************************************
+// TWORZENIE LISTY PLIKOW Z WYBRANEGO KATALOGU
+// *****************************************************************************
 int Global::listdir(const char *szDir, bool bCountHidden, AnsiString ext, TStringList &SL)
 {
 	char path[MAX_PATH];
@@ -1071,8 +1088,8 @@ AnsiString Global::LoadStationsBase()
 {
  WriteLog("");
  WriteLog("Loading station base...");
- int fn = 1;
- int tn = 0;
+ int fn = 0;
+ int tn = -1;
  int pos1 = 0;
  int pos2 = 0;
  bool trackinfo = false;
@@ -1086,12 +1103,13 @@ AnsiString Global::LoadStationsBase()
 
  fn = slFiles->Count;
 
- for (int i = 0; i<fn; i++)   // LISTA PLIKOW ...
+ for (int i = 0; i < fn; i++)   // LISTA PLIKOW ...
       {
        WriteLog("Retrieving station info from " + slFiles->Strings[i]);
        slFile->Clear();
        slFile->LoadFromFile(QGlobal::asAPPDIR + "stations\\" + slFiles->Strings[i]);
-
+       tn = -1;
+       
        for (int j = 0; j< slFile->Count-1; j++)  // PARSOWANIE PLIKU ...
           {
            line = slFile->Strings[j].c_str();
@@ -1101,28 +1119,27 @@ AnsiString Global::LoadStationsBase()
 
            par1 = Trim(line.substr(pos2 + 1, 255).c_str());     
 
-           //if (test != "") WriteLog("[" +test+ "][" + par1 + "]");
+          // if (test != "") WriteLog("[" +test+ "][" + par1 + "]");
 
-           if (test == "name") QGlobal::station[i].Name = Trim(par1);
+           if (test == "name") QGlobal::station[i].Name = Trim(par1.LowerCase());
            if (test == "info") QGlobal::station[i].Info = Trim(par1);
-           if (test == "type") QGlobal::station[i].Type = Trim(par1);               // junction JS, suburban SS,
-           if (test == "subtype") QGlobal::station[i].SubType = Trim(par1);           // P - passenger, F - freight
-           if (test == "platforms") QGlobal::station[i].platforms = par1.ToInt();      // ilosc peronow
+           if (test == "type") QGlobal::station[i].Type = Trim(par1);                     // junction JS, suburban SS,
+           if (test == "subtype") QGlobal::station[i].SubType = Trim(par1);               // P - passenger, F - freight
+           if (test == "platforms") QGlobal::station[i].platforms = par1.ToInt();         // ilosc peronow
            if (test == "platformedges") QGlobal::station[i].platformedges = par1.ToInt(); // ilosc krawedzi peronowych
            if (test == "tracksnum") QGlobal::station[i].tracksnum = par1.ToInt();         // ogolna liczba torow na stacji
 
-           trackinfo = false;
+
            // czytanie wlasnosci torow
            if (QGlobal::station[i].tracksnum > 0)
                {
                 if (test.Pos("{") > 0) tn++;
-              //  if (test == "track-" + IntToStr(tn)) trackinfo = true;
-
-                if (test == "len") QGlobal::station[i].trackinfo[tn].len = StrToInt(par1);    // dlugosc pomiedzy semaforami wyjazdowymi
-                if (test == "number") QGlobal::station[i].trackinfo[tn].number = par1.c_str();    // kolejowa numeracja torow - parzyste po lewej, nieparzyste po prawej  (w kierunku rosnacym kilometrarza)
-                if (test == "platformav") QGlobal::station[i].trackinfo[tn].platformav = par1.c_str();  // lr, l, r, none
+              //if (test.Pos("{") > 0) WriteLog("TAB=" + IntToStr(tn));
+                if (test == "len") QGlobal::station[i].trackinfo[tn].len = StrToInt(par1);      // dlugosc pomiedzy semaforami wyjazdowymi
+                if (test == "number") QGlobal::station[i].trackinfo[tn].number = par1.c_str();     // kolejowa numeracja torow - parzyste po lewej, nieparzyste po prawej  (w kierunku rosnacym kilometrarza)
+                if (test == "platformav") QGlobal::station[i].trackinfo[tn].platformav = par1.c_str();   // lr, l, r, none
                 if (test == "platformlen") QGlobal::station[i].trackinfo[tn].platformlen = StrToInt(par1);  // dlugosc peronu
-                if (test == "electrified") QGlobal::station[i].trackinfo[tn].electrified = StrToInt(par1);  // 1 - zelektryfikowany, 0 - nie,
+                if (test == "electrified") QGlobal::station[i].trackinfo[tn].electrified = StrToInt(par1);    // 1 - zelektryfikowany, 0 - nie,
 
                 trackinfo = false;
                }
@@ -1136,12 +1153,12 @@ AnsiString Global::LoadStationsBase()
 // **********************************************************************************************************
 int Global::findstationbyname(AnsiString name)
 {
- int tp = 0;;
+ int ipos = 0;
  for (int i = 0; i<50; i++)   // LISTA STACJI ...
       {
-       tp = i;
+       ipos = i;
        //WriteLog(LowerCase(QGlobal::station[i].Name) + " : " + LowerCase(name));
-       if (LowerCase(QGlobal::station[i].Name) == LowerCase(name)) return tp;
+       if (LowerCase(QGlobal::station[ipos].Name) == LowerCase(name)) return ipos;
       }
  return -1;
 }
@@ -1153,13 +1170,13 @@ int Global::setpassengerdest(AnsiString train, AnsiString station)   // Wywolywa
 {
  train = Trim(train);
  station = Trim(station);
- WriteLog("DESTSTR: [" + train + "]:[" + station + "]");
+ WriteLog("relation: " + train + ":" + station + " ");
  return 0;
 }
 
 
 // **********************************************************************************************************
-// Wolane z ground.cpp w TGroundNode::RenderDL()  !! PRZENIESC DO TGroundNode::Update() !!
+// Wolane z ground.cpp w TGroundNode::RenderDL() 
 // **********************************************************************************************************
 int Global::findpassengerdynamic(vector3 PPos, AnsiString asName, AnsiString Prel, AnsiString DST, TGroundNode *GN)
 {
@@ -1171,60 +1188,56 @@ int Global::findpassengerdynamic(vector3 PPos, AnsiString asName, AnsiString Pre
  float distance = 0;
  float distance2 = 0;
  float walkdelay = 0;
-        
- for (int l = 0; l<255-1; l++)    // Jedziemy po tablicy entrypointow...
+ int PEPSIZE = MAXPASSENGERENTYPOINTS;
+
+ if (Global::iPause == 0)        
+ for (int l = 0; l < PEPSIZE - 1; l++)    // Jedziemy po tablicy entrypointow...
      {
       Drel = QGlobal::PEP[l].dyntrainnumber;
       Ddst = QGlobal::PEP[l].dyndestination;
       dpnt = QGlobal::PEP[l].point;
       Dnam = QGlobal::PEP[l].dynname;
 
-      float fSquareDist = SquareMagnitude(dpnt - vector3(PPos)); // porownywanie pozycji aktualnego posera z pozycjami wszystkich pojazdow
+      float fSquareDist = SquareMagnitude(dpnt - GN->pCenter);                  // porownywanie pozycji aktualnego posera z pozycjami wszystkich pojazdow
 
-      if ((!GN->bINTRAIN) && (fSquareDist < 1700))   // Jezeli odleglosc pasazera do pojadu mniejsza niz 300...
+      if ((!GN->bINTRAIN) && (fSquareDist < 6000))                              // Jezeli odleglosc pasazera do pojadu mniejsza niz 60 metrow?
         {
-          if (Prel == Drel) // Gdy relacja pasazera zgadza sie z numerem pociagu...
+          if (Prel == Drel)                                                     // Gdy relacja pasazera zgadza sie z numerem pociagu...
            {
            // Sortowanie punktow wejsciowych aby najblizszy pasazerowi byl na pierwszym miejscu listy
-            for (int j = 0; j < 255 - 1; j++)
+            for (int j = 0; j < PEPSIZE - 1; j++)
              {
               QGlobal::array[j].num1 = SquareMagnitude(QGlobal::PEP[j].point - GN->pCenter);
               QGlobal::array[j].num2 = QGlobal::PEP[j].point;
              }
             a::sort_by = 1;
-            std::sort(QGlobal::array, QGlobal::array + 255);                    // sortowanie po odleglosci pomiedzy pasazerem a punktem wejscia
+            std::sort(QGlobal::array, QGlobal::array + PEPSIZE);                // sortowanie po odleglosci pomiedzy pasazerem a punktem wejscia
 
-            pdyn = Global::pGround->DynamicFindAny(Dnam);                     // znajdz wskaznik na pojazd znajac nazwe z tablicy entrypointow
+            pdyn = Global::pGround->DynamicFindAny(Dnam);                       // znajdz wskaznik na pojazd znajac nazwe z tablicy entrypointow
             if (!GN->bINTRAIN && pdyn != NULL) DO = pdyn->DynamicObject;
-           
-            
-            if (DO->MoverParameters->Vel < 4.0)
-            {
-             GN->fPassengerCDelay += 0.004;
-            }
 
-            if (GN->fPassengerCDelay >= GN->fPassengerDDelay)
-            {
-            dpnt = QGlobal::array[0].num2;                                      // pierwszy item zawsze jest najmniejsza wartoscia (najblizsze drzwi)
-            distance = SquareMagnitude(dpnt - vector3(PPos));                   // dystans do przebycia
-            vector3 direction = Normalize(dpnt - vector3(PPos));
-            GN->pCenter += (direction * GN->fPassengerSpeed) * elapsed;         // aktualizacja pozycji
+            if (DO->MoverParameters->Vel < 3.0) GN->fPassengerCDelay += 0.004;  // Gdy sklad hamuje, juz moga zaczyanc myslec o podchodzeniu, niektorym to ciezko idzie ;)
 
-            distance2 = SquareMagnitude(dpnt - GN->pCenter);                    // dystans pomiedzy pasazerem a drzwiami
+            if (GN->fPassengerCDelay >= GN->fPassengerDDelay)                   // Gdy juz pomyslal (czas myslenia jest randomowy), zaczyna isc do drzwi
+            {
+             dpnt = QGlobal::array[0].num2;                                     // pierwszy item zawsze jest najmniejsza wartoscia (najblizsze drzwi)
+             distance = SquareMagnitude(dpnt - vector3(PPos));                  // dystans do przebycia
+             vector3 direction = Normalize(dpnt - vector3(PPos));
+             GN->pCenter += (direction * GN->fPassengerSpeed) * elapsed;        // aktualizacja pozycji
+
+             distance2 = SquareMagnitude(dpnt - GN->pCenter);                   // dystans pomiedzy pasazerem a drzwiami
             }
 
 
             // Wejscie pasazera do wagonu
-            if ((distance2 > 0) && (distance2 < 0.3))                           // jezeli dystans pomiedzy pasazerem a drzwiami wiekszy od 0 i mniejszy niz 10cm...
+            if (DO->MoverParameters->Vel < 0.2)                                 // ...GDY PREDKOSC MNIEJSZA OD 0.1km/h
+            if ((distance2 > 0) && (distance2 < 0.3))                           // jezeli dystans pomiedzy pasazerem a drzwiami wiekszy od 0 i mniejszy niz 30cm...
              {
-
-
-              if (!GN->bINTRAIN && pdyn != NULL)   // JEZELI JESCZE NIE W POJEZDZIE TO...
+              if (!GN->bINTRAIN && pdyn != NULL)                                // JEZELI JESCZE NIE W POJEZDZIE TO...
                  {
-                  if (DO->MoverParameters->Vel < 0.4) // ...GDY PREDKOSC MNIEJSZA OD 0.5km/h
                     {
-                     DO->MoverParameters->Mass += 80; // zwiekszenie masy wagonu o 80kg (random cos nie dziala) //getRandomMinMax( 60.0f, 100.0f );    // Zwiekszyc wage wagonu o wage pasazera
-                     GN->bINTRAIN = true;           // Wlazi do pociagu     // Ustawienie flagi noda pasazera ze w pociagu
+                     DO->MoverParameters->Mass += 80;                           // zwiekszenie masy wagonu o 80kg (random cos nie dziala) //getRandomMinMax( 60.0f, 100.0f );    // Zwiekszyc wage wagonu o wage pasazera
+                     GN->bINTRAIN = true;                                       // Wlazi do pociagu
                     }
                   }
               Global::pWorld->Controlled->GetConsist_f(1, Global::pWorld->Controlled); // odswiezenie danych na liscie skladu
@@ -1239,17 +1252,11 @@ int Global::findpassengerdynamic(vector3 PPos, AnsiString asName, AnsiString Pre
              //glEnd();
              //WriteLog("POSER " + asName + ": " + REL + ", " + DST + ", train: " + drel + " wagon: " + dnam);
            }
-           Global::pWorld->Controlled->GetConsist_f(1, Global::pWorld->Controlled);
+          // Global::pWorld->Controlled->GetConsist_f(1, Global::pWorld->Controlled);
         }
      }
  return 0;
 }
- 
-   //SLDOORS->Add(FloatToStr(array[0].num1) + ", " + FloatToStr(array[0].num2.x)+ ", " + FloatToStr(array[0].num2.y)+ ", " + FloatToStr(array[0].num2.z));
-   //SLDOORS->Add(FloatToStr(array[1].num1) + ", " + FloatToStr(array[1].num2.x)+ ", " + FloatToStr(array[1].num2.y)+ ", " + FloatToStr(array[1].num2.z));
-   //SLDOORS->Add(FloatToStr(array[2].num1) + ", " + FloatToStr(array[2].num2.x)+ ", " + FloatToStr(array[2].num2.y)+ ", " + FloatToStr(array[2].num2.z));
-   //SLDOORS->Add(FloatToStr(array[3].num1) + ", " + FloatToStr(array[3].num2.x)+ ", " + FloatToStr(array[3].num2.y)+ ", " + FloatToStr(array[3].num2.z));
-
 
 
 #pragma package(smart_init)

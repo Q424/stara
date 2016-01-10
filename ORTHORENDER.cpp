@@ -71,6 +71,7 @@ bool iniloaded = false;
 bool floaded = false;
 bool startsound1 = false;
 bool startsound2 = false;
+bool tmp;
 Font *BFONT;
 
 
@@ -157,6 +158,7 @@ float LDR_BRIEF_Y;
 AnsiString LDR_STR_LOAD;
 AnsiString LDR_STR_FRST;
 
+ 
 
 // *****************************************************************************
 // LOADING Q FEATURES CONFIG ***************************************************
@@ -1237,6 +1239,7 @@ lineplus(15);
          int i =1;
          int l =0;
          int g =0;
+
          glEnable( GL_TEXTURE_2D);
          BFONT->Begin();
          glDisable(GL_TEXTURE_2D);
@@ -1254,12 +1257,16 @@ lineplus(15);
 
          PBY = Global::iWindowHeight - (200-8);
 
+
          AnsiString x, scn;
          if (g==0) x= AnsiString(Global::szSceneryFile);
          if (g==0) l = x.Length();
          //scn = x.SubString(5,l-7)
          if (g==0) scn = x.SubString(1,l-4);
          g=1;
+         if (scn == "$") tmp = true;
+         if (scn == "$") scn= "...z pliku tymczasowego $";
+
          glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_COLOR);
          glEnable(GL_TEXTURE_2D);
          glColor4f(LDR_STR_1_R, LDR_STR_1_G, LDR_STR_1_B, LDR_STR_1_A);
@@ -1269,7 +1276,8 @@ lineplus(15);
 
          BFONT->Print_scale( 2,55, AnsiString(IntToStr(QGlobal::iNODES) + ", " + currloading_b).c_str(), 1, 0.7, 0.7);     // current element
          if (!QGlobal::bfirstloadingscn) BFONT->Print_scale( 2,56,AnsiString(currloading).c_str(), 1, 0.7, 0.7);
-         if (!QGlobal::bSCNLOADED) BFONT->Print_scale(45,59,AnsiString(AnsiString(scn)).c_str(), 1, 2.0, 2.0);      // NAZWA SCENERII
+         if (!QGlobal::bSCNLOADED) BFONT->Print_scale(40,59,AnsiString(AnsiString(scn)).c_str(), 1, 2.0, 2.0);      // NAZWA SCENERII
+if (tmp) if (!QGlobal::bSCNLOADED) BFONT->Print_scale(40,60,AnsiString("$.scn - plik roboczy generowany przez Rainsted").c_str(), 1, 0.8, 0.8);
 
          glColor4f(0.5, 0.5, 0.5, 0.7);  // 09 07 02
          BFONT->Print_scale(75,63,AnsiString(AnsiString(QGlobal::asAPPVERS)).c_str(), 1, 0.7, 0.7);       // WERSJA APLIKACJI, DATA KOMPILACJI
@@ -1286,7 +1294,7 @@ lineplus(15);
         // glEnable(GL_BLEND);
          //BFONT->End();
 
-         if (QGlobal::bfirstloadingscn) BFONT->Print_scale( 2,56,AnsiString(LDR_STR_FRST).c_str(), 1, 0.7, 0.7);
+         if (QGlobal::bfirstloadingscn) BFONT->Print_scale( 2, 56, AnsiString(LDR_STR_FRST).c_str(), 1, 0.7, 0.7);
          BFONT->End();
 
 
@@ -3252,7 +3260,8 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+0, margin, 0);   // GORNY PRAWY
   glEnd( );
 
-  if (num == 1)
+  
+  if (num == 1)  // PANEL 1 - INFORMACJE O SKLADZIE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
     int posy = 60;
     for (int l = 0; l<lc; l++)
@@ -3264,13 +3273,13 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
     }
    }
 
-  if (num == 2)
+  if (num == 2)  // PANEL 2 - INFORMACJE O STACJI ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
     int posy = 160;
     glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
     freetype::print(our_font16, 10, Global::iWindowHeight-20, "INFORMACJE O STACJI");
 
-    if (QGlobal::iSTATIONPOSINTAB > -1)
+    if (QGlobal::iSTATIONPOSINTAB > -1)    // QGlobal::iSTATIONPOSINTAB wyciagane jest w TWorld::Update()
      {
        freetype::print(our_font16, 10, Global::iWindowHeight-20, "INFORMACJE O STACJI");
        freetype::print(our_font10, 20, iWH- 60, AnsiString("ST Name     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name).c_str());
@@ -3281,21 +3290,20 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
        freetype::print(our_font10, 20, iWH-160, AnsiString("ST edges    : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].platformedges)).c_str());
        freetype::print(our_font10, 20, iWH-180, AnsiString("ST tracks n : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].tracksnum)).c_str());
 
-       int id = Global::findstationbyname(QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name);
-
-       posy = 220;
-       int stracks = QGlobal::station[id].tracksnum;
+       int itempos = Global::findstationbyname(QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name);
+       int stracks = QGlobal::station[itempos].tracksnum;
+       
      //  WriteLog(QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name + ", " + IntToStr(id) + ", " + IntToStr(QGlobal::station[id].tracksnum) ) ;
-
+     posy = 220;
      freetype::print(our_font10, 10, Global::iWindowHeight-posy, "numer   | dlugosc | elektr. | peron i dlugosc");
      posy = 240;
-       for (int j = 1; j < stracks+1; j++)
+       for (int j = 0; j < stracks; j++)
          {
-          AnsiString ELECTRIFIED = BoolToYN(QGlobal::station[id].trackinfo[j].electrified);
-          AnsiString LENGTH = IntToStr(QGlobal::station[id].trackinfo[j].len);
-          AnsiString NUMBER = QGlobal::station[id].trackinfo[j].number.c_str();
-          AnsiString PERON = StrToPERON(QGlobal::station[id].trackinfo[j].platformav.c_str());
-          AnsiString PERONL = IntToStr(QGlobal::station[id].trackinfo[j].platformlen) + "m";
+          AnsiString ELECTRIFIED = BoolToYN(QGlobal::station[itempos].trackinfo[j].electrified);
+          AnsiString LENGTH =      IntToStr(QGlobal::station[itempos].trackinfo[j].len);
+          AnsiString NUMBER =               QGlobal::station[itempos].trackinfo[j].number.c_str();
+          AnsiString PERON =     StrToPERON(QGlobal::station[itempos].trackinfo[j].platformav.c_str());
+          AnsiString PERONL =      IntToStr(QGlobal::station[itempos].trackinfo[j].platformlen) + "m";
 
           freetype::print(our_font10, 20, iWH-posy, AnsiString("  tor " + NUMBER + " : " + LENGTH + "m,   " + ELECTRIFIED  + ",     " + PERON + " " + PERONL).c_str());
           posy+=20;
@@ -3855,27 +3863,24 @@ bool __fastcall TWorld::LOADLOADERTEXTURES()
 
     AnsiString cscn = Global::szSceneryFile;
     AnsiString clok = Global::asHumanCtrlVehicle;
-    AnsiString asBRIEFFILE = "data\\briefs\\briefbackg.tga"; // + cscn + "-" + clok + ".tga";
-    AnsiString asSCNBACKG =  "data\\lbacks\\" + cscn + QGlobal::asLBACKEXT;
-
-    AnsiString asBRIEFTEXT = QGlobal::asAPPDIR + "data\\briefs\\" + cscn + "-" + clok + ".txt";
+    AnsiString asBRIEFFILE = "data\\briefs\\briefbackg.tga";                        // Kartka z opisem
+    AnsiString asSCNBACKG =  "data\\lbacks\\" + cscn + QGlobal::asLBACKEXT;         // tlo wczytywania
+    AnsiString asBRIEFTEXT = "data\\briefs\\" + cscn + "-" + clok + ".txt";         // opis misji
 
     //WriteLog(asBRIEFTEXT);
-    if (FEX(asBRIEFTEXT))
-    QGlobal::MBRIEF->LoadFromFile( asBRIEFTEXT);
+    if (FEX(asBRIEFTEXT)) QGlobal::MBRIEF->LoadFromFile( asBRIEFTEXT);
 
     if (!FEX(asBRIEFTEXT)) QGlobal::bloaderbriefing = false;
     if ( FEX(asBRIEFTEXT)) QGlobal::bloaderbriefing = true;
 
-    WriteLog(asBRIEFTEXT);
-    Global::asCurrentTexturePath= "../data/";
-    Global::asCurrentTexturePath= "../data/";
+    WriteLog("Loading -briefing: " + asBRIEFTEXT);
 
-    loaderbrief = TTexturesManager::GetTextureID("../data/", "../data/", AnsiString(asBRIEFFILE).c_str());
+    Global::asCurrentTexturePath = QGlobal::asAPPDIR;
 
+    loaderbrief = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString(asBRIEFFILE).c_str());
     QGlobal::bfonttex = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString("data\\menu\\menu_xfont.bmp").c_str());
 
-    if (!FileExists(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString("data\\lbacks\\lbackgdef" + QGlobal::asLBACKEXT).c_str());
+    if (!FEX(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString("data\\lbacks\\lbackgdef" + QGlobal::asLBACKEXT).c_str());
     if ( FEX(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString(asSCNBACKG).c_str());
 
     Global::asCurrentTexturePath = AnsiString(szTexturePath);
@@ -4217,7 +4222,6 @@ bool __fastcall TWorld::RenderLoaderU(HDC hDC, int node, AnsiString text)
   }
  return true;
 }
-
 
 
 

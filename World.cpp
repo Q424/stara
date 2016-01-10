@@ -34,6 +34,7 @@ http://mozilla.org/MPL/2.0/.
 #include "qutils.h"
 #include "screen.h"
 #include "freetype.h"		// Header for our little font library.
+#include "effects2d.h"
 
 #define TEXTURE_FILTER_CONTROL_EXT 0x8500
 #define TEXTURE_LOD_BIAS_EXT 0x8501
@@ -61,6 +62,8 @@ TDynamicObject *DO;
 
 
 
+
+
 bool __fastcall TWorld::STARTSIMULATION()
 {
    TSCREEN::CFOV = 45;
@@ -76,7 +79,8 @@ bool __fastcall TWorld::STARTSIMULATION()
    Camera.Reset();
    Global::iPause = false;
    loaderbrief = NULL;      // USUNIECIE TEKSTURY
- //loaderbackg = NULL;      // USUNIECIE TEKSTURY
+   loaderbackg=NULL;
+   QGlobal::splashscreen=NULL;
 }
 
 
@@ -258,7 +262,6 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 
     LOADLOADERFONTS();
     LOADLOADERCONFIG();
-
     LOADLOADERTEXTURES();
 
     if (QGlobal::bSPLASHSCR)
@@ -652,6 +655,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
     glEnable(GL_LIGHTING);
+    WriteLog(".");
     /*-----------------------Sound Initialization-----------------------*/
     TSoundsManager::Init(hWnd);
     // TSoundsManager::LoadSounds( "" );
@@ -857,7 +861,11 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     QGlobal::SLTEMP->SaveToFile("data\\pbars\\" + AnsiString(Global::szSceneryFile));
     Global::iPause = true;
 
+    generatenoisetex(); // W efects2d.cpp
+
+
     if (mvControlled) Controlled->GetConsist_f(1, Controlled);
+
     return true;
 };
 
@@ -877,6 +885,9 @@ void TWorld::OnKeyDown(int cKey)
 
  QGlobal::isshift = false;
 
+ if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('f'))) QGlobal::bscrfilter = !QGlobal::bscrfilter;
+ if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('n'))) QGlobal::bscrnoise = !QGlobal::bscrnoise;
+ 
  if (Global::iPause && cKey==Global::Keys[k_Czuwak]) STARTSIMULATION();         //Q 291215: Bo po zaladowaniu symulacji jest pauza i pozostaje obraz wczytywania jako tlo pauzy
 
  if (!Console::Pressed(VK_SHIFT) && cKey == VK_F11) SCR->SaveScreen_xxx();   // Q 261215: zrut ekranu do jpg, tga lub bmp w zaleznosci od opcji w config.txt
@@ -920,6 +931,9 @@ void TWorld::OnKeyDown(int cKey)
            DeleteFile("myconsist.txt"); // usuniêcie starego
            DeleteFile(AnsiString(QGlobal::asAPPDIR + "models\\temp\\temp.e3d").c_str());
 
+           char logfile[200];
+           sprintf(logfile,"%s%s", QGlobal::asAPPDIR.c_str() , QGlobal::logfilenm1.c_str());
+           if (QGlobal::bOPENLOGONX) ShellExecute(0, "open", logfile, NULL, NULL, SW_MAXIMIZE);
            exit(0);
          }
 
@@ -1481,7 +1495,7 @@ bool TWorld::Update()
         iCheckFPS = 0.25 * GetFPS(); // tak za 0.25 sekundy sprawdziæ ponownie (jeszcze przycina?)
     }
     
-    if (Controlled) QGlobal::iSTATIONPOSINTAB = Global::findstationbyname(Trim(Controlled->asStation)); // Q 030116: Pobieranie pozycji itemu stacji na liscie
+    if (Controlled) QGlobal::iSTATIONPOSINTAB = Global::findstationbyname(Trim(Controlled->asStation.LowerCase())); // Q 030116: Pobieranie pozycji itemu stacji na liscie
 
     UpdateTimers(Global::iPause);
 
@@ -1643,7 +1657,7 @@ bool TWorld::Update()
             if (FreeFlyModeFlag)
                 Camera.RaLook(); // jednorazowe przestawienie kamery
         }
-        else if (Console::Pressed(VK_MBUTTON)) //||Console::Pressed(VK_F4))
+        else if (Console::Pressed(VK_RBUTTON) && !Console::Pressed(VK_SHIFT)) //||Console::Pressed(VK_F4))
             FollowView(false); // bez wyciszania dŸwiêków
         else if (Global::iTextMode == -1)
         { // tu mozna dodac dopisywanie do logu przebiegu lokomotywy
@@ -2778,7 +2792,7 @@ bool TWorld::Render()
     glColor3b(255, 255, 255);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(TSCREEN::CFOV, (GLdouble)Global::iWindowWidth/(GLdouble)Global::iWindowHeight, 0.1f, 19961.0f);
+    gluPerspective(TSCREEN::CFOV, (GLdouble)Global::iWindowWidth/(GLdouble)Global::iWindowHeight, 0.05f, 19961.0f);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glViewport(0, 0, Global::iWindowWidth, Global::iWindowHeight);
@@ -2797,27 +2811,20 @@ bool TWorld::Render()
 
     if (QGlobal::bmodelpreview) DRAW_XYGRID();
     if (QGlobal::bmodelpreview) Draw_SCENE000(0, 0, 0);
-   // if (QGlobal::bmodelpreview) Camera.LookAt = vector3(0,0,0);
 
-    if (Global::bUseVBO)
-    { // renderowanie przez VBO
+    if (Global::bUseVBO)                                                        // renderowanie przez VBO
+    {
         if (!Ground.RenderVBO(Camera.Pos)) return false;
         if (!Ground.RenderAlphaVBO(Camera.Pos)) return false;
     }
-    else
-    { // renderowanie przez DL
+    else                                                                        // renderowanie przez DL
+    {
         if (!Ground.RenderDL(Camera.Pos)) return false;
         if (!Ground.RenderAlphaDL(Camera.Pos)) return false;
     }
 
-    tmp = Ground.DynamicFindAny("111aproto1");
 
-    if (tmp)
-    {
-
-    }
-
-    TSubModel::iInstance = (int)(Train ? Train->Dynamic() : 0); //¿eby nie robiæ cudzych animacji
+    TSubModel::iInstance = (int)(Train ? Train->Dynamic() : 0);                 //¿eby nie robiæ cudzych animacji
 
     if (Train) Train->Update();
 
@@ -2836,16 +2843,17 @@ bool TWorld::Render()
         QGlobal::mousemode){
 
         switch2dRender();
-      //if (QGlobal::bscrfilter) RenderFILTER(0.25f);              // WYSYPUJE SIE NA TYM ZARAZ NA STARCIE, CZEMU?!
+
         if (Global::iTextMode == VK_F10) RenderEXITQUERY(0.30f);
-
         if (QGlobal::infotype > 0) RenderINFOPANEL(QGlobal::infotype, 0.25f);
-     }
 
+        if (QGlobal::bscrfilter) RenderFILTER(0.20f);                           // WYSYPUJE SIE NA TYM ZARAZ NA STARCIE, CZEMU?!
+        if (QGlobal::bscrnoise) drawNoise(1, QGlobal::fnoisealpha);             // W efects2d.cpp
+     }
 
      
     if ((Console::Pressed(VK_DELETE)) || (Console::Pressed(VK_INSERT)))
-     if (mvControlled) Controlled->GetConsist_f(1, Controlled);  // Q 040116: Tworzenie listy pojazdow w skladzie, liczenie masy brutto i dlugosci
+     if (mvControlled) Controlled->GetConsist_f(1, Controlled);                 // Q 040116: Tworzenie listy pojazdow w skladzie, liczenie masy brutto i dlugosci
 
 
     // Global::bReCompile=false; //Ra: ju¿ zrobiona rekompilacja

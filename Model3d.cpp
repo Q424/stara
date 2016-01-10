@@ -250,7 +250,7 @@ int TSubModel::Load(cParser &parser, TModel3d *Model, int Pos, bool dynamic)
     // GLuint TextureID;
     // char *extName;
     if (!parser.expectToken("type:"))
-        Error("Model type parse failure!");
+        Error("Model type parse failure!", false);
     {
         std::string type;
         parser.getToken(type);
@@ -377,7 +377,7 @@ int TSubModel::Load(cParser &parser, TModel3d *Model, int Pos, bool dynamic)
         if ((Global::iConvertModels & 1) == 0) // dla zgodnoœci wstecz
             Opacity = 0.0; // wszystko idzie w przezroczyste albo zale¿nie od tekstury
         if (!parser.expectToken("map:"))
-            Error("Model map parse failure!");
+            Error("Model map parse failure!", false);
         std::string texture;
         parser.getToken(texture);
         if (texture == "none")
@@ -416,10 +416,8 @@ int TSubModel::Load(cParser &parser, TModel3d *Model, int Pos, bool dynamic)
             TextureNameSet(texture.c_str());
             if (texture.find_first_of("/\\") == texture.npos)
                 texture.insert(0, Global::asCurrentTexturePath.c_str());
-
             TextureID = TTexturesManager::GetTextureID(
                 szTexturePath, Global::asCurrentTexturePath.c_str(), texture);
-
             // TexAlpha=TTexturesManager::GetAlpha(TextureID);
             // iFlags|=TexAlpha?0x20:0x10; //0x10-nieprzezroczysta, 0x20-przezroczysta
             if (Opacity < 1.0) // przezroczystoœæ z tekstury brana tylko dla Opacity 0!
@@ -467,11 +465,7 @@ int TSubModel::Load(cParser &parser, TModel3d *Model, int Pos, bool dynamic)
         }
         else
         { // normalna lista wierzcho³ków
-            iNumVerts = atoi(token.c_str());
-
-        int iNumFaces = iNumVerts/3;
-            iTotalFaces += iNumFaces;
-            
+            iNumVerts = atoi(token.c_str()); //int iNumFaces = iNumVerts/3; iTotalFaces += iNumFaces;
             if (iNumVerts % 3)
             {
                 iNumVerts = 0;
@@ -1567,8 +1561,8 @@ void TSubModel::BinInit(TSubModel *s, float4x4 *m, float8 *v, TStringPack *t, TS
         AnsiString t = AnsiString(pTexture);
         if (t.LastDelimiter("/\\") == 0)
             t.Insert(Global::asCurrentTexturePath, 1);
-
         TextureID = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), t.c_str());
+
         // TexAlpha=TTexturesManager::GetAlpha(TextureID); //zmienna robocza
         // ustawienie cyklu przezroczyste/nieprzezroczyste zale¿nie od w³asnoœci sta³ej tekstury
         // iFlags=(iFlags&~0x30)|(TTexturesManager::GetAlpha(TextureID)?0x20:0x10);
@@ -1583,7 +1577,6 @@ void TSubModel::BinInit(TSubModel *s, float4x4 *m, float8 *v, TStringPack *t, TS
     b_aAnim = b_Anim; // skopiowanie animacji do drugiego cyklu
     iFlags &= ~0x0200; // wczytano z pliku binarnego (nie jest w³aœcicielem tablic)
     Vertices = v + iVboPtr;
-
     // if (!iNumVerts) eType=-1; //tymczasowo zmiana typu, ¿eby siê nie renderowa³o na si³ê
 };
 void TSubModel::AdjustDist()
@@ -1774,13 +1767,11 @@ void TModel3d::LoadFromBinFile(char *FileName, bool dynamic)
     fs->Read(iModel, fs->Size); // wczytanie pliku
     delete fs;
     float4x4 *m = NULL; // transformy
-
-    //iNumVerts = 0; // w konstruktorze to jest
-    iTotalFaces = 0;
-    iNumFaces = 0;
-    asFile = AnsiString(FileName);
-    asType = QGlobal::asINCLUDETYPE;
-    asFileInc = QGlobal::asINCLUDEFILE;
+//--    iTotalFaces = 0;
+//--iNumFaces = 0;
+    //asFile = AnsiString(FileName);
+    //asType = QGlobal::asINCLUDETYPE;
+    //asFileInc = QGlobal::asINCLUDEFILE;
 
     // zestaw kromek:
     while ((i << 2) < size) // w pliku mo¿e byæ kilka modeli
@@ -1803,7 +1794,7 @@ void TModel3d::LoadFromBinFile(char *FileName, bool dynamic)
                     m_nVertexCount = iNumVerts;
                     m_pVNT = (CVertNormTex *)(iModel + i + 2);
 
-                    iNumFaces += iNumVerts/3;
+                   //-- iNumFaces += iNumVerts/3;
                     break;
                 case 'SUB0': // submodele: 'SUB0',len,(256 bajtów na submodel)
                     iSubModelsCount = (k - 2) / 64;
@@ -1862,9 +1853,8 @@ void TModel3d::LoadFromBinFile(char *FileName, bool dynamic)
     iFlags &= ~0x0200;
 
 
-    WriteLog(AnsiString("submodels: ") + IntToStr(iSubModelsCount));
+    WriteLog(AnsiString("sm/tris: ") + IntToStr(iSubModelsCount) + "/" + IntToStr(iNumFaces));
   //WriteLog(AnsiString("sizebytes ") + IntToStr(size));
-    WriteLog(AnsiString("FACES=") + IntToStr(iNumFaces));
     WriteLog(AnsiString(" "));
 
     //iNumFaces = iTotalFaces;  // iTotalFaces - naliczane w LoadFromTextFile()
@@ -1881,10 +1871,10 @@ void TModel3d::LoadFromTextFile(char *FileName, bool dynamic)
     std::string token, asFileName, modeltype;
     parser.getToken(token);
     iNumVerts = 0; // w konstruktorze to jest
-    iTotalFaces = 0;
-    asFile = AnsiString(FileName);
-    asType = QGlobal::asINCLUDETYPE;
-    asFileInc = QGlobal::asINCLUDEFILE;
+    //iTotalFaces = 0;
+    //asFile = AnsiString(FileName);
+    //asType = QGlobal::asINCLUDETYPE;
+    //asFileInc = QGlobal::asINCLUDEFILE;
 
     while (token != "" || parser.eof())
     {
@@ -1902,13 +1892,12 @@ void TModel3d::LoadFromTextFile(char *FileName, bool dynamic)
         parser.getToken(token);
     }
 
-    WriteLog(AnsiString("submodels: ") + IntToStr(iSubModelsCount));
-  //WriteLog(AnsiString("sizebytes ") + IntToStr(size));
-    WriteLog(AnsiString("FACES=") + IntToStr(iTotalFaces));
-    WriteLog(AnsiString(" "));
+    //--WriteLog(AnsiString("submodels: ") + IntToStr(iSubModelsCount));
+    //--WriteLog(AnsiString("FACES=") + IntToStr(iTotalFaces));
+    //--WriteLog(AnsiString(" "));
 
-    iNumFaces = iTotalFaces;  // iTotalFaces - naliczane w LoadFromTextFile()
-    iNumVerts = iTotalFaces * 3;
+    //--iNumFaces = iTotalFaces;  // iTotalFaces - naliczane w LoadFromTextFile()
+    //--iNumVerts = iTotalFaces * 3;
     
     // Ra: od wersji 334 przechylany jest ca³y model, a nie tylko pierwszy submodel
     // ale bujanie kabiny nadal u¿ywa bananów :( od 393 przywrócone, ale z dodatkowym warunkiem

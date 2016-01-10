@@ -291,6 +291,9 @@ void TGroundNode::RaRenderVBO()
 
 void TGroundNode::RenderVBO()
 { // renderowanie obiektu z VBO - faza nieprzezroczystych
+
+    if (iSubType == 101) Global::findpassengerdynamic(pCenter, asName, asTrainNumber, asDest, this);    // Q 060116: JEZELI PASAZER TO SZUKANIE WLASCIWEGO WAGONU
+
     double mgn = SquareMagnitude(pCenter - Global::pCameraPosition);
     if ((mgn > fSquareRadius || (mgn < fSquareMinRadius)) &&
         (iType != TP_EVLAUNCH)) // McZapkie-070602: nie rysuj odleglych obiektow ale sprawdzaj
@@ -306,7 +309,7 @@ void TGroundNode::RenderVBO()
             pTrack->RaRenderVBO(iVboPtr);
         return;
     case TP_MODEL:
-        Model->RenderVBO(&pCenter);
+        if (!bINTRAIN) Model->RenderVBO(&pCenter);  // Q 070116: !bINTRAIN bo model moze byc pasazerem ktory moze wejsc do wagonu - wtedy nie renderujemy
         return;
     // case TP_SOUND: //McZapkie - dzwiek zapetlony w zaleznosci od odleglosci
     // if ((pStaticSound->GetStatus()&DSBSTATUS_PLAYING)==DSBPLAY_LOOPING)
@@ -564,8 +567,7 @@ void TGroundNode::RenderDL()
 { // wyœwietlanie obiektu przez Display List
   // WriteLog(asName + ", " + GetPosStr());
 
- if (iSubType == 101) Global::findpassengerdynamic(pCenter, asName, asTrainNumber, asDest, this);    // Q 060116: JEZELI PASAZER TO SZUKANIE WLASCIWEGO WAGONU
-
+   if (iSubType == 101) Global::findpassengerdynamic(pCenter, asName, asTrainNumber, asDest, this);    // Q 060116: JEZELI PASAZER TO SZUKANIE WLASCIWEGO WAGONU
 
     switch (iType)
     { // obiekty renderowane niezale¿nie od odleg³oœci
@@ -2555,8 +2557,8 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
             if (LastNode->asName == "") LastNode->asName = QGlobal::asINCLUDETYPE + "-" + LastNode->asTrainNumber + "-" + LastNode->asDest;
             if (LastNode)
             { // je¿eli przetworzony poprawnie
-             WriteLog(IntToStr(LastNode->iType) + " [" + LastNode->asTrainNumber + "]:[" + LastNode->asDest + "]");
-             WriteLog("---------------------------------------------------------");
+             // WriteLog(IntToStr(LastNode->iType) + " [" + LastNode->asTrainNumber + "]:[" + LastNode->asDest + "]");
+             //WriteLog("---------------------------------------------------------");
                 if (LastNode->iType == GL_TRIANGLES)
                 {
                     if (!LastNode->Vertices)

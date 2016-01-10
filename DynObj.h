@@ -198,6 +198,7 @@ class TDynamicObject
     AnsiString asBogieAModel, asBogieBModel, asBogieCModel;
     pentrypointscontainer PEP[4];    // Q 060116:        Passengers entry point
     int iDOORS;                     // Q 060116: Ilosc drzwi w wagonie  (zliczane przy parsowaniu pozycji drzwi z .mmd)
+    int iLOADACCEPTED;
     
   public: // modele sk³adowe pojazdu
     TModel3d *mdModel; // model pud³a

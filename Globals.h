@@ -27,7 +27,7 @@ http://mozilla.org/MPL/2.0/.
 #define DTOR (PI/180.0f)
 #define SQR(x) (x*x)
 #define MAXSTATIONS 64
-#define MAXPASSENGERENTYPOINTS 256
+#define MAXPASSENGERENTYPOINTS 512
 
 using namespace Math3D;
 
@@ -511,6 +511,8 @@ class QGlobal
  static bool bSENDLOGFTP;
  static bool breplacescn;
  static bool bISDYNAMIC;  // Q 040116: dla zmiany sciezki tekstur dla modelviewera
+ static bool bRAINSTED;
+ static bool bOPENLOGONX;
 
  static int objectid;
  static int cabelementid;
@@ -543,6 +545,7 @@ class QGlobal
  static float ffovblocktime;
  static float ftrwiresize;
  static float consistlen;
+ static float fnoisealpha;
  
  static GLuint reflecttex;
  static GLuint mousesymbol;
@@ -556,7 +559,7 @@ class QGlobal
  static GLuint SCRFILTER;
  static GLfloat selcolor[4];
 
- static a array[256];
+ static a array[MAXPASSENGERENTYPOINTS];
  static stationscontainer station[MAXSTATIONS];     // POWODUJE KRZACZENIE PODCZAS WYCHODZENIA???
  static pentrypointscontainer PEP[MAXPASSENGERENTYPOINTS];
  static int currententrypoint;
@@ -609,6 +612,7 @@ class Global
     static AnsiString asCurrentSceneryPath;
     static AnsiString asCurrentTexturePath;
     static AnsiString asCurrentDynamicPath;
+    static AnsiString asCurrentSoundPath;
     // McZapkie-170602: zewnetrzna definicja pojazdu uzytkownika
     static AnsiString asHumanCtrlVehicle;
     static void LoadIniFile(AnsiString asFileName);
