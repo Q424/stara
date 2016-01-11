@@ -871,7 +871,7 @@ SENDLOGTOFTP()
 
    // else  return -1;
 
-    WriteLog("Wyslano Plik.");
+    WriteLog("FTP: Wyslano Plik.");
 
   //  return 0;
 
@@ -880,12 +880,9 @@ SENDLOGTOFTP()
 // *****************************************************************************
 // POCZATEK WSZYSTKIEGO
 // *****************************************************************************
-int WINAPI WinMain(HINSTANCE hInstance, // instance
-                   HINSTANCE hPrevInstance, // previous instance
-                   LPSTR lpCmdLine, // command line parameters
-                   int nCmdShow) // window show state
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-  // Install the low-level keyboard & mouse hooks
+ // Install the low-level keyboard & mouse hooks
  HHOOK hhkLowLevelKybd  = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC) &LowLevelKeyboardProc, hInstance, 0); //Q 261215: niskopoziomowe przechwytywanie klawiary specjalnie dla klawisza PrntScr :)
 
  MSG msg; // windows message structure
@@ -901,12 +898,9 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  char shotdir[100];
  char szFILE[200];
  char szCFGFILE[200];
- std::string line, tocut;
- AnsiString ftocopy, fext;
+ std::string line;
  WORD vmajor, vminor, vbuild, vrev;
- char    buff[BUFSIZ];
- FILE    *in, *out;
- size_t  n;
+ TModelViewer *MV;
 
  BOOL askforfull = false;
  BOOL getscreenb = false;
@@ -914,6 +908,9 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  BOOL rege3dt3d = false;
  BOOL done = FALSE; // bool variable to exit loop
  BOOL bISDYNAMIC = false;
+ BOOL bMV = false;
+ BOOL bFILEOK = false;
+ BOOL bDM = false;
  fullscreen = true;
  DecimalSeparator = '.';
 
@@ -921,106 +918,62 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
  QGlobal::CONFIG = new TStringList;
  QGlobal::LOKTUT = new TStringList;
  QGlobal::MBRIEF = new TStringList;
-
- DEBUGGER = new TDEBUGGER(NULL);   // UTWORZENIE FORMY DEBUGGERA
-
- //argc = ParseCommandline2();
-
- DeleteFile("errors.txt"); // usuniêcie starego
- DeleteFile("templog.txt"); // usuniêcie starego
- DeleteFile("models\\temp.e3d");
+ DEBUGGER = new TDEBUGGER(NULL);                                                // UTWORZENIE FORMY DEBUGGERA
+ MV = new TModelViewer;
 
  GetDesktopResolution(sh, sv);
- SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());  // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
+ SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());                      // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
 
- appath = GETCWD();   // POBIERA SCIEZKE APLIKACJI DO ZMIENNEJ GLOBALNEJ Global::asCWD
+ appath = GETCWD();                                                             // POBIERA SCIEZKE APLIKACJI DO ZMIENNEJ GLOBALNEJ Global::asCWD
 
  QGlobal::asAPPDIR = ExtractFilePath(ParamStr(0));
 
-// WriteLog("APPDIR: [" + QGlobal::asAPPDIR + "]");
-// WriteLog("APPCWD: [" + QGlobal::asCWD + "]");
-// WriteLog("CLINEO: [" + AnsiString(lpCmdLine) + "]");                         // np: C:\MaSzyna_15_04\models\ip\wloclawek\wwek_przychodniak.t3d
+ DeleteFile(QGlobal::asAPPDIR + "errors.txt");                                  // usuniêcie starego
+ DeleteFile(QGlobal::asAPPDIR + "templog.txt");                                 // usuniêcie starego
+ DeleteFile(QGlobal::asAPPDIR + "models\\temp.e3d");
+ DeleteFile(QGlobal::asAPPDIR + "models\\temp.t3d");                            
 
  commandline = Trim(lpCmdLine);
 
- ftocopy = commandline.c_str();
+ MV->Update(QGlobal::asAPPDIR);
 
- fext = ExtractFileExt(ftocopy);
+ MV->isdynamicmodel(commandline.c_str());                                       // sprawdza czy z katalogu dynamic (ustawia flage globalna i w klasie)
 
- commandline = StringReplace( commandline, "e3d", "t3d", TReplaceFlags() << rfReplaceAll ); /* ZAMIENIA 'e3d' na 't3d'    */
- commandline = StringReplace( commandline, "E3D", "t3d", TReplaceFlags() << rfReplaceAll );
- commandline = StringReplace( commandline, "\\", "/", TReplaceFlags() << rfReplaceAll );    // np: C:/MaSzyna_15_04/models/ip/wloclawek/wwek_przychodniak.t3d
+ bMV = MV->copymodelfiletotemp(commandline.c_str(), bFILEOK);                         // KOPIOWANIE PLIKU Z MIEJSCA URUCHOMIENIA NA models/temp.ext
 
- if ((commandline.Pos("dynamic") > 0)) QGlobal::bISDYNAMIC = true;
+ MV->UnifyCmdLine(commandline);
 
- if ((commandline.Pos("T3D") > 0) || (commandline.Pos("t3d") > 0))
- {
-  in = fopen( ftocopy.c_str(), "rb" );
-  out= fopen( "models\\temp.e3d", "wb" );
-  while ( (n=fread(buff,1,BUFSIZ,in)) != 0 ) { fwrite( buff, 1, n, out ); }
-  fclose (in);
-  fclose (out);
-  Application->ProcessMessages();
-  if (FEX(AnsiString(QGlobal::asAPPDIR + "models\\temp.e3d").c_str())) WriteLog("FILE OK!");
- }
+ MV->PrepareCompare(commandline);
 
-
- tocut = AnsiString(QGlobal::asAPPDIR + "models\\").c_str();
-// tocut = AnsiString(StringReplace( tocut.c_str(), "\\", "/", TReplaceFlags() << rfReplaceAll )).c_str();
-// WriteLog("TOCUT: [" + AnsiString(tocut.c_str()) + "]");
- tcl = tocut.length();                              // dlugosc powyzszego lancucha
-// WriteLog("TOCUT LEN: [" + IntToStr(tcl) + "]");
-
-
- AnsiString testp1 = commandline.SubString(1, commandline.Pos("models")-1);
- AnsiString testp2 = StringReplace( QGlobal::asAPPDIR, "\\", "/", TReplaceFlags() << rfReplaceAll );
-
-
- 
- // OTWIERANIE PODGLADU MODELU GDY KLIKNIETO NA PLIK MODELU W KATALOGU MODELS\ Z KATALOGU TEJ MASZYNY...
-   if ((commandline.Pos("models") > 0) && (testp1 == testp2) && (commandline.Pos("t3d") > 0))
+ // PODGLAD GDY KLIKNIETO NA PLIK W KATALOGU MODELS\ Z KATALOGU TEJ MASZYNY ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   if ((bMV) && (commandline.Pos("-s") == 0) && (commandline.Pos("models") > 0) && (MV->testp1 == MV->testp2))
    {
     WriteLog("Lauching EXE from model file double click (in habitat)...");
-    filetoopen = commandline.Delete( 1, tcl);        // usuwa F:\MaSzyna_15_04\models\ zostaje linia053\lamp-y.t3d
-    WriteLog("FTOPE: [" + filetoopen + "]");
-    //std::vector<std::string> x = split(commandline.c_str(), ' ');
-
-    modelpreview(filetoopen.c_str(), "", "", "");                               // tworzenie tymczasowego pliku scenerii
-
+    filetoopen = commandline.Delete( 1, MV->tocutlen);                          // usuwa F:\MaSzyna_15_04\models\ zostaje linia053\lamp-y.t3d
+    WriteLog("MODEL: " + commandline);
+    MV->modelpreview(filetoopen.c_str(), "", "", "");                           // tworzenie tymczasowego pliku scenerii
     commandline = AnsiString("-vm " + filetoopen).c_str();
    }
 
- // JEZELI KLIKNIETO NA PLIK MODELU POZA KATALOGIEM MODELS\ ...  
-  else if ((commandline.Pos("-s") == 0) && (testp1 != testp2) && ((commandline.Pos("t3d") > 0) || (commandline.Pos("T3D") > 0)))
+ // JEZELI KLIKNIETO NA PLIK MODELU POZA KATALOGIEM MODELS\ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  else if ((bMV) && (commandline.Pos("-s") == 0) && (MV->testp1 != MV->testp2))
    {
     WriteLog("Lauching EXE from model file double click (out of habitat)...");
-    commandline = StringReplace( commandline, "/", "\\", TReplaceFlags() << rfReplaceAll );   /* ZAMIENIA Z '\' na '/'  */
-    //AnsiString mfp = ExtractFilePath(commandline);
-   // AnsiString mfn = ExtractFileName(commandline);
-    //WriteLog("mfp: [" + mfp + "]");
-    //WriteLog("mfn: [" + mfn + "]");
-   // mfn = StringReplace( mfn, "t3d", "e3d", TReplaceFlags() << rfReplaceAll );
-    //WriteLog("mfn: [" + mfn + "]");  // tu juz jest e3d
-
-    WriteLog(commandline.c_str());
-
+    WriteLog("MODEL: " + commandline);
     QGlobal::asDynamicTexturePath = ExtractFilePath(commandline.c_str());
-
-    if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
-
-   
-
-    ftocopy = StringReplace( ftocopy, "t3d", "e3d", TReplaceFlags() << rfReplaceAll );
-
-    modelpreview("temp.t3d", "", "", "");
-
+if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
+    MV->modelpreview("temp.t3d", "", "", "");                                   // tworzenie tymczasowego pliku scenerii
     commandline = "-vm temp.t3d";
    }
-  else if ((commandline.Pos("-s") > 0))                                         // JEZLEI W POLECENIU NIE BYLO -s NP ODPALENIE EXE BEZPOSREDNIO...
+
+ // JEZLEI W POLECENIU NIE BYLO -s NP ODPALENIE EXE BEZPOSREDNIO... ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  else if ((commandline.Pos("-s") > 0))
    {
     WriteLog("Lauching program from EXE file with parameters...");
    }
-  else if ((commandline.Pos("-s") == 0) && (commandline.Pos("t3d") == 0))       // JEZLEI W POLECENIU NIE BYLO -s NP ODPALENIE EXE BEZPOSREDNIO...
+
+ // JEZLEI W POLECENIU NIE BYLO -s NP ODPALENIE EXE BEZPOSREDNIO ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  else if ((commandline.Pos("-s") == 0) && (commandline.Pos("") == 0))
    {
     WriteLog("Lauching program from EXE file");
    }
@@ -1286,7 +1239,7 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
 
              str = str.SubString(1, 255);
 
-             modelpreview(str.c_str(), "", "", "");
+             MV->modelpreview(str.c_str(), "", "", "");
 
              if (QGlobal::breplacescn) strcpy(Global::szSceneryFile, "modelpreview.scn");
             }
@@ -1441,6 +1394,9 @@ int WINAPI WinMain(HINSTANCE hInstance, // instance
     KillGLWindow(); // kill the window
     return (msg.wParam); // exit the program
 }
+
+
+
 
 
 

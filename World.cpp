@@ -486,7 +486,6 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     glEnable(GL_CULL_FACE); // Cull back-facing triangles
     WriteLog("glLineWidth(1.0f);");
     glLineWidth(1.0f);
-    //	glLineWidth(2.0f);
     WriteLog("glPointSize(2.0f);");
     glPointSize(2.0f);
 
@@ -644,7 +643,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 
 
 
-    glColor3f(0.0f, 0.0f, 100.0f);
+
     //if (Global::detonatoryOK)
     //{
     //    glRasterPos2f(-0.25f, -0.09f);
@@ -654,10 +653,13 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     //}
     //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
-    glEnable(GL_LIGHTING);
+
     WriteLog(".");
+    SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());
+    WriteLog("SetCurrentDirectory();");
     /*-----------------------Sound Initialization-----------------------*/
     TSoundsManager::Init(hWnd);
+    WriteLog(".");
     // TSoundsManager::LoadSounds( "" );
     /*---------------------Sound Initialization End---------------------*/
     WriteLog("Sound Init OK");
@@ -668,8 +670,9 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     //}
    // SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
-    int i;
-
+    //int i;
+    glColor3f(0.0f, 0.0f, 100.0f);
+    glEnable(GL_LIGHTING);
     RenderLoader(hDC, 77, "TEXTUREMANAGER INITIALIZATION...");
     Paused = true;
     WriteLog("Textures init");
@@ -842,15 +845,8 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
        {
         Global::SetCameraPosition(Global::pFreeCameraInit[1]); //nowa pozycja dla generowania obiektów
         Ground.Silence(Camera.Pos); //wyciszenie wszystkiego z poprzedniej pozycji
-        Camera.Init(Global::pFreeCameraInit[0], Global::pFreeCameraInitAngle[0]); //przestawienie
-
-        //Camera.Reset(); // likwidacja obrotów - patrzy horyzontalnie na po³udnie
-
-       // Camera.LookAt = vector3(0,0,0);
-
-       Global::SetCameraPosition(Global::pFreeCameraInit[1]); // nowa pozycja dla generowania obiektów
-       Ground.Silence(Camera.Pos); // wyciszenie wszystkiego z poprzedniej pozycji
-       Camera.Init(Global::pFreeCameraInit[1], Global::pFreeCameraInitAngle[1]); // przestawienie
+      //Camera.Init(Global::pFreeCameraInit[0], Global::pFreeCameraInitAngle[0]); //przestawienie
+        Camera.Init(Global::pFreeCameraInit[1], Global::pFreeCameraInitAngle[1]); // przestawienie
 
         if (FreeFlyModeFlag) Camera.RaLook(); // jednorazowe przestawienie kamery
        }
@@ -861,8 +857,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     QGlobal::SLTEMP->SaveToFile("data\\pbars\\" + AnsiString(Global::szSceneryFile));
     Global::iPause = true;
 
-    generatenoisetex(); // W efects2d.cpp
-
+    if (!QGlobal::bmodelpreview) generatenoisetex(); // W efects2d.cpp
 
     if (mvControlled) Controlled->GetConsist_f(1, Controlled);
 

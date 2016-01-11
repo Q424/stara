@@ -9,18 +9,134 @@ http://mozilla.org/MPL/2.0/.
 
 #include "system.hpp"
 #include "classes.hpp"
+#include <vcl.h>
 #pragma hdrstop
 
 #include "sky.h"
 #include "Globals.h"
 #include "Console.h"
-#include "QueryParserComp.hpp"
 #include "Logs.h"
 #include "qutils.h"
+#include "modelpreview.h"
 
-bool __fastcall modelpreview(std::string par1, std::string par2, std::string par3, std::string par4)
+char    buff[BUFSIZ];
+FILE    *in, *out;
+size_t  n;
+
+
+TModelViewer::TModelViewer()
 {
+ bDYN = false;
+}
 
+TModelViewer::~TModelViewer()
+{
+ //
+}
+
+// *****************************************************************************
+// Oblicza ile znakow do obciecia coby usunac sciezke bezwzgledna
+// *****************************************************************************
+bool TModelViewer::Update(AnsiString appdir)
+ {
+  asAPPDIR = appdir;
+  tocutstr = AnsiString(asAPPDIR + "models\\").c_str();
+  tocutlen = tocutstr.length();
+ }
+
+AnsiString TModelViewer::UnifyCmdLine(AnsiString &cmd)
+{
+ cmd = StringReplace( cmd, "e3d", "t3d", TReplaceFlags() << rfReplaceAll ); /* ZAMIENIA 'e3d' na 't3d'    */
+ cmd = StringReplace( cmd, "E3D", "t3d", TReplaceFlags() << rfReplaceAll );
+ cmd = StringReplace( cmd, "\\", "/", TReplaceFlags() << rfReplaceAll );    // np: C:/MaSzyna_15_04/models/ip/wloclawek/wwek_przychodniak.t3d
+
+ return cmd;
+}
+
+AnsiString TModelViewer::PrepareCompare(AnsiString cmd)
+{
+ testp1 = cmd.SubString(1, cmd.Pos("models")-1);
+ testp2 = StringReplace( asAPPDIR, "\\", "/", TReplaceFlags() << rfReplaceAll ); // katalog tej maszyny do porownania z katalogiem otwieranego modelu
+}
+
+
+// *****************************************************************************
+// Sprawdza czy w lini polecen jest plik modelu
+// *****************************************************************************
+bool TModelViewer::ismodelfileincmdline(std::string cmdl)
+{
+ AnsiString line = cmdl.c_str();
+
+ if ((line.Pos("t3d") > 0) || (line.Pos("e3d") > 0))
+ {
+  WriteLog("MODEL VIEWER MODE...");
+  WriteLog("FILE: " + AnsiString(cmdl.c_str()));
+  return true;
+ }
+ else
+return false;
+}
+
+// *****************************************************************************
+// Sprawdza czy czasem model nie odpalony z katalogu dynamic
+// *****************************************************************************
+bool TModelViewer::isdynamicmodel(std::string cmdl)
+{
+ AnsiString line = cmdl.c_str();
+
+ if ((line.Pos("dynamic") > 0))
+ {
+  bDYN = true;
+  QGlobal::bISDYNAMIC = true;
+  return true;
+ }
+ else
+return false;
+}
+
+
+// *****************************************************************************
+// Tworzenie pliku tymczasowego do podgladu
+// *****************************************************************************
+bool TModelViewer::copymodelfiletotemp(std::string ftocopy, bool &fok)
+{
+ AnsiString fext = ExtractFileExt(LowerCase(ftocopy.c_str()));
+ AnsiString line = ftocopy.c_str();
+
+ if ((line.Pos("t3d") > 0) || (line.Pos("e3d") > 0))
+  {
+  if (fext == ".e3d")
+   {
+    in = fopen( ftocopy.c_str(), "rb" );
+    out = fopen( "models\\temp.e3d", "wb" );
+    while ( (n=fread(buff,1,BUFSIZ,in)) != 0 ) { fwrite( buff, 1, n, out ); }
+    fclose (in);
+    fclose (out);
+    Application->ProcessMessages();
+    if (FEX(AnsiString(QGlobal::asAPPDIR + "models\\temp.e3d").c_str())) WriteLog("MODEL TEMP FILE CREATED!");
+    if (FEX(AnsiString(QGlobal::asAPPDIR + "models\\temp.e3d").c_str())) fok = true;
+   }
+
+  if (fext == ".t3d")
+   {
+    in = fopen( ftocopy.c_str(), "rb" );
+    out = fopen( AnsiString(QGlobal::asAPPDIR +"models\\temp.t3d").c_str(), "wb" );
+    while ( (n=fread(buff,1,BUFSIZ,in)) != 0 ) { fwrite( buff, 1, n, out ); }
+    fclose (in);
+    fclose (out);
+    Application->ProcessMessages();
+    if (FEX(AnsiString(QGlobal::asAPPDIR + "models\\temp.t3d").c_str())) WriteLog("MODEL TEMP FILE CREATED!");
+    if (FEX(AnsiString(QGlobal::asAPPDIR + "models\\temp.t3d").c_str())) fok = true;
+   }
+ 
+  }
+ else fok = false;
+
+ return fok;
+}
+
+bool TModelViewer::modelpreview(std::string par1, std::string par2, std::string par3, std::string par4)
+{
          //MessageBox(0, "MODEL VIEWING.", "INFO",MB_OK|MB_ICONEXCLAMATION);
          FILE *stream = NULL;
          QGlobal::bmodelpreview = true;
