@@ -493,6 +493,7 @@ class TDynamicObject
 
     // McZapkie-260202
     void LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName, AnsiString ReplacableSkin);
+    void LoadUniqueSpecs(AnsiString asName);
 
     inline double ABuGetDirection() // ABu.
     {

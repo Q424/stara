@@ -1605,7 +1605,7 @@ void TGround::RaTriangleDivider(TGroundNode *node)
 
 TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
 { // wczytanie wpisu typu "node"
-   WriteLog("+");
+   //WriteLog("+");
     // parser->LoadTraction=Global::bLoadTraction; //Ra: tu nie potrzeba powtarzaæ
     AnsiString str, str1, str2, str3, str4, Skin, DriverType, asNodeName;
     int nv, ti, i, n;
@@ -2487,7 +2487,9 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
 { // g³ówne wczytywanie scenerii
     if (asFile.LowerCase().SubString(1, 7) == "scenery")
         asFile.Delete(1, 8); // Ra: usuniêcie niepotrzebnych znaków - zgodnoœæ wstecz z 2003
-    WriteLog("Loading scenery from " + asFile);
+    WriteLog("");
+    WriteLog("Loading scenery from " + asFile + "  #############################################################################################################################");
+    WriteLog("");
     Global::pGround = this;
     // pTrain=NULL;
     pOrigin = aRotate = vector3(0, 0, 0); // zerowanie przesuniêcia i obrotu

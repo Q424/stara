@@ -24,7 +24,6 @@ TSky::TSky(){};
 void TSky::Init()
 {
     WriteLog(Global::asSky.c_str());
-    WriteLog("init");
     AnsiString asModel;
     asModel = Global::asSky;
     if ((asModel != "1") && (asModel != "0"))

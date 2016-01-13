@@ -48,7 +48,7 @@ int TSubModelInfo::iCurrent = 0; // aktualny obiekt
 TSubModelInfo *TSubModelInfo::pTable = NULL; // tabele obiektów pomocniczych
 int iTotalFaces = 0;
 int iTotalVerts = 0;
-
+int iTotalObjs = 0;
 
 char *TStringPack::String(int n)
 { // zwraca wskaŸnik do ³añcucha o podanym numerze
@@ -1767,11 +1767,11 @@ void TModel3d::LoadFromBinFile(char *FileName, bool dynamic)
     fs->Read(iModel, fs->Size); // wczytanie pliku
     delete fs;
     float4x4 *m = NULL; // transformy
-//--    iTotalFaces = 0;
+    iTotalFaces = 0;
 //--iNumFaces = 0;
-    //asFile = AnsiString(FileName);
-    //asType = QGlobal::asINCLUDETYPE;
-    //asFileInc = QGlobal::asINCLUDEFILE;
+    asFile = AnsiString(FileName);
+    asType = QGlobal::asINCLUDETYPE;
+    asFileInc = QGlobal::asINCLUDEFILE;
 
     // zestaw kromek:
     while ((i << 2) < size) // w pliku mo¿e byæ kilka modeli
@@ -1794,7 +1794,7 @@ void TModel3d::LoadFromBinFile(char *FileName, bool dynamic)
                     m_nVertexCount = iNumVerts;
                     m_pVNT = (CVertNormTex *)(iModel + i + 2);
 
-                   //-- iNumFaces += iNumVerts/3;
+                    iTotalFaces += iNumVerts/3;
                     break;
                 case 'SUB0': // submodele: 'SUB0',len,(256 bajtów na submodel)
                     iSubModelsCount = (k - 2) / 64;
@@ -1853,7 +1853,7 @@ void TModel3d::LoadFromBinFile(char *FileName, bool dynamic)
     iFlags &= ~0x0200;
 
 
-    WriteLog(AnsiString("sm/tris: ") + IntToStr(iSubModelsCount) + "/" + IntToStr(iNumFaces));
+    WriteLog(AnsiString("sm/tris: ") + IntToStr(iSubModelsCount) + "/" + IntToStr(iTotalFaces));
   //WriteLog(AnsiString("sizebytes ") + IntToStr(size));
     WriteLog(AnsiString(" "));
 
@@ -1871,10 +1871,11 @@ void TModel3d::LoadFromTextFile(char *FileName, bool dynamic)
     std::string token, asFileName, modeltype;
     parser.getToken(token);
     iNumVerts = 0; // w konstruktorze to jest
-    //iTotalFaces = 0;
-    //asFile = AnsiString(FileName);
-    //asType = QGlobal::asINCLUDETYPE;
-    //asFileInc = QGlobal::asINCLUDEFILE;
+    iTotalFaces = 0;
+    iTotalObjs = 0;
+    asFile = AnsiString(FileName);
+    asType = QGlobal::asINCLUDETYPE;
+    asFileInc = QGlobal::asINCLUDEFILE;
 
     while (token != "" || parser.eof())
     {
@@ -1882,19 +1883,19 @@ void TModel3d::LoadFromTextFile(char *FileName, bool dynamic)
         // parser.getToken(parent);
         parser.getTokens(1, false); // nazwa submodelu nadrzêdnego bez zmieny na ma³e
         parser >> parent;
-        if (parent == "")
-            break;
+        if (parent == "") break;
+        
         SubModel = new TSubModel();
         iNumVerts += SubModel->Load(parser, this, iNumVerts, dynamic);
         SubModel->Parent = AddToNamed(
             parent.c_str(), SubModel); // bêdzie potrzebne do wyliczenia pozycji, np. pantografu
         // iSubModelsCount++;
+        iTotalObjs++;
         parser.getToken(token);
     }
-
-    //--WriteLog(AnsiString("submodels: ") + IntToStr(iSubModelsCount));
-    //--WriteLog(AnsiString("FACES=") + IntToStr(iTotalFaces));
-    //--WriteLog(AnsiString(" "));
+    iTotalFaces = iNumVerts / 3;
+    WriteLog(AnsiString("sm/tris: ") + IntToStr(iTotalObjs) + "/" + IntToStr(iTotalFaces));
+    WriteLog(AnsiString(" "));
 
     //--iNumFaces = iTotalFaces;  // iTotalFaces - naliczane w LoadFromTextFile()
     //--iNumVerts = iTotalFaces * 3;

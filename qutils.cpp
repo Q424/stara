@@ -153,6 +153,8 @@ void GetOSVersionVCL(TStringList *lines)
     lines->Add("servpak: ""No Service Pack Installed");
   else
     lines->Add("servpak: " + Win32CSDVersion);
+
+  lines->Add("klayout: " + QGlobal::asKBDLAYOUT + "(" + QGlobal::asKBDLAYOUTSTR + ")");
 }
 
 

@@ -18,6 +18,8 @@ http://mozilla.org/MPL/2.0/.
 
 #include <vector>
 #include <vcl.h>
+#include <winuser.h>
+#include <windows.h>
 #include <registry.hpp>  // Q 241215
 #include <filectrl.hpp>  // Q 241215
 #include "system.hpp"
@@ -121,7 +123,7 @@ TWorld World;
 HDC hDC = NULL; // Private GDI Device Context
 HGLRC hRC = NULL; // Permanent Rendering Context
 HWND hWnd = NULL; // Holds Our Window Handle
-
+HWND hWnd2 = NULL;
 // bool active=TRUE;	//window active flag set to TRUE by default
 bool fullscreen = TRUE; // fullscreen flag set to fullscreen mode by default
 int WindowWidth = 800;
@@ -137,9 +139,17 @@ char **argv = NULL;  // zmienna trzymajaca mocne argumenty
 AnsiString appath, commandline, filetoopen, FDT;
 std::string ftppassword;
 TStringList *ss;
+HMENU hMenubar;
+HMENU hMenu;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); // Declaration For WndProc
 
+void AddMenus(HWND);
+
+#define IDM_FILE_NEW 1
+#define IDM_FILE_OPEN 2
+#define IDM_FILE_QUIT 3
+#define IDM_FILE_CONTINUE 4
 //#include "dbgForm.h"
 //---------------------------------------------------------------------------
 
@@ -298,7 +308,9 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
     wc.hbrBackground = NULL; // no background required for GL
     wc.lpszMenuName = NULL; // we don't want a menu
     wc.lpszClassName = "EU07"; // nazwa okna do komunikacji zdalnej
-    // // Set The Class Name
+
+    QGlobal::hINST = hInstance;
+   // Set The Class Name
 
     if (!arbMultisampleSupported) // tylko dla pierwszego okna
         if (!RegisterClass(&wc)) // Attempt To Register The Window Class
@@ -369,7 +381,7 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
     if (fullscreen) // Are We Still In Fullscreen Mode?
     {
         dwExStyle = WS_EX_APPWINDOW; // Window Extended Style
-        dwStyle = WS_POPUP| WS_CLIPSIBLINGS | WS_CLIPCHILDREN; // Windows Style
+        dwStyle = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN; // Windows Style
         ShowCursor(FALSE); // Hide Mouse Pointer
     }
     else
@@ -407,8 +419,8 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
          sizeof(PIXELFORMATDESCRIPTOR),                                         // Size Of This Pixel Format Descriptor
          1, // Version Number
          PFD_DRAW_TO_WINDOW |                                                   // Format Must Support Window
-             PFD_SUPPORT_OPENGL |                                               // Format Must Support OpenGL
-             PFD_DOUBLEBUFFER,                                                  // Must Support Double Buffering
+         PFD_SUPPORT_OPENGL |                                                   // Format Must Support OpenGL
+         PFD_DOUBLEBUFFER,                                                      // Must Support Double Buffering
          PFD_TYPE_RGBA,                                                         // Request An RGBA Format
          bits,                                                                  // Select Our Color Depth
          0,
@@ -518,11 +530,7 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
 
 BOOL fEatKeystroke = FALSE;
 static int test = 0;
-/**/
-// ************ Globals ************
-//
 #define MYDISPLAY 1
-
 PCOPYDATASTRUCT pDane;
 
 
@@ -559,12 +567,31 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
   return(fEatKeystroke ? 1 : CallNextHookEx(NULL, nCode, wParam, lParam));
 }
 
+void AddMenus(HWND hwnd)
+{
+  hMenubar = CreateMenu();
+  hMenu = CreateMenu();
+
+  AppendMenuW(hMenu, MF_STRING, IDM_FILE_NEW, L"&Nowy");
+  AppendMenuW(hMenu, MF_STRING, IDM_FILE_OPEN, L"&Otworz...");
+  AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
+  AppendMenuW(hMenu, MF_STRING, IDM_FILE_QUIT, L"&Zakoncz");
+  AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
+  AppendMenuW(hMenu, MF_STRING, IDM_FILE_CONTINUE, L"&Kontynuuj");
+
+  AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR)hMenu, L"&File");
+  SetMenu(hwnd, hMenubar);
+}
+
 
 LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
                          UINT uMsg, // message for this window
                          WPARAM wParam, // additional message information
                          LPARAM lParam) // additional message information
 {
+//HINSTANCE hINST;
+//hINST = GetModuleHandle(NULL);
+
     TRect rect;
     switch (uMsg) // check for windows messages
     {
@@ -575,11 +602,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
 
     case WM_PASTE: //[Ctrl]+[V] potrzebujemy do innych celów
         return 0;
+
     case WM_COPYDATA: // obs³uga danych przes³anych przez program steruj¹cy
         pDane = (PCOPYDATASTRUCT)lParam;
         if (pDane->dwData == 'EU07') // sygnatura danych
             World.OnCommandGet((DaneRozkaz *)(pDane->lpData));
         break;
+
     case WM_ACTIVATE: // watch for window activate message
         // case WM_ACTIVATEAPP:
         { // Ra: uzale¿nienie aktywnoœci od bycia na wierzchu
@@ -632,7 +661,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
 
         if (Global::bActive && ((mouse.x != mx) || (mouse.y != my)))
         {
-            World.OnMouseMove(double(mouse.x - mx) * 0.005, double(mouse.y - my) * 0.01);
+            if (!Console::Pressed(VK_RMENU)) World.OnMouseMove(double(mouse.x - mx) * 0.005, double(mouse.y - my) * 0.01);
           //World.OnMouseMove(double(mouse.x - mx) * 0.005, double(mouse.y - my) * 0.01,  LOWORD(lParam), HIWORD(lParam));
 
             if (!Console::Pressed(VK_RMENU)) SetCursorPos(mx, my);
@@ -692,6 +721,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
          return 0;
         };
 
+    case WM_SYSKEYUP:
+        if (Global::bActive)
+        {
+            World.OnSysKeyUp(wParam);
+            return 0;
+        }
+        
     case WM_KEYUP:
         if (Global::bActive)
         {
@@ -708,6 +744,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
             switch (wParam)
             {
             case VK_ESCAPE: //[Esc] pauzuje tylko bez Debugmode
+                if (!QGlobal::bSCNLOADED) exit(0);
                 if (DebugModeFlag)
                     break;
             case 19: //[Pause]
@@ -772,6 +809,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
     }
     case WM_PAINT:
     { // odrysowanie okna
+
         break;
     }
     // case WM_ERASEBKGND: //Process this message to keep Windows from erasing background.
@@ -781,9 +819,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
         break;
     }
     case WM_CREATE:
-        /* Capture the joystick. If this fails, beep and display
-         * error, then quit.
-         */
+        /* Capture the joystick. If this fails, beep and display error, then quit.*/
+        //--AddMenus(hWnd);
+        //AddButton(hWnd, hINST);
+
         if (joySetCapture(hWnd, JOYSTICKID1, 0, FALSE))
         {
             // MessageBeep(MB_ICONEXCLAMATION);
@@ -791,7 +830,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
             // return -1;
         }
         break;
-    }
+
+    case WM_COMMAND:
+          switch(LOWORD(wParam))
+           {
+              case IDM_FILE_NEW:
+              case IDM_FILE_OPEN:
+                  Beep(50, 100);
+                  break;
+              case IDM_FILE_QUIT:
+                  SendMessage(hWnd, WM_CLOSE, 0, 0);
+                  break;
+              case IDM_FILE_CONTINUE:
+
+                  break;
+           }
+           break;
+
+    }   // Switch
+
+
     // pass all unhandled messages to DefWindowProc
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 };
@@ -802,6 +860,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
 // *****************************************************************************
 SENDLOGTOFTP()
 {
+    CopyFile("log.txt", "templog.txt", false);
 
     FDT = FormatDateTime("ddmmyy-hhmmss", Now());
 
@@ -826,9 +885,9 @@ SENDLOGTOFTP()
 
     HINTERNET hFtpSession;    
 
-    if(InternetAttemptConnect(0) == ERROR_SUCCESS) WriteLog("internet ok, sending log.txt...");
-     else WriteLog("Internet blocked for this app");
- 
+    if(InternetAttemptConnect(0) == ERROR_SUCCESS) WriteLog("FTP: internet ok, sending log.txt...");
+     else WriteLog("FTP: Internet blocked for this app");
+
 
     hInternet = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL,0);
 
@@ -865,8 +924,6 @@ SENDLOGTOFTP()
         }
        
       //  else return -1;
-       
-
     }
 
    // else  return -1;
@@ -874,8 +931,8 @@ SENDLOGTOFTP()
     WriteLog("FTP: Wyslano Plik.");
 
   //  return 0;
-
 };
+
 
 // *****************************************************************************
 // POCZATEK WSZYSTKIEGO
@@ -896,6 +953,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
  char appdate[100];
  char apppath[100];
  char shotdir[100];
+ char kbdlayo[100];
  char szFILE[200];
  char szCFGFILE[200];
  std::string line;
@@ -909,8 +967,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
  BOOL done = FALSE; // bool variable to exit loop
  BOOL bISDYNAMIC = false;
  BOOL bMV = false;
- BOOL bFILEOK = false;
  BOOL bDM = false;
+ BOOL bFILEOK = false;
  fullscreen = true;
  DecimalSeparator = '.';
 
@@ -920,26 +978,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
  QGlobal::MBRIEF = new TStringList;
  DEBUGGER = new TDEBUGGER(NULL);                                                // UTWORZENIE FORMY DEBUGGERA
  MV = new TModelViewer;
+ AnsiString FULLEXE = Application->ExeName;
 
- GetDesktopResolution(sh, sv);
- SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());                      // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
+ Global::GetKbdLayout();                                                        // POBIERANIE UKLADU KLAWIATURY
 
  appath = GETCWD();                                                             // POBIERA SCIEZKE APLIKACJI DO ZMIENNEJ GLOBALNEJ Global::asCWD
+ QGlobal::asAPPDIR = appath; //ExtractFilePath(ParamStr(0));
 
- QGlobal::asAPPDIR = ExtractFilePath(ParamStr(0));
+ GetDesktopResolution(sh, sv);
+ SetCurrentDirectory(QGlobal::asAPPDIR.c_str());                                // BO PODCZAS OTWIERANIA MODELU Z INNEGO KATALOGU USTAWIAL TAM GLOWNY
 
  DeleteFile(QGlobal::asAPPDIR + "errors.txt");                                  // usuniêcie starego
  DeleteFile(QGlobal::asAPPDIR + "templog.txt");                                 // usuniêcie starego
  DeleteFile(QGlobal::asAPPDIR + "models\\temp.e3d");
  DeleteFile(QGlobal::asAPPDIR + "models\\temp.t3d");                            
 
- commandline = Trim(lpCmdLine);
+ commandline = lpCmdLine;
+
+ WriteLog("CMDLINE: " + commandline);
 
  MV->Update(QGlobal::asAPPDIR);
 
  MV->isdynamicmodel(commandline.c_str());                                       // sprawdza czy z katalogu dynamic (ustawia flage globalna i w klasie)
 
- bMV = MV->copymodelfiletotemp(commandline.c_str(), bFILEOK);                         // KOPIOWANIE PLIKU Z MIEJSCA URUCHOMIENIA NA models/temp.ext
+ bMV = MV->copymodelfiletotemp(commandline.c_str(), bFILEOK);                   // KOPIOWANIE PLIKU Z MIEJSCA URUCHOMIENIA NA models/temp.ext
 
  MV->UnifyCmdLine(commandline);
 
@@ -977,7 +1039,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
    {
     WriteLog("Lauching program from EXE file");
    }
-
+ WriteLog("CMDLINE: " + commandline);
 
  QGlobal::USERPID = AnsiString(GetMachineID("C:\\"));
  
@@ -996,7 +1058,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
  int errc = 0;
    if (File)
     {
-        while(getline(File,line))
+        while(getline(File, line))
        {
 		std::string test, par1;
                 int pos1 = 0;
@@ -1065,8 +1127,8 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
                 //WriteLog(test + "=[" + par1 + "]");
 
 		if (test == "getscreenb") getscreenb = atoi(par1.c_str());
-	      	if (test == "screenresw") sh = StrToInt(par1.c_str());
-	     	if (test == "screenresh") sv = StrToInt(par1.c_str());
+	      	if (test == "screenresw") QGlobal::iWW = StrToInt(par1.c_str());
+	     	if (test == "screenresh") QGlobal::iWH = StrToInt(par1.c_str());
 		if (test == "fullscreen") fullscreen = atoi(par1.c_str());
                 if (test == "askforfull") askforfull = atoi(par1.c_str());
                 if (test == "aspectratio") QGlobal::aspectratio = atoi(par1.c_str());
@@ -1098,11 +1160,12 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
                 if (test == "noisealpha") QGlobal::fnoisealpha = StrToFloat(Trim(par1));
               //if (test == "deftextext") Global::szDefaultExt = par1;
 
-
-               Global::iWindowWidth = sh;
-               Global::iWindowHeight = sv;
-               WindowWidth = sh;
-               WindowHeight = sv;
+               //if (sh > 0) QGlobal::iWW = sh;
+               //if (sv > 0) QGlobal::iWH = sv;
+               Global::iWindowWidth = QGlobal::iWW;
+               Global::iWindowHeight = QGlobal::iWH;
+               //WindowWidth = sh;
+               //WindowHeight = sv;
                Global::bFullScreen = fullscreen;
         }
 
@@ -1128,7 +1191,6 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 
 
  WriteLog("");
-
  WriteLog("environment informations: ");
 
  sprintf(cmdline, "appfile: [%s]", argv[0]);    //argv[0]
@@ -1147,7 +1209,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
  sprintf(appvers, "appvers: %i %i %i %i", vmajor, vminor, vbuild, vrev);
  WriteLog(appvers);
 
- GetFileAttributesEx(ParamStr(0).c_str(), GetFileExInfoStandard, &attr);
+ GetFileAttributesEx(FULLEXE.c_str(), GetFileExInfoStandard, &attr);
  FileTimeToSystemTime(&attr.ftLastWriteTime, &creation);
  sprintf(appdate, "appdate: %04d%02d%02d %02d%02d%02d", creation.wYear, creation.wMonth, creation.wDay, creation.wHour+2, creation.wMinute, creation.wSecond);
  WriteLog(appdate);
@@ -1178,6 +1240,8 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 
  for (int l = 0; l < ss->Count; l++) WriteLog(ss->Strings[l]);
 
+ SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());
+
  //WriteLog("cmpconf: windows 7 Ultimate 64, AMD FX 4170 4.2GHz 4 core, 8gb ram, GFX GF8600GT CORE 560Mhz 256MB PCIE,  BIOS VIDEO: 60.84.5E.00.00, OpenGL 3.3 driver rev 2009-01-16 6.14.11.8151 ");
  WriteLog("");
  WriteLog("");
@@ -1187,7 +1251,6 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     aHWnd = FindWindow(NULL, QGlobal::logwinname.c_str()); // Szukanie okna z otwartm logiem znajac etykiete
     SendMessage(aHWnd, WM_CLOSE, 0, 0);    // ZAMYKAMY OTWARTY LOG
 
-    
     WriteLog("Reading eu07.ini...");
     Global::LoadIniFile("eu07.ini"); // teraz dopiero mo¿na przejrzeæ plik z ustawieniami
     Global::InitKeys("keys.ini"); // wczytanie mapowania klawiszy - jest na sta³e
@@ -1196,9 +1259,10 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     if (Global::iWriteLogEnabled & 2)
     {
         WriteLog("Creating Console...");
-        AllocConsole();
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_GREEN);
+        if (!Global::bHideConsole) AllocConsole();
+        if (!Global::bHideConsole) SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_GREEN);
     }
+  //WriteLog(lpCmdLine);
 
     WriteLog("Parsing command line...");
     AnsiString str = lpCmdLine; // parametry uruchomienia
@@ -1262,48 +1326,43 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     if (Bpp != 32)
         Bpp = 16;
 
-    WriteLog(".");
+    //WriteLog(".");
 
     if (getscreenb) // JEZELI OPCJA ROZDZIELCZOSCI IDENTYCZNEJ JAK PULPIT
         {
-         GetDesktopResolution(sh, sv); // USTAW ROZDZIELCZOSC TAKA JAK PULPIT
-         WindowWidth = sh;
-         WindowHeight = sv;
-         Global::iWindowWidth = sh;
-         Global::iWindowHeight = sv;
+         GetDesktopResolution(QGlobal::iWW, QGlobal::iWH); // USTAW ROZDZIELCZOSC TAKA JAK PULPIT
+        // WindowWidth = sh;
+       //  WindowHeight = sv;
+         Global::iWindowWidth = QGlobal::iWW;
+         Global::iWindowHeight = QGlobal::iWH;
         }
 
-     if (askforfull)  // OKIENKO DIALOGOWE Z ZAPYTANIEM O TRYB OKNA
+    if (askforfull)  // OKIENKO DIALOGOWE Z ZAPYTANIEM O TRYB OKNA
         {
          if (MessageBox(NULL,"Would You Like To Run Fullscreen Mode?", "Start FullScreen?",MB_YESNO|MB_ICONQUESTION)==IDNO)
          Global::bFullScreen = false;
          else Global::bFullScreen  = true;
          fullscreen = Global::bFullScreen;
         }
-        
-   if (sv > 0) Global::iWindowHeight  = sv;
-   if (sh > 0) Global::iWindowWidth = sh;
-
-   if (QGlobal::bSENDLOGFTP)  // Jezeli wysylanie logu na ftp wlaczone to pokaz okienko debuggera i polacz z serwerem FTP
-    {
-     //password = encryptDecrypt(X2985Z457);
-     DEBUGGER->Left = 0;
-     DEBUGGER->Width = Screen->Width;
-   //DEBUGGER->Show();
-     //DEBUGGER->FTP->Port = 21;
-     //DEBUGGER->FTP->HostName = "lisek.org.pl";
-     //DEBUGGER->FTP->UserName = "queued_q";
-     //DEBUGGER->FTP->PassWord = password.c_str(); //AnsiString(password.c_str());
-     //DEBUGGER->FTP->Binary          = true;
-     //DEBUGGER->FTP->DisplayFileFlag = true;
-     //DEBUGGER->FTP->Connect();
-    }
+    if (!getscreenb) // JEZELI OPCJA ROZDZIELCZOSCI IDENTYCZNEJ JAK PULPIT
+        {
+         if (QGlobal::iWH > 0) Global::iWindowHeight  = QGlobal::iWH;
+         if (QGlobal::iWW > 0) Global::iWindowWidth = QGlobal::iWW;
+        }
 
     // create our OpenGL window
     if (!CreateGLWindow(Global::asHumanCtrlVehicle.c_str(), Global::iWindowWidth, Global::iWindowHeight, Bpp, fullscreen))
         return 0; // quit if window was not created
 
     SetForegroundWindow(hWnd);
+    SetFocus(hWnd);
+
+
+    //password = encryptDecrypt(X2985Z457);
+    //DEBUGGER->Left = 0;
+    //DEBUGGER->Width = Screen->Width;
+    //DEBUGGER->Top = Screen->Height - DEBUGGER->Height;
+    //DEBUGGER->Show();
 
     // McZapkie: proba przeplukania klawiatury
     Console *pConsole = new Console(); // Ra: nie wiem, czy ma to sens, ale jakoœ zainicjowac trzeba
@@ -1321,7 +1380,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
         Global::iMaxTextureSize = 64; //¿eby nie zamulaæ pamiêci
         World.ModifyTGA(); // rekurencyjne przegl¹danie katalogów
     }
-    else
+   else
     {
         if (Global::iConvertModels < 0)
         {
@@ -1333,25 +1392,9 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
         //{//g³ówna pêtla programu
         Console::On(); // w³¹czenie konsoli
 
-        if ( QGlobal::bAPPDONE ) done = true;
+       if (QGlobal::bAPPDONE ) done = true;
 
-
- if (QGlobal::bSENDLOGFTP > 0)
-   {
-    CopyFile("log.txt", "templog.txt", false);
-
-    SENDLOGTOFTP();
-
-   // Application->ProcessMessages();
-
-    //DEBUGGER->FTP->LocalFileName = appath + "templog.txt";
-    //DEBUGGER->FTP->HostDirName = QGlobal::USERPID;
-    //DEBUGGER->FTP->HostFileName = QGlobal::USERPID;  // nazwa katalogu
-    //DEBUGGER->FTP->Mkd(); // uteorzenie katalogu
-    //DEBUGGER->FTP->Cwd(); // ustawienie jako roboczy
-    //DEBUGGER->FTP->HostFileName = "log-" + FDT + ".txt";  // nazwa pliku logu
-    //DEBUGGER->FTP->Put();      // wrzucamy plik do wczesniej wybranego
-   }
+       if (QGlobal::bSENDLOGFTP > 0) SENDLOGTOFTP();
 
        while (!done) // loop that runs while done=FALSE
         {
@@ -1384,7 +1427,6 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     SystemParametersInfo(SPI_SETKEYBOARDSPEED, iOldSpeed, NULL, 0);
     SystemParametersInfo(SPI_SETKEYBOARDDELAY, iOldDelay, NULL, 0);
 
-
     DeleteFile("templog.txt"); // usuniêcie starego
     DeleteFile("myconsist.txt"); // usuniêcie starego
     DeleteFile(AnsiString(QGlobal::asAPPDIR + "models\\temp\\temp.e3d").c_str());
@@ -1394,6 +1436,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     KillGLWindow(); // kill the window
     return (msg.wParam); // exit the program
 }
+
 
 
 

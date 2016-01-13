@@ -416,12 +416,32 @@ TTexturesManager::AlphaValue   TTexturesManager::LOADJPG(char* szPathName)				//
 
         GLfloat maxaniso;
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxaniso);
-
+         /*
 	if (strstr(szPathName, "http://"))					// If PathName Contains http:// Then...
 	{
         strcpy(szPath, szPathName);						// Append The PathName To szPath
         //WriteLog("http tex:");
         //WriteLog(szPath);
+	}
+	else									// Otherwise... We Are Loading From A File
+	{
+		GetCurrentDirectory(MAX_PATH, szPath);				// Get Our Working Directory
+		strcat(szPath, "\\");						// Append "\" After The Working Directory
+		strcat(szPath, szPathName);					// Append The PathName
+	}
+          */
+	if (strstr(szPathName, "qqq"))						// If PathName Contains http:// Then...
+	{
+
+		std::string tmp;
+		tmp.append(szPathName);                                         // PRZEPISUJEMY Z char DO std::string
+              //WriteLog("sss:" + AnsiString(tmp.c_str()));                     // sss: www.\annuncio.jpg
+		tmp = tmp.substr(4, 144);                                       // USUWAMY tex/www.
+              //WriteLog("TMP: " + AnsiString(tmp.c_str()));                    // TMP: \annuncio.jpg
+		strcpy(szPath, "http://eu07.es");                               // NADPISUJEMY szPath prefixem protokolu
+		strcat(szPath, tmp.c_str());                                    // DODAJEMY DO TEGO ADRES PLIKU
+              //WriteLog( szPath);
+		//strcpy(szPath, szPathName);					// Append The PathName To szPath
 	}
 	else									// Otherwise... We Are Loading From A File
 	{
@@ -488,8 +508,6 @@ TTexturesManager::AlphaValue   TTexturesManager::LOADJPG(char* szPathName)				//
 	pPicture->Render(hdcTemp, 0, 0, lWidthPixels, lHeightPixels, 0, lHeight, lWidth, -lHeight, 0);
 
 	// Convert From BGR To RGB Format And Add An Alpha Value Of 255
-
-
 	for(long i = 0; i < lWidthPixels * lHeightPixels; i++)			// Loop Through All Of The Pixels
 	{
 		BYTE* pPixel	= (BYTE*)(&pBits[i]);				// Grab The Current Pixel
@@ -514,16 +532,18 @@ TTexturesManager::AlphaValue   TTexturesManager::LOADJPG(char* szPathName)				//
 
 	// Typical Texture Generation Using Data From The Bitmap
 	glBindTexture(GL_TEXTURE_2D, ID);					// Bind To The Texture ID
+  	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);		// (Modify This For The Type Of Filtering You Want)
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);         // (Modify This For The Type Of Filtering You Want)
 
         // FILTROWANIE TEKSTURY COBY UZYSKAC NA TORZE TAKI EFEKT JAK PRZY TEKSTURZE Z PLIKU .TEX
-        //--gluBuild2DMipmaps( GL_TEXTURE_2D, 4, lWidthPixels, lHeightPixels, GL_RGBA, GL_UNSIGNED_BYTE, pBits );
+        gluBuild2DMipmaps( GL_TEXTURE_2D, 4, lWidthPixels, lHeightPixels, GL_RGBA, GL_UNSIGNED_BYTE, pBits );
 
         //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         //--glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       //  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxaniso);
+        //--glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+        //-glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxaniso);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lWidthPixels, lHeightPixels, 0, GL_RGBA, GL_UNSIGNED_BYTE, pBits);	// (Modify This If You Want Mipmaps)
 
@@ -563,8 +583,8 @@ TTexturesManager::Names::iterator TTexturesManager::LoadFromFile(std::string fil
 
     if (strstr(realFileName.c_str(), "http-"))
         {
-         str = AnsiString(realFileName.c_str());              // textures\http-xxxxxx.jpg
-         inetlink = "http://eu07.es/textures\\" + str.SubString(15, 255);   // UCINAMY  "textures\http-"
+         str = AnsiString(realFileName.c_str());                                // textures\http-xxxxxx.jpg
+         inetlink = "http://eu07.es/textures\\" + str.SubString(15, 255);       // UCINAMY  "textures\http-"
          WriteLog("INETLINK: " + inetlink);                                     // INETLINK: http://q.matinf.pl/textures\ip\jpegtestd.jpg
          cFileName = inetlink.c_str();
         }

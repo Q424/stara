@@ -1790,10 +1790,8 @@ double TDynamicObject::Init(
      }
     */
     // utworzenie parametrów fizyki
-    MoverParameters =
-        new TMoverParameters(iDirection ? fVel : -fVel, Type_Name, asName, Load, LoadType, Cab);
-    iLights = MoverParameters
-                  ->iLights; // wskaŸnik na stan w³asnych œwiate³ (zmienimy dla rozrz¹dczych EZT)
+    MoverParameters = new TMoverParameters(iDirection ? fVel : -fVel, Type_Name, asName, Load, LoadType, Cab);
+    iLights = MoverParameters->iLights; // wskaŸnik na stan w³asnych œwiate³ (zmienimy dla rozrz¹dczych EZT)
     // McZapkie: TypeName musi byc nazw¹ CHK/MMD pojazdu
     if (!MoverParameters->LoadChkFile(asBaseDir))
     { // jak wczytanie CHK siê nie uda, to b³¹d
@@ -1803,6 +1801,9 @@ double TDynamicObject::Init(
               ".fiz\r\nError " + ConversionError + " in line " + LineCount);
         return 0.0; // zerowa d³ugoœæ to brak pojazdu
     }
+
+    
+
     bool driveractive = (fVel != 0.0); // jeœli prêdkoœæ niezerowa, to aktywujemy ruch
     if (!MoverParameters->CheckLocomotiveParameters(
             driveractive, (fVel > 0 ? 1 : -1) * Cab *
@@ -2007,6 +2008,8 @@ double TDynamicObject::Init(
     iAxles = (MaxAxles < MoverParameters->NAxles) ? MaxAxles : MoverParameters->NAxles; // iloœæ osi
     // wczytywanie z pliku nazwatypu.mmd, w tym model
     LoadMMediaFile(asBaseDir, Type_Name, asReplacableSkin);
+    LoadUniqueSpecs(asName);
+
     // McZapkie-100402: wyszukiwanie submodeli sprzegów
     btCoupler1.Init("coupler1", mdModel, false); // false - ma byæ wy³¹czony
     btCoupler2.Init("coupler2", mdModel, false);
@@ -3467,6 +3470,17 @@ void TDynamicObject::Render()
                 mdLoad->RaRender(ObjSqrDist, ReplacableSkinID, iAlpha);
             if (mdPrzedsionek)
                 mdPrzedsionek->RaRender(ObjSqrDist, ReplacableSkinID, iAlpha);
+            // Renderowanie wozkow z oddzielnych modeli
+                glPushMatrix();
+                glTranslatef(pBogieA.x, pBogieA.y, pBogieA.z);
+            if (mdBogieA)
+                mdBogieA->RaRender(ObjSqrDist, ReplacableSkinID, iAlpha);
+                glPopMatrix();
+                glPushMatrix();
+                glTranslatef(pBogieB.x, pBogieB.y, pBogieB.z);
+            if (mdBogieB)
+                mdBogieB->RaRender(ObjSqrDist, ReplacableSkinID, iAlpha);
+                glPopMatrix();
         }
         else
         { // wersja Display Lists
@@ -3479,16 +3493,18 @@ void TDynamicObject::Render()
                 mdLoad->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
             if (mdPrzedsionek)
                 mdPrzedsionek->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
-    glPushMatrix();
-    glTranslatef(pBogieA.x, pBogieA.y, pBogieA.z);
+
+            // Renderowanie wozkow z oddzielnych modeli
+                glPushMatrix();
+                glTranslatef(pBogieA.x, pBogieA.y, pBogieA.z);
             if (mdBogieA)
                 mdBogieA->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
-    glPopMatrix();
-    glPushMatrix();
-    glTranslatef(pBogieB.x, pBogieB.y, pBogieB.z);
+                glPopMatrix();
+                glPushMatrix();
+                glTranslatef(pBogieB.x, pBogieB.y, pBogieB.z);
             if (mdBogieB)
                 mdBogieB->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
-    glPopMatrix();
+                glPopMatrix();
         }
 
         // Ra: czy ta kabina tu ma sens?
@@ -4030,8 +4046,20 @@ void TDynamicObject::RenderAlpha()
     return;
 } // koniec renderalpha
 
-// McZapkie-250202
+
+// *****************************************************************************
+// Q 120116: Wczytywanie charakterystycznych specyfikacji pojazdu
+// *****************************************************************************
+void TDynamicObject::LoadUniqueSpecs(AnsiString asName)
+{
+ WriteLog("Loading - " + asName + ".add");
+
+}
+
+
+// McZapkie-250202 *************************************************************
 // wczytywanie pliku z danymi multimedialnymi (dzwieki)
+// *****************************************************************************
 void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
                                     AnsiString ReplacableSkin)
 {
@@ -4356,8 +4384,12 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
                     for (i = 0; i < iAnimType[ANIM_WHEELS]; ++i) // liczba osi
                     { // McZapkie-050402: wyszukiwanie kol o nazwie str*
                         asAnimName = str + AnsiString(i + 1);
-                        pAnimations[i].smAnimated =
-                            mdModel->GetFromName(asAnimName.c_str()); // ustalenie submodelu
+                        pAnimations[i].smAnimated = mdModel->GetFromName(asAnimName.c_str()); // ustalenie submodelu
+
+                        //float3 transloc;
+
+                        //transloc = pAnimations[i].smAnimated->Translation1Get();
+                        //WriteLog("trans " + AnsiString(transloc.x) + " " + AnsiString(transloc.y) + " " + AnsiString(transloc.z));
 
                         if (pAnimations[i].smAnimated)
                         { //++iAnimatedAxles;

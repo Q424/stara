@@ -134,12 +134,12 @@ bool TSCREEN::SaveBMPFile(char *filename, HBITMAP bitmap, HDC bitmapDC, int widt
 // *****************************************************************************
 // ZMIANA OGNISKOWEJ - PRZYBLIZANIE
 // *****************************************************************************
-void __fastcall TSCREEN::FOVADD()
+void __fastcall TSCREEN::FOVADD(float incrf)
 {
        ADJSCR = true;
        ADJFOV = true;
 
-       if (QGlobal::ffov < 75.0) QGlobal::ffov += 0.10;
+       if (QGlobal::ffov < 75.0) QGlobal::ffov += incrf;
        TSCREEN::CFOV = QGlobal::ffov;
        ReSizeGLSceneEx(QGlobal::ffov, Global::iWindowWidth, Global::iWindowHeight);
        if (QGlobal::ffov == 45.0) Sleep(500);
@@ -160,11 +160,11 @@ void __fastcall TSCREEN::FOVADDF()
 // *****************************************************************************
 // ZMIANA OGNISKOWEJ - ODDALANIE
 // *****************************************************************************
-void __fastcall TSCREEN::FOVREM()
+void __fastcall TSCREEN::FOVREM(float incrf)
 {
        ADJSCR = true;
        ADJFOV = true;
-       if (QGlobal::ffov > 20.0) QGlobal::ffov -= 0.10;
+       if (QGlobal::ffov > 10.0) QGlobal::ffov -= incrf;
        TSCREEN::CFOV = QGlobal::ffov;
        ReSizeGLSceneEx(QGlobal::ffov, Global::iWindowWidth, Global::iWindowHeight);
        if (QGlobal::ffov == 45.0) Sleep(500);

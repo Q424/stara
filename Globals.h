@@ -419,7 +419,7 @@ class QGlobal
  static HDC glHDC;
  static HGLRC glHGLRC;
  static HWND glHWND;
- 
+ static HINSTANCE hINST;
  static char **argv;
 // TFtpClient *FTP;
  
@@ -469,6 +469,8 @@ class QGlobal
  static AnsiString asPASSTRAINNUMBER;
  static AnsiString asPASSDESTINATION;
  static AnsiString asDynamicTexturePath;
+ static AnsiString asKBDLAYOUT;
+ static AnsiString asKBDLAYOUTSTR;
 
  static GLblendstate GLBLENDSTATE;
  static GLlightstate GLLIGHTSTATE;
@@ -513,6 +515,9 @@ class QGlobal
  static bool bISDYNAMIC;  // Q 040116: dla zmiany sciezki tekstur dla modelviewera
  static bool bRAINSTED;
  static bool bOPENLOGONX;
+ static bool bEXITQUERY;
+ static bool bKBDREVERSED;
+ static bool bSIMSTARTED;
 
  static int objectid;
  static int cabelementid;
@@ -530,6 +535,8 @@ class QGlobal
  static int loaderrefresh;
  static int iINCLUDETYPE;
  static int iSTATIONPOSINTAB;
+ static int iWH;
+ static int iWW;
 
  static double fscreenfade;
  static double fscreenfade2;
@@ -730,6 +737,7 @@ class Global
     static int findpassengerdynamic(vector3 PPos, AnsiString asName, AnsiString REL, AnsiString DST, TGroundNode *GN);
     static int listdir(const char *szDir, bool bCountHidden, AnsiString ext, TStringList &SL );
     static int setpassengerdest(AnsiString train, AnsiString station);
+    static std::string GetKbdLayout();
 };
 
 //---------------------------------------------------------------------------

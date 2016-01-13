@@ -79,8 +79,9 @@ bool __fastcall TWorld::STARTSIMULATION()
    Camera.Reset();
    Global::iPause = false;
    loaderbrief = NULL;      // USUNIECIE TEKSTURY
-   loaderbackg=NULL;
-   QGlobal::splashscreen=NULL;
+   loaderbackg = NULL;
+   QGlobal::splashscreen = NULL;
+   QGlobal::bSIMSTARTED = true;
 }
 
 
@@ -256,6 +257,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     QGlobal::postep = 0;
     QGlobal::bSCNLOADED = false;
     QGlobal::bfirstloadingscn = true;
+    QGlobal::bKBDREVERSED = false;
     ShowWindow(NhWnd,SW_SHOW);
     SetForegroundWindow(NhWnd);                                                    // slightly higher priority
     SetFocus(NhWnd);
@@ -556,6 +558,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     // Ra: ustawienia testowe
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+    WriteLog("");
 
     if (QGlobal::bSPLASHSCR) RenderSPLASHSCR(hDC, 77, "SS", 1);                 // Pierwsza czesc splasha (7s)
     if (QGlobal::bSPLASHSCR) RenderLoaderU(hDC, 77, "SS");                      // Zaraz po splashu stopniowe wylonienie sie z czerni ekranu wczytywania
@@ -602,6 +605,8 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
         WriteLog("Display Lists font used."); //+AnsiString(glGetError())
     }
     WriteLog("Font init OK"); //+AnsiString(glGetError())
+    WriteLog("");
+
     SetForegroundWindow(hWnd);
 
     Timer::ResetTimers();
@@ -654,15 +659,16 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
 
-    WriteLog(".");
-    SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());
-    WriteLog("SetCurrentDirectory();");
+    //WriteLog(".");
+    //SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());
+    //WriteLog("SetCurrentDirectory();");
     /*-----------------------Sound Initialization-----------------------*/
     TSoundsManager::Init(hWnd);
-    WriteLog(".");
+    //WriteLog(".");
     // TSoundsManager::LoadSounds( "" );
     /*---------------------Sound Initialization End---------------------*/
     WriteLog("Sound Init OK");
+    WriteLog("");
     //if (Global::detonatoryOK)
     //{
     //    glRasterPos2f(-0.25f, -0.11f);
@@ -685,6 +691,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 
     TTexturesManager::Init();
     WriteLog("Textures init OK");
+    WriteLog("");
     //if (Global::detonatoryOK)
     //{
     //    glRasterPos2f(-0.25f, -0.13f);
@@ -704,6 +711,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     //    TModelsManager::LoadModels(asModelsPatch);
     TModelsManager::Init();
     WriteLog("Models init OK");
+    WriteLog("");
     //if (Global::detonatoryOK)
     //{
     //    glRasterPos2f(-0.25f, -0.15f);
@@ -722,9 +730,15 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 
     Ground.Init(Global::szSceneryFile, hDC);
     //    Global::tSinceStart= 0;
-    RenderLoader(hDC, 77, "SKY INITIALIZATION...");
-    Clouds.Init();
     WriteLog("Ground init OK");
+    WriteLog("");
+
+    RenderLoader(hDC, 77, "SKY INITIALIZATION...");
+    WriteLog("Sky init");
+    Clouds.Init();
+    WriteLog("Sky init OK");
+    WriteLog("");
+    
     //if (Global::detonatoryOK)
     //{
     //    glRasterPos2f(-0.25f, -0.17f);
@@ -780,6 +794,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
             Sleep(200);
             Error("Player train init failed!", false);
             FreeFlyModeFlag = true; // Ra: automatycznie w³¹czone latanie
+            QGlobal::bSIMSTARTED = true;
             //if (Global::detonatoryOK)
             //{
             //    glRasterPos2f(-0.25f, -0.20f);
@@ -805,6 +820,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
             //}
         }
         FreeFlyModeFlag = true; // Ra: automatycznie w³¹czone latanie
+        QGlobal::bSIMSTARTED = true;
         //SwapBuffers(hDC); // swap buffers (double buffering)
         Controlled = NULL;
         mvControlled = NULL;
@@ -845,7 +861,6 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
        {
         Global::SetCameraPosition(Global::pFreeCameraInit[1]); //nowa pozycja dla generowania obiektów
         Ground.Silence(Camera.Pos); //wyciszenie wszystkiego z poprzedniej pozycji
-      //Camera.Init(Global::pFreeCameraInit[0], Global::pFreeCameraInitAngle[0]); //przestawienie
         Camera.Init(Global::pFreeCameraInit[1], Global::pFreeCameraInitAngle[1]); // przestawienie
 
         if (FreeFlyModeFlag) Camera.RaLook(); // jednorazowe przestawienie kamery
@@ -865,75 +880,63 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 };
 
 
-// *****************************************************************************
+
+// ***********************************************************************************************************
 // OBSLUGA WCISNIECIA KLAWISZY W ROZNYCH KOMBINACJACH
-// *****************************************************************************
+// ***********************************************************************************************************
 void TWorld::OnKeyDown(int cKey)
 { //(cKey) to kod klawisza, cyfrowe i literowe siê zgadzaj¹
-    // Ra 2014-09: tu by mo¿na dodaæ tabelê konwersji: 256 wirtualnych kodów w kontekœcie dwóch
-    // prze³¹czników [Shift] i [Ctrl]
-    // na ka¿dy kod wirtualny niech przypadaj¹ 4 bajty: 2 dla naciœniêcia i 2 dla zwolnienia
-    // powtórzone 256 razy da 1kB na ka¿dy stan prze³¹czników, ³¹cznie bêdzie 4kB pierwszej tabeli
-    // przekodowania
-
- bool isshift = false;
+  // Ra 2014-09: tu by mo¿na dodaæ tabelê konwersji: 256 wirtualnych kodów w kontekœcie dwóch prze³¹czników
+  // [Shift] i [Ctrl] na ka¿dy kod wirtualny niech przypadaj¹ 4 bajty: 2 dla naciœniêcia i 2 dla zwolnienia
+  // powtórzone 256 razy da 1kB na ka¿dy stan prze³¹czników, ³¹cznie bêdzie 4kB pierwszej tabeli przekodowania
 
  QGlobal::isshift = false;
 
+ // 18 nowych klawiszy do przemyslenia czy jest sens (klawiatura multimedialna)
+ if (Console::Pressed(VK_BROWSER_BACK)) WriteLog("VK_BROWSER_BACK");
+ if (Console::Pressed(VK_BROWSER_FORWARD)) WriteLog("VK_BROWSER_FORWARD");
+ if (Console::Pressed(VK_BROWSER_HOME)) WriteLog("VK_BROWSER_HOME");
+ if (Console::Pressed(VK_BROWSER_SEARCH)) WriteLog("VK_BROWSER_SEARCH");
+ if (Console::Pressed(VK_BROWSER_REFRESH)) WriteLog("VK_BROWSER_REFRESH");
+ if (Console::Pressed(VK_BROWSER_STOP)) WriteLog("VK_BROWSER_STOP");
+ if (Console::Pressed(VK_VOLUME_DOWN)) WriteLog("VK_VOLUME_DOWN");
+ if (Console::Pressed(VK_VOLUME_UP)) WriteLog("VK_VOLUME_UP");                                                  
+ if (Console::Pressed(VK_VOLUME_MUTE)) WriteLog("VK_VOLUME_MUTE");
+ if (Console::Pressed(VK_LAUNCH_MAIL)) WriteLog("VK_LAUNCH_MAIL");
+ if (Console::Pressed(VK_LAUNCH_MEDIA_SELECT)) WriteLog("VK_LAUNCH_MEDIA_SELECT");
+ if (Console::Pressed(VK_MEDIA_PLAY_PAUSE)) WriteLog("VK_MEDIA_PLAY_PAUSE");
+ if (Console::Pressed(VK_MEDIA_STOP)) WriteLog("VK_MEDIA_STOP");
+ if (Console::Pressed(VK_MEDIA_NEXT_TRACK)) WriteLog("VK_MEDIA_NEXT_TRACK");
+ if (Console::Pressed(VK_MEDIA_PREV_TRACK)) WriteLog("VK_MEDIA_PREV_TRACK");
+ if (Console::Pressed(VK_SLEEP)) WriteLog("VK_SLEEP");
+ if (Console::Pressed(VK_LAUNCH_APP1)) WriteLog("VK_LAUNCH_APP1");
+ if (Console::Pressed(VK_LAUNCH_APP2)) WriteLog("VK_LAUNCH_APP2");
+
+ if (Console::Pressed(VK_RMENU)) WriteLog("R ALT");                             // PRAWY ALT
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('f'))) QGlobal::bscrfilter = !QGlobal::bscrfilter;
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('n'))) QGlobal::bscrnoise = !QGlobal::bscrnoise;
  
- if (Global::iPause && cKey==Global::Keys[k_Czuwak]) STARTSIMULATION();         //Q 291215: Bo po zaladowaniu symulacji jest pauza i pozostaje obraz wczytywania jako tlo pauzy
+ if (Global::iPause && cKey == Global::Keys[k_Czuwak]) STARTSIMULATION();       // Q 291215: Bo po zaladowaniu symulacji jest pauza i pozostaje obraz wczytywania jako tlo pauzy
 
- if (!Console::Pressed(VK_SHIFT) && cKey == VK_F11) SCR->SaveScreen_xxx();   // Q 261215: zrut ekranu do jpg, tga lub bmp w zaleznosci od opcji w config.txt
+ if (!Console::Pressed(VK_SHIFT) && cKey == VK_F11) SCR->SaveScreen_xxx();      // Q 261215: zrut ekranu do jpg, tga lub bmp w zaleznosci od opcji w config.txt
 
- if (GetAsyncKeyState(VK_SHIFT) < 0) { QGlobal::isshift = isshift = true; }  // USUNALEM SPRAWDZANIE W TTrain::OnKeyDown() zastepujac parametrem funkcji;
+ if (GetAsyncKeyState(VK_SHIFT) < 0) { QGlobal::isshift = true; }               // USUNALEM SPRAWDZANIE W TTrain::OnKeyDown() zastepujac parametrem funkcji;
 
-//    if (!Global::iPause && cKey == VK_F10)
-//        {
-//         //if (Global::iTextMode==cKey)
-//         // Global::iTextMode=(Global::iPause&&(cKey!=VK_F1)?VK_F1:0); //wy³¹czenie napisów, chyba ¿e pauza
-//         //else
-//         Global::iPause = true;
-//         Global::iTextMode = cKey;
-//        }
-
-//    if (Global::iPause && Global::iTextMode==VK_F10) if (Console::Pressed(VkKeyScan('n')))   // Jezeli pauza po wcisnieciu F10 i wcisnie sie n ...
-//        {
-//         Global::iPause = false;    // koniec pauzy
-//         Global::iTextMode = -999;  // resetuj flage textmode
-//        }
-
-// if (Global::iPause && Global::iTextMode==VK_F10) if (Console::Pressed(VkKeyScan('y')) || Console::Pressed(VkKeyScan('n')))
-//      {
-//       //--Global::bAPPDONE = true;
-//       Global::iPause = false;
-//       Global::iTextMode = 0;
-//       Global::iTextMode=(cKey=='Y')?-1:0; //flaga wyjœcia z programu
-//       return; //nie przekazujemy do poci¹gu
-//      }
-
- if (Global::iTextMode == VK_F10)
-  {
-     WriteLog("PAUSED I EXIT QUERY");
-     Global::iPause = true;
-
-     if (Console::Pressed(VkKeyScan('n'))) { Global::iTextMode = -999; Global::iPause = false; }
-     // else
-     if (Console::Pressed(VkKeyScan('y')))
-         {
-           DeleteFile("templog.txt"); // usuniêcie starego
-           DeleteFile("myconsist.txt"); // usuniêcie starego
-           DeleteFile(AnsiString(QGlobal::asAPPDIR + "models\\temp\\temp.e3d").c_str());
-
-           char logfile[200];
-           sprintf(logfile,"%s%s", QGlobal::asAPPDIR.c_str() , QGlobal::logfilenm1.c_str());
-           if (QGlobal::bOPENLOGONX) ShellExecute(0, "open", logfile, NULL, NULL, SW_MAXIMIZE);
-           exit(0);
-         }
-
-  }
-  else
+ if (QGlobal::bEXITQUERY)
+    {
+      if ((cKey == 89))   // 89.Y lub 90.Z (bo czasami sie zamieni gdy ktos ma krzywe palce
+       {
+        DeleteFile("templog.txt"); // usuniêcie starego
+        DeleteFile("myconsist.txt"); // usuniêcie starego
+        DeleteFile(AnsiString(QGlobal::asAPPDIR + "models\\temp\\temp.e3d").c_str());
+        char logfile[200];
+        sprintf(logfile,"%s%s", QGlobal::asAPPDIR.c_str() , QGlobal::logfilenm1.c_str());
+        if (QGlobal::bOPENLOGONX) ShellExecute(0, "open", logfile, NULL, NULL, SW_MAXIMIZE);
+        exit(0);
+       } 
+      if (Console::Pressed(VkKeyScan('n'))) { Global::iTextMode = -999; Global::iPause = false; QGlobal::bEXITQUERY = false;}
+    }
+   else 
   {
     if (!Global::iPause)
     { // podczas pauzy klawisze nie dzia³aj¹
@@ -955,8 +958,7 @@ void TWorld::OnKeyDown(int cKey)
             WriteLog(info + "F" + AnsiString(cKey - 111) + "]");
         else if (cKey >= 96)
             WriteLog(info + "Num" + AnsiString("0123456789*+?-./").SubString(cKey - 95, 1) + "]");
-        else if (((cKey >= '0') && (cKey <= '9')) || ((cKey >= 'A') && (cKey <= 'Z')) ||
-                 (cKey == ' '))
+        else if (((cKey >= '0') && (cKey <= '9')) || ((cKey >= 'A') && (cKey <= 'Z')) || (cKey == ' '))
             WriteLog(info + AnsiString(char(cKey)) + "]");
         else if (cKey == '-')
             WriteLog(info + "Insert]");
@@ -1038,7 +1040,6 @@ void TWorld::OnKeyDown(int cKey)
         case VK_F5: // przesiadka do innego pojazdu
         case VK_F8: // FPS
         case VK_F9: // wersja, typ wyœwietlania, b³êdy OpenGL
-        case VK_F10:
             if (Global::iTextMode == cKey)
                 Global::iTextMode =
                     (Global::iPause && (cKey != VK_F1) ? VK_F1 : 0); // wy³¹czenie napisów, chyba ¿e pauza
@@ -1106,15 +1107,16 @@ void TWorld::OnKeyDown(int cKey)
            WriteLog(tmptrk->pTrack->NameGet() + " switched to " + IntToStr(state) + " " + statestr);
      }
 
-    if (Global::iTextMode == VK_F10) // wyœwietlone napisy klawiszem F10
-    { // i potwierdzenie
-        Global::iPause = false;
-        Global::iTextMode = 0;
-        Global::iTextMode = (cKey == 'Y') ? -1 : 0; // flaga wyjœcia z programu
-
-        return; // nie przekazujemy do poci¹gu
-    }
-    else if ((Global::iTextMode == VK_F12) ? (cKey >= '0') && (cKey <= '9') : false)
+//    if (Global::iTextMode == VK_F10) // wyœwietlone napisy klawiszem F10
+//    { // i potwierdzenie
+//        Global::iPause = false;
+//        Global::iTextMode = 0;
+//        Global::iTextMode = (cKey == 'Y') ? -1 : 0; // flaga wyjœcia z programu
+//
+//        return; // nie przekazujemy do poci¹gu
+//    }
+//    else
+    if ((Global::iTextMode == VK_F12) ? (cKey >= '0') && (cKey <= '9') : false)
     { // tryb konfiguracji debugmode (przestawianie kamery ju¿ wy³¹czone
         if (!Console::Pressed(VK_SHIFT)) // bez [Shift]
         {
@@ -1262,11 +1264,35 @@ void TWorld::OnKeyDown(int cKey)
 // *****************************************************************************
 void TWorld::OnKeyUp(int cKey)
 { // zwolnienie klawisza; (cKey) to kod klawisza, cyfrowe i literowe siê zgadzaj¹
+
     if (!Global::iPause) // podczas pauzy sterownaie nie dzia³a
         if (Train)
             if (Controlled)
                 if ((Controlled->Controller == Humandriver) ? true : DebugModeFlag || (cKey == 'Q'))
                     Train->OnKeyUp(cKey); // przekazanie zwolnienia klawisza do kabiny
+};
+
+
+// *****************************************************************************
+// W ten sposob rozgraniczylem klawisze F10 i lewy ALT - normalnie w WM_KEYDOWN
+// generuja ten sam kod a w WM_SYSKEYUP nie
+// *****************************************************************************
+void TWorld::OnSysKeyUp(int cKey)
+{
+ if (QGlobal::bSIMSTARTED)
+  if (!QGlobal::bEXITQUERY)
+   if (cKey == 121)  // F10
+     {
+       std::string skbdl;
+       skbdl = Global::GetKbdLayout();
+
+       if (skbdl != "415") LoadKeyboardLayout("00000415", KLF_ACTIVATE);  // Q 120116: Gdy odwroci klawiature krzywymi palcami to wracamy do polskiego ukladu
+
+       QGlobal::bEXITQUERY = true;
+       Global::iPause = true;
+       WriteLog("PAUSED I EXIT QUERY");
+     }
+ return;
 };
 
 
@@ -1295,8 +1321,8 @@ void TWorld::OnMouseMpush(double x, double y)
 
 void TWorld::OnMouseWheel(int zDelta)
 {
- if (zDelta > 0) SCR->FOVADD();
- if (zDelta < 0) SCR->FOVREM();
+ //if (zDelta > 0) SCR->FOVADD(5.00f);
+ //if (zDelta < 0) SCR->FOVREM(5.00f);
 }
 
 
@@ -1616,12 +1642,12 @@ bool TWorld::Update()
         {
         //if (!Console::Pressed(VK_CONTROL) ) Global::ffov = 45.0;
          //if ( Console::Pressed(VK_SHIFT)) SCR->ReSizeGLSceneEx(Global::ffov, Global::iWindowWidth, Global::iWindowHeight);
-         if ( Console::Pressed(VK_SHIFT)) SCR->FOVADD();
+         if ( Console::Pressed(VK_SHIFT)) SCR->FOVADD(0.1f);
         }
 
         if (Console::Pressed(VK_RBUTTON))
         {
-         if (Console::Pressed(VK_SHIFT)) SCR->FOVREM();
+         if (Console::Pressed(VK_SHIFT)) SCR->FOVREM(0.1f);
         }
         
         if (Console::Pressed(VK_MBUTTON))
@@ -1684,15 +1710,17 @@ bool TWorld::Update()
 // procesora
 #if 0
   Ground.UpdatePhys(fMaxDt,n); //Ra: teraz czas kroku jest (wzglêdnie) sta³y
+
   if (DebugModeFlag)
    if (Global::bActive) //nie przyspieszaæ, gdy jedzie w tle :)
-    if (GetAsyncKeyState(VK_ESCAPE)<0)
-    {//yB doda³ przyspieszacz fizyki
-     Ground.UpdatePhys(fMaxDt,n);
-     Ground.UpdatePhys(fMaxDt,n);
-     Ground.UpdatePhys(fMaxDt,n);
-     Ground.UpdatePhys(fMaxDt,n); //w sumie 5 razy
-    }
+    if (QGlobal::bSCNLOADED)
+     if (GetAsyncKeyState(VK_ESCAPE)<0)
+     {//yB doda³ przyspieszacz fizyki
+      Ground.UpdatePhys(fMaxDt,n);
+      Ground.UpdatePhys(fMaxDt,n);
+      Ground.UpdatePhys(fMaxDt,n);
+      Ground.UpdatePhys(fMaxDt,n); //w sumie 5 razy
+     }
 #endif
     }
     // awaria PoKeys mog³a w³¹czyæ pauzê - przekazaæ informacjê
@@ -2403,14 +2431,14 @@ if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
              }
         */
     }
-    else if (Global::iTextMode == VK_F10)
-    { // tu mozna dodac dopisywanie do logu przebiegu lokomotywy
-        // Global::iViewMode=VK_F10;
-        // return false;
-        OutText01 = AnsiString("To quit press [Y] key.");
-        OutText03 = AnsiString("Aby zakonczyc program, przycisnij klawisz [Y].");
-        Global::iPause = true;
-    }
+//    else if (Global::iTextMode == VK_F10)
+//    { // tu mozna dodac dopisywanie do logu przebiegu lokomotywy
+//        // Global::iViewMode=VK_F10;
+//        // return false;
+//        OutText01 = AnsiString("To quit press [Y] key.");
+//        OutText03 = AnsiString("Aby zakonczyc program, przycisnij klawisz [Y].");
+//        Global::iPause = true;
+//    }
     else if (Controlled && DebugModeFlag && !Global::iTextMode)
     {
         OutText01 += AnsiString(";  vel ") + FloatToStrF(Controlled->GetVelocity(), ffFixed, 6, 2);
@@ -2833,13 +2861,13 @@ bool TWorld::Render()
         QGlobal::bKEYBOARD ||
         QGlobal::bSHOWBRIEFING ||
         QGlobal::bscrfilter ||
-        Global::iTextMode == VK_F10 ||
+        QGlobal::bEXITQUERY ||
         QGlobal::infotype > 0 ||
         QGlobal::mousemode){
 
         switch2dRender();
 
-        if (Global::iTextMode == VK_F10) RenderEXITQUERY(0.30f);
+        if (QGlobal::bEXITQUERY) RenderEXITQUERY(0.30f);
         if (QGlobal::infotype > 0) RenderINFOPANEL(QGlobal::infotype, 0.25f);
 
         if (QGlobal::bscrfilter) RenderFILTER(0.20f);                           // WYSYPUJE SIE NA TYM ZARAZ NA STARCIE, CZEMU?!

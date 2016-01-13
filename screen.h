@@ -16,8 +16,8 @@
 class TSCREEN
 {
 public:
-void __fastcall FOVADD();
-void __fastcall FOVREM();
+void __fastcall FOVADD(float incrf);
+void __fastcall FOVREM(float incrf);
 void __fastcall FOVDEL();
 void __fastcall FOVADDF();
 void __fastcall FOVREMF();

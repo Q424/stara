@@ -35,6 +35,7 @@ class TWorld
     GLvoid glPrint(const char *fmt);
     void OnKeyDown(int cKey);
     void OnKeyUp(int cKey);
+    void OnSysKeyUp(int cKey);
     // void UpdateWindow();
     void OnMouseMove(double x, double y);
     void OnMouseWheel(int zDelta);

@@ -62,6 +62,7 @@ bool QModelInfo::bnearestobjengaged = true;
 HDC QGlobal::glHDC=NULL;
 HGLRC QGlobal::glHGLRC=NULL;
 HWND QGlobal::glHWND=NULL;
+HINSTANCE QGlobal::hINST=NULL;
 
 AnsiString QGlobal::USERPID="unknown";
 AnsiString QGlobal::asCurrentSceneryPath="scenery/";
@@ -100,6 +101,8 @@ AnsiString QGlobal::asINCLUDEFILE = "?";
 AnsiString QGlobal::asDynamicTexturePath = "";
 AnsiString QGlobal::asPASSTRAINNUMBER = "";
 AnsiString QGlobal::asPASSDESTINATION = "";
+AnsiString QGlobal::asKBDLAYOUT = "";
+AnsiString QGlobal::asKBDLAYOUTSTR = "";
 
 TStringList *QGlobal::SLTEMP;
 TStringList *QGlobal::CONFIG;
@@ -153,6 +156,9 @@ bool QGlobal::breplacescn = false;
 bool QGlobal::bISDYNAMIC = false;
 bool QGlobal::bRAINSTED = false;
 bool QGlobal::bOPENLOGONX = false;
+bool QGlobal::bEXITQUERY = false;
+bool QGlobal::bKBDREVERSED = false;
+bool QGlobal::bSIMSTARTED = false;
 
 int QGlobal::objectid = 0;
 int QGlobal::cabelementid = 0;
@@ -170,6 +176,8 @@ int QGlobal::aspectratio = 43;
 int QGlobal::loaderrefresh = 5;
 int QGlobal::iINCLUDETYPE = 999;
 int QGlobal::iSTATIONPOSINTAB = 0;
+int QGlobal::iWH = 768;
+int QGlobal::iWW = 1024;
 
 double QGlobal::fMoveLightS = -1.0f;
 double QGlobal::fps = 1.0f;
@@ -294,7 +302,7 @@ bool Global::bFullScreen = false;
 bool Global::bInactivePause = true; // automatyczna pauza, gdy okno nieaktywne
 float Global::fMouseXScale = 1.5;
 float Global::fMouseYScale = 0.2;
-char Global::szSceneryFile[256] = "td.scn";
+char Global::szSceneryFile[256] = "td2.scn";
 AnsiString Global::asHumanCtrlVehicle = "EU07-424";
 int Global::iMultiplayer = 0; // blokada dzia³ania niektórych funkcji na rzecz komunikacji
 double Global::fMoveLight = -1; // ruchome œwiat³o
@@ -609,10 +617,8 @@ void Global::ConfigParse(TQueryParserComp *qp, cParser *cp)
             // wczytywania
             iModifyTGA = GetNextSymbol().ToIntDef(0); // domyœlnie 0
         else if (str == AnsiString("hideconsole")) // hunter-271211: ukrywanie konsoli
-            bHideConsole = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str ==
-                 AnsiString(
-                     "rollfix")) // Ra: poprawianie przechy³ki, aby wewnêtrzna szyna by³a "pozioma"
+            Global::bHideConsole = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        else if (str == AnsiString("rollfix")) // Ra: poprawianie przechy³ki, aby wewnêtrzna szyna by³a "pozioma"
             bRollFix = (GetNextSymbol().LowerCase() == AnsiString("yes"));
         else if (str == AnsiString("fpsaverage")) // oczekiwana wartosæ FPS
             fFpsAverage = GetNextSymbol().ToDouble();
@@ -1256,6 +1262,50 @@ int Global::findpassengerdynamic(vector3 PPos, AnsiString asName, AnsiString Pre
         }
      }
  return 0;
+}
+
+std::string Global::GetKbdLayout()
+{
+ char kbdlayout[100];
+ std::string skbdlayout, kl;
+ HWND hWnd = QGlobal::glHWND;
+ DWORD procid = GetWindowThreadProcessId (hWnd, NULL);
+ HKL kstate = GetKeyboardLayout (procid);
+
+ sprintf(kbdlayout, "%02X", LOWORD (kstate));
+ kl = kbdlayout;
+
+ QGlobal::asKBDLAYOUT = kl.c_str();
+
+ if (kl == "401") QGlobal::asKBDLAYOUTSTR = "Arabic";
+ if (kl == "402") QGlobal::asKBDLAYOUTSTR = "Bulgarian";
+ if (kl == "403") QGlobal::asKBDLAYOUTSTR = "Catalan";
+ if (kl == "404") QGlobal::asKBDLAYOUTSTR = "Chinese (PRC)";
+ if (kl == "405") QGlobal::asKBDLAYOUTSTR = "Czech";
+ if (kl == "406") QGlobal::asKBDLAYOUTSTR = "Danish";
+ if (kl == "413") QGlobal::asKBDLAYOUTSTR = "Dutch";
+ if (kl == "409") QGlobal::asKBDLAYOUTSTR = "English";
+ if (kl == "40B") QGlobal::asKBDLAYOUTSTR = "Finnish";
+ if (kl == "40C") QGlobal::asKBDLAYOUTSTR = "French";
+ if (kl == "407") QGlobal::asKBDLAYOUTSTR = "German";
+ if (kl == "408") QGlobal::asKBDLAYOUTSTR = "Greek";
+ if (kl == "40D") QGlobal::asKBDLAYOUTSTR = "Hebrew";
+ if (kl == "40E") QGlobal::asKBDLAYOUTSTR = "Hungarian";
+ if (kl == "410") QGlobal::asKBDLAYOUTSTR = "Italian";
+ if (kl == "411") QGlobal::asKBDLAYOUTSTR = "Japanese";
+ if (kl == "412") QGlobal::asKBDLAYOUTSTR = "Korean";
+ if (kl == "427") QGlobal::asKBDLAYOUTSTR = "Lithuanian";
+ if (kl == "414") QGlobal::asKBDLAYOUTSTR = "Norwegian";
+ if (kl == "816") QGlobal::asKBDLAYOUTSTR = "Portugese";
+ if (kl == "419") QGlobal::asKBDLAYOUTSTR = "Russian";
+ if (kl == "41B") QGlobal::asKBDLAYOUTSTR = "Slovak";
+ if (kl == "40A") QGlobal::asKBDLAYOUTSTR = "Spanish";
+ if (kl == "41D") QGlobal::asKBDLAYOUTSTR = "Swedish";
+ if (kl == "41E") QGlobal::asKBDLAYOUTSTR = "Thai";
+ if (kl == "41F") QGlobal::asKBDLAYOUTSTR = "Turkish";
+ if (kl == "422") QGlobal::asKBDLAYOUTSTR = "Ukrainian";
+ if (kl == "415") QGlobal::asKBDLAYOUTSTR = "Polish";
+ return skbdlayout;
 }
 
 
