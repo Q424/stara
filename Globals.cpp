@@ -78,6 +78,7 @@ AnsiString QGlobal::asSCREENSHOTFILE= "";
 AnsiString QGlobal::asSSHOTDIR= "SCR\\";
 AnsiString QGlobal::asSSHOTSUB= "2014\\";
 AnsiString QGlobal::asSSHOTEXT= ".jpg";
+AnsiString QGlobal::asSSHOTQLT= "99";
 AnsiString QGlobal::asLBACKEXT= ".jpg";
 AnsiString QGlobal::asAPPVERS= "0.0.0.0";
 AnsiString QGlobal::asAPPDATE= "00.00.00";
@@ -103,7 +104,13 @@ AnsiString QGlobal::asPASSTRAINNUMBER = "";
 AnsiString QGlobal::asPASSDESTINATION = "";
 AnsiString QGlobal::asKBDLAYOUT = "";
 AnsiString QGlobal::asKBDLAYOUTSTR = "";
-
+AnsiString QGlobal::astempx = "";
+AnsiString QGlobal::font10file = "";
+AnsiString QGlobal::font11file = "";
+AnsiString QGlobal::font12file = "";
+AnsiString QGlobal::font14file = "";
+AnsiString QGlobal::font16file = "";
+AnsiString QGlobal::font18file = "";
 TStringList *QGlobal::SLTEMP;
 TStringList *QGlobal::CONFIG;
 TStringList *QGlobal::LOKTUT;
@@ -206,13 +213,21 @@ GLuint QGlobal::bfonttex;
 GLuint QGlobal::consolebackg;
 GLuint QGlobal::SCRFILTER;
 GLfloat QGlobal::selcolor[4];
+GLuint QGlobal::semlight;
+GLuint QGlobal::semlense;
 
 char **QGlobal::argv = NULL;
 
 a QGlobal::array[MAXPASSENGERENTYPOINTS];
 stationscontainer QGlobal::station[MAXSTATIONS];
 pentrypointscontainer QGlobal::PEP[MAXPASSENGERENTYPOINTS];
+semlightcontainer QGlobal::slc[128];
 int QGlobal::currententrypoint = 0;
+
+float QGlobal::rekrot3_rot = 0.0;
+float QGlobal::rekrot3_time = 0.0;
+int QGlobal::rekrot_step = 1;
+bool QGlobal::rekrot_timepause = false;
 
 // parametry do u¿ytku wewnêtrznego
 // double Global::tSinceStart=0;

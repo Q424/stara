@@ -148,6 +148,7 @@ class TAnimModel
     void RaAnimate(); // przeliczenie animacji egzemplarza
     void RaPrepare(); // ustawienie animacji egzemplarza na wzorcu
   public:
+    bool bISBLINK;
     bool bISLAMP;    //Q 060116:
     int iTYPE;       //Q 060116:
     std::string asTRAINNUMBER;  //Q 060116:
@@ -164,10 +165,12 @@ class TAnimModel
     TAnimContainer *__fastcall GetContainer(char *pName);
     void RenderDL(vector3 pPosition = vector3(0, 0, 0), double fAngle = 0);
     void RenderAlphaDL(vector3 pPosition = vector3(0, 0, 0), double fAngle = 0);
+    void RenderAlpha2DL(vector3 pPosition = vector3(0, 0, 0), double fAngle = 0);
     void RenderVBO(vector3 pPosition = vector3(0, 0, 0), double fAngle = 0);
     void RenderAlphaVBO(vector3 pPosition = vector3(0, 0, 0), double fAngle = 0);
     void RenderDL(vector3 *vPosition);
     void RenderAlphaDL(vector3 *vPosition);
+    void RenderAlpha2DL(vector3 *vPosition);
     void RenderVBO(vector3 *vPosition);
     void RenderAlphaVBO(vector3 *vPosition);
     int Flags();

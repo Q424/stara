@@ -23,6 +23,8 @@ http://mozilla.org/MPL/2.0/.
 #include "Globals.h"
 #include "Timer.h"
 #include "mtable.hpp"
+#include "qutils.h"
+#include "submodelsops.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
@@ -49,6 +51,101 @@ TSubModelInfo *TSubModelInfo::pTable = NULL; // tabele obiektów pomocniczych
 int iTotalFaces = 0;
 int iTotalVerts = 0;
 int iTotalObjs = 0;
+
+// *****************************************************************************
+
+float tr = 1.0;
+int dir = 0;
+float rot1, rot2 = 0;
+float cdrt = 0;
+float cfps = 0;
+float emm1[] = {1, 1, 1, 0};
+float emm2[] = {0, 0, 0, 1};
+
+void RenderProLight(double size, float h, bool blink, GLuint tid, float r, float g, float b)
+{
+  cdrt = Timer::GetDeltaRenderTime();
+  cfps = Timer::GetFPS();
+  if (blink) rot1 = (cdrt * 1.80);  // gaszenie
+  if (blink) rot2 = (cdrt * 1.84);
+
+  if (blink)
+  {
+  if ((dir == 0) && (tr >0.05))  // gaszenie
+   {
+    tr-=(rot1);
+     if (tr < 0.06) dir = 1;
+   }
+  if ((dir == 1) && (tr <1.0))   // zapalanie
+   {
+    tr+=(rot2) ;
+     if (tr > 0.90) dir = 0;
+   }
+  }
+
+   getalphablendstate();
+   glDisable(GL_LIGHTING);
+   glEnable(GL_BLEND);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+// if (color == 1) glColor4f(tr, tr+02, 0.0, tr);     // pomaranczowe      1.0, 0.5
+// if (color == 2) glColor4f(0.1, tr, 0.0, tr);     // zielone          0.1, 0.8
+
+   glColor4f(r, g, b, tr);
+
+   // LIGHT
+   glBindTexture(GL_TEXTURE_2D, tid);
+   //-glPushMatrix();
+   //-glTranslatef(0.01, -0.50, -0.01);
+   glBegin(GL_QUADS);
+   //glNormal3f( 0.0f, 0.0f, 0.5f);
+   //glTexCoord2f(0.0f, 0.0f); glVertex3f(-size, -size,  0.01);
+   //glTexCoord2f(1.0f, 0.0f); glVertex3f( size, -size,  0.01);
+   //glTexCoord2f(1.0f, 1.0f); glVertex3f( size,  size,  0.01);
+   //glTexCoord2f(0.0f, 1.0f); glVertex3f(-size,  size,  0.01);
+   // Back face
+   glNormal3f( 0.0f, 0.0f,-0.5f);
+   glTexCoord2f(1.0f, 0.0f); glVertex3f(-size, -size, -0.01);
+   glTexCoord2f(1.0f, 1.0f); glVertex3f(-size,  size, -0.01);
+   glTexCoord2f(0.0f, 1.0f); glVertex3f( size,  size, -0.01);
+   glTexCoord2f(0.0f, 0.0f); glVertex3f( size, -size, -0.01);
+   glEnd();
+
+   glColorMaterial(GL_FRONT, GL_EMISSION);
+   glBindTexture(GL_TEXTURE_2D, 0);
+   glBegin(GL_POINTS);
+   glVertex3f(0, 0.05, 0);
+   glEnd();
+   //-glPopMatrix();
+
+
+   // LENS
+
+   //-glPushMatrix();
+   //if (color == 1)glTranslatef(-1.58, h, 235.76);
+   //if (color == 2)glTranslatef(-1.58, h, 235.78);
+   glTranslatef(0, -0.07, -0.01);
+   glBindTexture(GL_TEXTURE_2D, QGlobal::semlense);
+   glBegin(GL_QUADS);
+   //glNormal3f( 0.0f, 0.0f, 0.5f);
+   //glTexCoord2f(0.0f, 0.0f); glVertex3f(-(size+0.25), -size+0.25,  0.01);
+   //glTexCoord2f(1.0f, 0.0f); glVertex3f( (size+0.25), -size+0.25,  0.01);
+   //glTexCoord2f(1.0f, 1.0f); glVertex3f( (size+0.25),  size+0.25,  0.01);
+   //glTexCoord2f(0.0f, 1.0f); glVertex3f(-(size+0.25),  size+0.25,  0.01);
+   // Back face
+   glNormal3f( 0.0f, 0.0f,-0.5f);
+   glTexCoord2f(1.0f, 0.0f); glVertex3f(-(size+0.25), -(size+0.25), -0.01);
+   glTexCoord2f(1.0f, 1.0f); glVertex3f(-(size+0.25),  (size+0.25), -0.01);
+   glTexCoord2f(0.0f, 1.0f); glVertex3f( (size+0.25),  (size+0.25), -0.01);
+   glTexCoord2f(0.0f, 0.0f); glVertex3f( (size+0.25), -(size+0.25), -0.01);
+   glEnd();
+   //-glPopMatrix();
+
+
+   glEnable(GL_LIGHTING);
+   glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+   glMaterialfv(GL_FRONT, GL_EMISSION, emm2);
+   setalphablendstate();
+}
 
 char *TStringPack::String(int n)
 { // zwraca wskaŸnik do ³añcucha o podanym numerze
@@ -200,8 +297,6 @@ int TSubModel::SeekFaceNormal(DWORD *Masks, int f, DWORD dwMask, float3 *pt, flo
     return -1; // nie znaleziono stycznego wierzcho³ka
 }
 
-float emm1[] = {1, 1, 1, 0};
-float emm2[] = {0, 0, 0, 1};
 
 inline double readIntAsDouble(cParser &parser, int base = 255)
 {
@@ -242,6 +337,166 @@ inline void readMatrix(cParser &parser, float4x4 &matrix)
             parser.getToken(matrix(x)[y]);
 };
 
+
+void TSubModel::SETIDS(AnsiString Name)
+{
+    if (Name == "light_on00") fWireSize = 777;
+    if (Name == "light_on01") fWireSize = 777;
+    if (Name == "light_on02") fWireSize = 777;
+    if (Name == "light_on03") fWireSize = 777;
+    if (Name == "light_on04") fWireSize = 777;
+    if (Name == "light_on05") fWireSize = 777;
+    if (Name == "light_on06") fWireSize = 777;
+    if (Name == "light_on07") fWireSize = 777;
+    if (Name == "light_on08") fWireSize = 777;
+
+    if (Name == "light_on00") smID = 100;
+    if (Name == "light_on01") smID = 101;
+    if (Name == "light_on02") smID = 102;
+    if (Name == "light_on03") smID = 103;
+    if (Name == "light_on04") smID = 104;
+    if (Name == "light_on05") smID = 105;
+    if (Name == "light_on06") smID = 106;
+    if (Name == "light_on07") smID = 107;
+    if (Name == "light_on08") smID = 108;
+
+
+    if (Name == "diga") smID = 701;
+    if (Name == "digb") smID = 702;
+    if (Name == "digc") smID = 703;
+    if (Name == "digd") smID = 704;
+    if (Name == "dige") smID = 705;
+    if (Name == "digf") smID = 706;
+    if (Name == "digg") smID = 707;
+    if (Name == "digh") smID = 708;
+    if (Name == "digi") smID = 709;
+    if (Name == "digj") smID = 710;
+
+    if (Name == "ch01") smID = 1001;
+    if (Name == "ch02") smID = 1002;
+    if (Name == "ch03") smID = 1003;
+    if (Name == "ch04") smID = 1004;
+    if (Name == "ch05") smID = 1005;
+    if (Name == "ch06") smID = 1006;
+    if (Name == "ch07") smID = 1007;
+    if (Name == "ch08") smID = 1008;
+    if (Name == "ch09") smID = 1009;
+    if (Name == "ch10") smID = 1010;
+    if (Name == "ch11") smID = 1011;
+    if (Name == "ch12") smID = 1012;
+    if (Name == "ch13") smID = 1013;
+    if (Name == "ch14") smID = 1014;
+    if (Name == "ch15") smID = 1015;
+    if (Name == "ch16") smID = 1016;
+    if (Name == "ch17") smID = 1017;
+    if (Name == "ch18") smID = 1018;
+    if (Name == "ch19") smID = 1019;
+    if (Name == "ch20") smID = 1020;
+    if (Name == "ch21") smID = 1021;
+    if (Name == "ch22") smID = 1022;
+    if (Name == "ch23") smID = 1023;
+    if (Name == "ch24") smID = 1024;
+    if (Name == "ch25") smID = 1025;
+    if (Name == "ch26") smID = 1026;
+    if (Name == "ch27") smID = 1027;
+    if (Name == "ch28") smID = 1028;
+    if (Name == "ch29") smID = 1029;
+    if (Name == "ch30") smID = 1030;
+    if (Name == "ch31") smID = 1031;
+    if (Name == "ch32") smID = 1032;
+
+    if (Name == "ccd1") smID = 801;
+    if (Name == "ccd2") smID = 802;
+    if (Name == "ccd3") smID = 803;
+    if (Name == "ccd4") smID = 804;
+    if (Name == "ccd5") smID = 805;
+    if (Name == "ccd6") smID = 806;
+    if (Name == "ccd7") smID = 807;
+    if (Name == "ccd8") smID = 808;
+
+    if (Name == "hs1") smID = 901;
+    if (Name == "hs2") smID = 902;
+    if (Name == "hs3") smID = 903;
+    if (Name == "hs4") smID = 904;
+    if (Name == "hs5") smID = 905;
+    if (Name == "hs6") smID = 906;
+
+    if (Name == "mirror_r")  smID = 601;
+    if (Name == "mirror_l")  smID = 602;
+    if (Name == "preview01") smID = 603;
+    if (Name == "preview02") smID = 604;
+    if (Name == "preview03") smID = 605;
+    if (Name == "preview04") smID = 606;
+    if (Name == "mirror_a")  smID = 607;
+    if (Name == "cscreen")   smID = 608;
+
+    if (Name == "rekrot_a") smID = 501;
+    if (Name == "rekrot_b") smID = 502;
+    if (Name == "rekrot_c") smID = 503;
+    if (Name == "rekrot_d") smID = 504;
+    if (Name == "rekrot_e") smID = 505;
+    if (Name == "rekrot_f") smID = 506;
+    if (Name == "rekrot_g") smID = 507;
+    if (Name == "rekrot_h") smID = 508;
+    if (Name == "rekrot_i") smID = 509;
+    if (Name == "rekrot_j") smID = 510;
+    if (Name == "rekrot_j") smID = 511;
+    if (Name == "rekrot_k") smID = 512;
+    if (Name == "rekrot_l") smID = 513;
+    if (Name == "rekrot_m") smID = 514;
+    if (Name == "rekrot_n") smID = 515;
+    if (Name == "rekrot_o") smID = 516;
+    if (Name == "rekrot_p") smID = 517;
+    if (Name == "rekrot_q") smID = 518;
+    if (Name == "rekrot_r") smID = 519;
+    if (Name == "rekrot_s") smID = 520;
+    if (Name == "rekrot_t") smID = 521;
+    if (Name == "rekrot_u") smID = 522;
+
+    if (Name == "clock_ptrhh") smID = 401;
+    if (Name == "clock_ptrmm") smID = 402;
+    if (Name == "clock_ptrss") smID = 403;
+
+    if (Name == "td1") smID = 301;
+    if (Name == "td2") smID = 302;
+    if (Name == "td3") smID = 303;
+    if (Name == "td4") smID = 304;
+    if (Name == "td5") smID = 305;
+    if (Name == "td6") smID = 306;
+    if (Name == "td7") smID = 307;
+    if (Name == "td8") smID = 308;
+
+    if (Name == "vd1") smID = 311;
+    if (Name == "vd2") smID = 312;
+    if (Name == "vd3") smID = 313;
+    if (Name == "vd4") smID = 314;
+    if (Name == "vd5") smID = 315;
+    if (Name == "vd6") smID = 316;
+    if (Name == "vd7") smID = 317;
+
+    if (Name == "cda1") smID = 321;
+    if (Name == "cda2") smID = 322;
+    if (Name == "cda3") smID = 323;
+    if (Name == "cda4") smID = 324;
+    if (Name == "cda5") smID = 325;
+    if (Name == "cda6") smID = 326;
+    if (Name == "cda7") smID = 327;
+
+    if (Name == "bp1") smID = 331;
+    if (Name == "bp2") smID = 332;
+    if (Name == "bp3") smID = 333;
+    if (Name == "bp4") smID = 334;
+    if (Name == "bp5") smID = 335;
+    if (Name == "bp5") smID = 336;
+    if (Name == "bp5") smID = 337;
+
+    if (Name == "swnum") smID = 404;
+    if (Name == "neon") smID = 777;
+    if (Name == "flag") smID = 770;
+
+
+}
+
 int TSubModel::Load(cParser &parser, TModel3d *Model, int Pos, bool dynamic)
 { // Ra: VBO tworzone na poziomie modelu, a nie submodeli
     iNumVerts = 0;
@@ -271,6 +526,9 @@ int TSubModel::Load(cParser &parser, TModel3d *Model, int Pos, bool dynamic)
     parser.getTokens(1, false); // nazwa submodelu bez zmieny na ma³e
     parser >> token;
     NameSet(token.c_str());
+
+    SETIDS(pName);
+
     if (dynamic)
     { // dla pojazdu, blokujemy za³¹czone submodele, które mog¹ byæ nieobs³ugiwane
         if (token.find("_on") + 3 == token.length()) // jeœli nazwa koñczy siê na "_on"
@@ -330,6 +588,10 @@ int TSubModel::Load(cParser &parser, TModel3d *Model, int Pos, bool dynamic)
     readColor(parser, f4Diffuse);
     if (eType < TP_ROTATOR)
         readColor(parser, f4Specular);
+    f4Emision[0] = f4Diffuse[0];
+    f4Emision[1] = f4Diffuse[1];
+    f4Emision[2] = f4Diffuse[2];
+
     parser.ignoreTokens(1); // zignorowanie nazwy "SelfIllum:"
     {
         std::string light;
@@ -1053,17 +1315,22 @@ void TSubModel::RaAnimation(TAnimType a)
     }
 };
 
+float tmpcolor[4];
 void TSubModel::RenderDL()
 { // g³ówna procedura renderowania przez DL
     if (iVisible && (fSquareDist >= fSquareMinDist) && (fSquareDist < fSquareMaxDist))
     {
         if (iFlags & 0xC000)
         {
+
             glPushMatrix();
             if (fMatrix)
                 glMultMatrixf(fMatrix->readArray());
             if (b_Anim)
                 RaAnimation(b_Anim);
+                
+   
+                setreklam3in1(smID);
         }
         if (eType < TP_ROTATOR)
         { // renderowanie obiektów OpenGL
@@ -1075,24 +1342,33 @@ void TSubModel::RenderDL()
                     // TexAlpha=!(iAlpha&1); //zmiana tylko w przypadku wymienej tekstury
                 }
                 else
+                {
                     glBindTexture(GL_TEXTURE_2D, TextureID); // równie¿ 0
+                }
+
                 if (Global::fLuminance < fLight)
                 {
                     glMaterialfv(GL_FRONT, GL_EMISSION, f4Diffuse); // zeby swiecilo na kolorowo
+
                     glCallList(uiDisplayList); // tylko dla siatki
                     glMaterialfv(GL_FRONT, GL_EMISSION, emm2);
                 }
                 else
                     glCallList(uiDisplayList); // tylko dla siatki
+
+
             }
         }
         else if (eType == TP_FREESPOTLIGHT)
         { // wersja DL
+
             matrix4x4 mat; // macierz opisuje uk³ad renderowania wzglêdem kamery
             glGetDoublev(GL_MODELVIEW_MATRIX, mat.getArray());
             // k¹t miêdzy kierunkiem œwiat³a a wspó³rzêdnymi kamery
             vector3 gdzie = mat * vector3(0, 0, 0); // pozycja punktu œwiec¹cego wzglêdem kamery
             fCosViewAngle = DotProduct(Normalize(mat * vector3(0, 0, 1) - gdzie), Normalize(gdzie));
+
+
             if (fCosViewAngle > fCosFalloffAngle) // k¹t wiêkszy ni¿ maksymalny sto¿ek swiat³a
             {
                 double Distdimm = 1.0;
@@ -1102,8 +1378,8 @@ void TSubModel::RenderDL()
                         Distdimm = 1.0 -
                                    (fCosHotspotAngle - fCosViewAngle) /
                                        (fCosHotspotAngle - fCosFalloffAngle);
-                glColor3f(f4Diffuse[0] * Distdimm, f4Diffuse[1] * Distdimm,
-                          f4Diffuse[2] * Distdimm);
+                glColor3f(f4Diffuse[0] * Distdimm, f4Diffuse[1] * Distdimm, f4Diffuse[2] * Distdimm);
+
                 /*  TODO: poprawic to zeby dzialalo
                               if (iFarAttenDecay>0)
                                switch (iFarAttenDecay)
@@ -1124,6 +1400,7 @@ void TSubModel::RenderDL()
                 //        return;
                 glCallList(uiDisplayList); // wyœwietlenie warunkowe
             }
+
         }
         else if (eType == TP_STARS)
         {
@@ -1140,50 +1417,71 @@ void TSubModel::RenderDL()
                 Child->RenderDL();
         if (iFlags & 0xC000)
             glPopMatrix();
-    }
+
+     } // visible
+     
     if (b_Anim < at_SecondsJump)
         b_Anim = at_None; // wy³¹czenie animacji dla kolejnego u¿ycia subm
     if (Next)
         if (iAlpha & iFlags & 0x1F000000)
             Next->RenderDL(); // dalsze rekurencyjnie
-}; // Render
+};
 
 void TSubModel::RenderAlphaDL()
 { // renderowanie przezroczystych przez DL
-    if (iVisible && (fSquareDist >= fSquareMinDist) && (fSquareDist < fSquareMaxDist))
+
+    if ( (iVisible) && ((fSquareDist >= fSquareMinDist) && (fSquareDist < fSquareMaxDist)))
     {
         if (iFlags & 0xC000)
         {
+
             glPushMatrix();
             if (fMatrix)
                 glMultMatrixf(fMatrix->readArray());
             if (b_aAnim)
                 RaAnimation(b_aAnim);
+
         }
+
         if (eType < TP_ROTATOR)
         { // renderowanie obiektów OpenGL
+
             if (iAlpha & iFlags & 0x2F) // rysuj gdy element przezroczysty
             {
+
                 if (TextureID < 0) // && (ReplacableSkinId!=0))
                 { // zmienialne skóry
                     glBindTexture(GL_TEXTURE_2D, ReplacableSkinId[-TextureID]);
+
                     // TexAlpha=iAlpha&1; //zmiana tylko w przypadku wymienej tekstury
                 }
                 else
+                {
                     glBindTexture(GL_TEXTURE_2D, TextureID); // równie¿ 0
+                }
                 if (Global::fLuminance < fLight)
                 {
+
                     glMaterialfv(GL_FRONT, GL_EMISSION, f4Diffuse); // zeby swiecilo na kolorowo
+
+                    // TUTAJ TRZA DAC LENSA
+
                     glCallList(uiDisplayList); // tylko dla siatki
+
                     glMaterialfv(GL_FRONT, GL_EMISSION, emm2);
                 }
                 else
                     glCallList(uiDisplayList); // tylko dla siatki
+
             }
         }
-        else if (eType == TP_FREESPOTLIGHT)
+      else  
+       if (eType == TP_FREESPOTLIGHT)
         {
-            // dorobiæ aureolê!
+         //AnsiString test = LowerCase(pName);
+
+         // dorobiæ aureolê!
+
         }
         if (Child != NULL)
             if (eType == TP_TEXT)
@@ -1215,9 +1513,10 @@ void TSubModel::RenderAlphaDL()
                     }
                 }
             }
-            else if (iAlpha & iFlags & 0x002F0000)
-                Child->RenderAlphaDL();
-        if (iFlags & 0xC000)
+            else
+            if (iAlpha & iFlags & 0x002F0000)
+            Child->RenderAlphaDL();
+            if (iFlags & 0xC000)
             glPopMatrix();
     }
     if (b_aAnim < at_SecondsJump)
@@ -1226,6 +1525,58 @@ void TSubModel::RenderAlphaDL()
         if (iAlpha & iFlags & 0x2F000000)
             Next->RenderAlphaDL();
 }; // RenderAlpha
+
+
+// *****************************************************************************
+// MIGAJACE SWIATLO SEMAFORA 
+// *****************************************************************************
+void TSubModel::RenderAlpha2DL()
+{
+   if ( ( (fSquareDist >= fSquareMinDist) && (fSquareDist < fSquareMaxDist)))
+    {
+
+        if (iFlags & 0xC000)
+        {
+         glPushMatrix();
+         if (fMatrix) glMultMatrixf(fMatrix->readArray());
+         if (b_aAnim) RaAnimation(b_aAnim);
+        }
+
+        //AnsiString test = LowerCase(pName);
+
+        if ((smID >= 100) || (smID <= 108))
+         {
+          bool isblink;
+          if (smID == 100) isblink= QGlobal::slc[0].blink;
+          if (smID == 101) isblink= QGlobal::slc[1].blink;
+          if (smID == 102) isblink= QGlobal::slc[2].blink;
+          if (smID == 103) isblink= QGlobal::slc[3].blink;
+          if (smID == 104) isblink= QGlobal::slc[4].blink;
+          if (smID == 105) isblink= QGlobal::slc[5].blink;
+          if (smID == 106) isblink= QGlobal::slc[6].blink;
+          
+          if (eType == TP_FREESPOTLIGHT  && isblink) RenderProLight(0.11, 0, true, QGlobal::semlight, f4Diffuse[0], f4Diffuse[1], f4Diffuse[2]);
+        }
+
+        if (Child != NULL)
+            if (eType == TP_TEXT)
+            { // tekst renderujemy w specjalny sposób, zamiast submodeli z ³añcucha Child
+
+            }
+            else
+        if (iAlpha & iFlags & 0x002F0000)
+            Child->RenderAlpha2DL();
+        if (iFlags & 0xC000)
+            glPopMatrix();
+   }  //vis
+
+   // if (b_aAnim < at_SecondsJump)
+   //     b_aAnim = at_None; // wy³¹czenie animacji dla kolejnego u¿ycia submodelu
+    if (Next != NULL)
+        if (iAlpha & iFlags & 0x2F000000)
+            Next->RenderAlpha2DL();
+}; // RenderAlpha2DL
+
 
 void TSubModel::RenderVBO()
 { // g³ówna procedura renderowania przez VBO
@@ -1540,6 +1891,9 @@ void TSubModel::BinInit(TSubModel *s, float4x4 *m, float8 *v, TStringPack *t, TS
     {
         pName = n->String(iName);
         AnsiString s = AnsiString(pName);
+
+        SETIDS(s);
+
         if (!s.IsEmpty())
         { // jeœli dany submodel jest zgaszonym œwiat³em, to domyœlnie go ukrywamy
             if (s.SubString(1, 8) == "Light_On") // jeœli jest œwiat³em numerowanym
@@ -2105,6 +2459,7 @@ void TModel3d::Render(double fSquareDistance, GLuint *ReplacableSkinId, int iAlp
     }
 };
 
+
 void TModel3d::RenderAlpha(double fSquareDistance, GLuint *ReplacableSkinId, int iAlpha)
 {
     if (iAlpha & iFlags & 0x2F2F002F)
@@ -2112,6 +2467,17 @@ void TModel3d::RenderAlpha(double fSquareDistance, GLuint *ReplacableSkinId, int
         TSubModel::fSquareDist = fSquareDistance; // zmienna globalna!
         Root->ReplacableSet(ReplacableSkinId, iAlpha);
         Root->RenderAlphaDL();
+    }
+};
+
+
+void TModel3d::RenderAlpha2(double fSquareDistance, GLuint *ReplacableSkinId, int iAlpha)
+{
+    if (iAlpha & iFlags & 0x2F2F002F)
+    {
+        TSubModel::fSquareDist = fSquareDistance; // zmienna globalna!
+        Root->ReplacableSet(ReplacableSkinId, iAlpha);
+        Root->RenderAlpha2DL();
     }
 };
 
@@ -2235,9 +2601,7 @@ void TModel3d::Render(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSki
     glPopMatrix();
 };
 
-
-void TModel3d::RenderAlpha(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId,
-                           int iAlpha)
+void TModel3d::RenderAlpha(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId, int iAlpha)
 { // przezroczyste, Display List
     glPushMatrix();
     glTranslated(vPosition->x, vPosition->y, vPosition->z);
@@ -2248,13 +2612,29 @@ void TModel3d::RenderAlpha(vector3 *vPosition, vector3 *vAngle, GLuint *Replacab
     if (vAngle->z != 0.0)
         glRotated(vAngle->z, 0.0, 0.0, 1.0);
 
-//--    if (iTYPE == 101) Global::findpassengerdynamic(vPosition, QGlobal::asPASSTRAINNUMBER, QGlobal::asPASSDESTINATION);   // Q 060116: JEZELI PASAZER TO SZUKANIE WLASCIWEGO WAGONU
-
     TSubModel::fSquareDist = SquareMagnitude(*vPosition - Global::GetCameraPosition()); // zmienna globalna!
     Root->ReplacableSet(ReplacableSkinId, iAlpha);
     Root->RenderAlphaDL();
     glPopMatrix();
 };
+
+void TModel3d::RenderAlpha2(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId, int iAlpha)
+{ // przezroczyste, Display List
+    glPushMatrix();
+    glTranslated(vPosition->x, vPosition->y, vPosition->z);
+    if (vAngle->y != 0.0)
+        glRotated(vAngle->y, 0.0, 1.0, 0.0);
+    if (vAngle->x != 0.0)
+        glRotated(vAngle->x, 1.0, 0.0, 0.0);
+    if (vAngle->z != 0.0)
+        glRotated(vAngle->z, 0.0, 0.0, 1.0);
+
+    TSubModel::fSquareDist = SquareMagnitude(*vPosition - Global::GetCameraPosition()); // zmienna globalna!
+    Root->ReplacableSet(ReplacableSkinId, iAlpha);
+    Root->RenderAlpha2DL();
+    glPopMatrix();
+};
+
 void TModel3d::RaRender(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId, int iAlpha)
 { // nieprzezroczyste, VBO
     glPushMatrix();

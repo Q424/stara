@@ -590,7 +590,7 @@ bool __fastcall TSCREEN::SaveScreen_JPG()
         JPG->DIBNeeded();
         JPG->ProgressiveEncoding = false;
         JPG->Smoothing = true;
-        JPG->CompressionQuality = 99;
+        JPG->CompressionQuality = StrToInt(QGlobal::asSSHOTQLT);
         JPG->SaveToFile(SSHOTFILEJPG);
 
         DeleteFile( SSHOTFILEBMP );
@@ -611,7 +611,7 @@ bool __fastcall TSCREEN::SaveScreen_JPG()
 
         if (QGlobal::bWRITEEXIF) ShellExecute(0, "open", exiftool.c_str(), par.c_str(), dir.c_str(), SW_HIDE);
 
-        if (!FileExists(SSHOTFILEBMP))  PlaySound("data\\sounds\\shutter.wav", NULL, SND_ASYNC);
+        if (!FileExists(SSHOTFILEBMP))  PlaySound(AnsiString(QGlobal::asAPPDIR + "data\\sounds\\shutter.wav").c_str(), NULL, SND_ASYNC);
  return true;
 }
 

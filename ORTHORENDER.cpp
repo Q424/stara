@@ -1304,15 +1304,15 @@ if (tmp) if (!QGlobal::bSCNLOADED) BFONT->Print_scale(40,60,AnsiString("$.scn - 
          glColor4f(0.2, 0.2, 0.2, 0.9);
          int py = 200;
 
-         freetype::print(our_font14, 55, Global::iWindowHeight-200, QGlobal::MBRIEF->Strings[0].c_str());   // Nazwa skladu ...
+         freetype::print(font14, 55, Global::iWindowHeight-200, QGlobal::MBRIEF->Strings[0].c_str());   // Nazwa skladu ...
          py+=24;
-         freetype::print(our_font12, 55, Global::iWindowHeight-py, QGlobal::MBRIEF->Strings[1].c_str());    // Prowadzimy ...
+         freetype::print(font12, 55, Global::iWindowHeight-py, QGlobal::MBRIEF->Strings[1].c_str());    // Prowadzimy ...
          py+=20;
 
          for (int l = 2; l<QGlobal::MBRIEF->Count -1; l++)
          {
           py+=14;
-          freetype::print(our_font10, 55, Global::iWindowHeight-py, QGlobal::MBRIEF->Strings[l].c_str());
+          freetype::print(font10, 55, Global::iWindowHeight-py, QGlobal::MBRIEF->Strings[l].c_str());
           }
          } 
         }
@@ -3125,10 +3125,10 @@ bool __fastcall TWorld::RenderFPS(double alpha)
      //BFONT->End();
 
      glColor4f(0.8f, 0.8f, 0.8f, 0.7f);
-     freetype::print(our_font14, Global::iWindowWidth-90, Global::iWindowHeight-20, "FPS: %7.2f", QGlobal::fps);   // W CZASIE SYMULACJI
+     freetype::print(font14, Global::iWindowWidth-90, Global::iWindowHeight-20, "FPS: %7.2f", QGlobal::fps);   // W CZASIE SYMULACJI
 
-   //freetype::print(our_font14, 10, Global::iWindowHeight-20, "MAXRENDERDIST: %7.2f", QGlobal::worldmaxdist);
-   //freetype::print(our_font14, 10, Global::iWindowHeight-40, "SUN Y POSITION: %7.2f", Global::lightPos[1]);
+   //freetype::print(font14, 10, Global::iWindowHeight-20, "MAXRENDERDIST: %7.2f", QGlobal::worldmaxdist);
+   //freetype::print(font14, 10, Global::iWindowHeight-40, "SUN Y POSITION: %7.2f", Global::lightPos[1]);
      glEnable(GL_TEXTURE_2D);
      glEnable(GL_FOG);
      glEnable( GL_LIGHTING );
@@ -3141,7 +3141,7 @@ bool __fastcall TWorld::RenderFILTER(double alpha)
     GWH = Global::iWindowHeight;
     QGlobal::bTUTORIAL = false;
     QGlobal::bKEYBOARD = false;
-    QGlobal::infotype = 0;
+  //QGlobal::infotype = 0;
     float margin = 1;
     int pm = 0;
 //    if (!floaded) BFONT = new Font();
@@ -3175,7 +3175,7 @@ bool __fastcall TWorld::RenderFILTER(double alpha)
 
  //    BFONT->End();
     glColor4f(0.5,0.5,0.5, 0.25);
-    freetype::print(our_font12, 20, Global::iWindowHeight-1000, "FPS: %7.2f", QGlobal::fps);
+    freetype::print(font12, 20, Global::iWindowHeight-1000, "FPS: %7.2f", QGlobal::fps);
     glEnable( GL_TEXTURE_2D );
     glEnable( GL_FOG );
     glEnable( GL_LIGHTING );
@@ -3206,8 +3206,8 @@ bool __fastcall TWorld::RenderEXITQUERY(double alpha)
     glEnd( );
 
     glColor4f(0.8f, 0.8f, 0.8f, 0.7f);
-    freetype::print(our_font18, 10, Global::iWindowHeight-20, "ZAMYKANIE PROGRAMU - POTWIERDZENIE ");
-    freetype::print(our_font18, 120, Global::iWindowHeight-220, "Czy na pewno chesz zakonczyc dzialanie programu? [Y]/[N]");
+    freetype::print(font18, 10, Global::iWindowHeight-20, "ZAMYKANIE PROGRAMU - POTWIERDZENIE ");
+    freetype::print(font18, 120, Global::iWindowHeight-220, "Czy na pewno chesz zakonczyc dzialanie programu? [Y]/[N]");
 
     glEnable( GL_TEXTURE_2D );
     glEnable( GL_FOG );
@@ -3229,7 +3229,8 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   glEnable( GL_TEXTURE_2D );
 
 
-
+  if (!QGlobal::bSCNLOADED)
+  {
   glColor4f(0.1,0.1,0.1, alpha);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glBindTexture(GL_TEXTURE_2D, QGlobal::splashscreen);
@@ -3239,7 +3240,10 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+0, iWH-margin, 0); // DOLNY PRAWY
   glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+0, margin, 0);   // GORNY PRAWY
   glEnd( );
+   }
 
+  if (!QGlobal::bmodelpreview)
+  {
   // TLO BOCZNE
   glColor4f(0.0,0.0,0.0, 0.4);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -3267,8 +3271,8 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
     for (int l = 0; l<lc; l++)
     {
      glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
-     freetype::print(our_font16, 10, Global::iWindowHeight-20, AnsiString("INFORMACJE O SKLADZIE POCIAGU " + Controlled->asTrainNumber).c_str());
-     freetype::print(our_font10, 10, Global::iWindowHeight-posy, QGlobal::CONSISTF->Strings[l].c_str());
+     freetype::print(font16, 10, Global::iWindowHeight-20, AnsiString("INFORMACJE O SKLADZIE POCIAGU " + Controlled->asTrainNumber).c_str());
+     freetype::print(font10, 10, Global::iWindowHeight-posy, QGlobal::CONSISTF->Strings[l].c_str());
      posy+= 20;
     }
    }
@@ -3277,25 +3281,25 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
    {
     int posy = 160;
     glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
-    freetype::print(our_font16, 10, Global::iWindowHeight-20, "INFORMACJE O STACJI");
+    freetype::print(font16, 10, Global::iWindowHeight-20, "INFORMACJE O STACJI");
 
     if (QGlobal::iSTATIONPOSINTAB > -1)    // QGlobal::iSTATIONPOSINTAB wyciagane jest w TWorld::Update()
      {
-       freetype::print(our_font16, 10, Global::iWindowHeight-20, "INFORMACJE O STACJI");
-       freetype::print(our_font10, 20, iWH- 60, AnsiString("ST Name     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name).c_str());
-       freetype::print(our_font10, 20, iWH- 80, AnsiString("ST Info     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Info).c_str());
-       freetype::print(our_font10, 20, iWH-100, AnsiString("ST Type     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Type).c_str());
-       freetype::print(our_font10, 20, iWH-120, AnsiString("ST SubT     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].SubType).c_str());
-       freetype::print(our_font10, 20, iWH-140, AnsiString("ST Platforms: " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].platforms)).c_str());
-       freetype::print(our_font10, 20, iWH-160, AnsiString("ST edges    : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].platformedges)).c_str());
-       freetype::print(our_font10, 20, iWH-180, AnsiString("ST tracks n : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].tracksnum)).c_str());
+       freetype::print(font16, 10, Global::iWindowHeight-20, "INFORMACJE O STACJI");
+       freetype::print(font10, 20, iWH- 60, AnsiString("ST Name     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name).c_str());
+       freetype::print(font10, 20, iWH- 80, AnsiString("ST Info     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Info).c_str());
+       freetype::print(font10, 20, iWH-100, AnsiString("ST Type     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Type).c_str());
+       freetype::print(font10, 20, iWH-120, AnsiString("ST SubT     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].SubType).c_str());
+       freetype::print(font10, 20, iWH-140, AnsiString("ST Platforms: " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].platforms)).c_str());
+       freetype::print(font10, 20, iWH-160, AnsiString("ST edges    : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].platformedges)).c_str());
+       freetype::print(font10, 20, iWH-180, AnsiString("ST tracks n : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].tracksnum)).c_str());
 
        int itempos = Global::findstationbyname(QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name);
        int stracks = QGlobal::station[itempos].tracksnum;
        
      //  WriteLog(QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name + ", " + IntToStr(id) + ", " + IntToStr(QGlobal::station[id].tracksnum) ) ;
      posy = 220;
-     freetype::print(our_font10, 10, Global::iWindowHeight-posy, "numer   | dlugosc | elektr. | peron i dlugosc");
+     freetype::print(font10, 10, Global::iWindowHeight-posy, "numer   | dlugosc | elektr. | peron i dlugosc");
      posy = 240;
        for (int j = 0; j < stracks; j++)
          {
@@ -3305,17 +3309,373 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
           AnsiString PERON =     StrToPERON(QGlobal::station[itempos].trackinfo[j].platformav.c_str());
           AnsiString PERONL =      IntToStr(QGlobal::station[itempos].trackinfo[j].platformlen) + "m";
 
-          freetype::print(our_font10, 20, iWH-posy, AnsiString("  tor " + NUMBER + " : " + LENGTH + "m,   " + ELECTRIFIED  + ",     " + PERON + " " + PERONL).c_str());
+          freetype::print(font10, 20, iWH-posy, AnsiString("  tor " + NUMBER + " : " + LENGTH + "m,   " + ELECTRIFIED  + ",     " + PERON + " " + PERONL).c_str());
           posy+=20;
+
          }
      posy+=20;
-     freetype::print(our_font10, 12, Global::iWindowHeight-posy, "linie wychodzace i pierwsza stacja na nich");
+     freetype::print(font10, 12, Global::iWindowHeight-posy, "linie wychodzace i pierwsza stacja na nich");
      }
    }
 
+  if (num == 3)  // PANEL 1 - INFORMACJE O LOKOMOTYWIE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   {
+    int posy = 60;
+     TDynamicObject *tmp = FreeFlyModeFlag ? Ground.DynamicNearest(Camera.Pos) : Controlled;
+     if (tmp)
+        {
+        AnsiString BD="";
+        AnsiString MANUALBRAKEACTIVE = "inactive";
+        AnsiString LOCALBRAKEACTIVE = "inactive";
+                if ((tmp->MoverParameters->BrakeDelayFlag & bdelay_G) == bdelay_G)
+                    BD += "G";
+                if ((tmp->MoverParameters->BrakeDelayFlag & bdelay_P) == bdelay_P)
+                    BD += "P";
+                if ((tmp->MoverParameters->BrakeDelayFlag & bdelay_R) == bdelay_R)
+                    BD += "R";
+                if ((tmp->MoverParameters->BrakeDelayFlag & bdelay_M) == bdelay_M)
+                    BD += "+Mg";
+                if (tmp->MoverParameters->ManualBrakePos > 0) MANUALBRAKEACTIVE = "active";
+                if (tmp->MoverParameters->LocalBrakePos > 0) LOCALBRAKEACTIVE = "active";
+
+         AnsiString PANTO = FloatToStrF(tmp->MoverParameters->PantPress, ffFixed, 8, 2) + ", " + (tmp->MoverParameters->bPantKurek3 ? "<ZG" : "|ZG");
+
+
+         glColor4f(0.9f, 0.7f, 0.1f, 0.8f);
+         freetype::print(font16, 10, iWH- 20, AnsiString("INFORMACJE O LOKOMOTYWIE AKTYWNEJ  (" + Controlled->asName + ")").c_str());
+         glColor4f(0.5f, 0.5f, 0.55f, 0.8f);
+         posy= 40;
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Name         : " + tmp->MoverParameters->Name).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("FName        : " + tmp->MoverParameters->filename).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Type         : " + tmp->MoverParameters->TypeName).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Train type   : " + tmp->MoverParameters->TrainType).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Vmax         : " + FloatToStrF(tmp->MoverParameters->Vmax, ffFixed, 4, 0)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Mass         : " + FloatToStr(tmp->MoverParameters->Mass)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Mass total   : " + FloatToStr(tmp->MoverParameters->TotalMass)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("owned by     : " + tmp->ctOwner->OwnerName()).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Pipe press   : " + FloatToStrF(tmp->MoverParameters->PipePress, ffFixed, 4, 0)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Brake press  : " + FloatToStrF(tmp->MoverParameters->BrakePress, ffFixed, 4, 0)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Compressed vol: " + FloatToStrF(tmp->MoverParameters->CompressedVolume, ffFixed, 4, 0)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Velocity km/h: " + FloatToStrF(tmp->MoverParameters->Vel, ffFixed, 4, 0)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Velocity m/s : " + FloatToStrF(tmp->MoverParameters->Vel*1000/3600, ffFixed, 4, 0)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("main ctrl pos: " + IntToStr(Controlled->MoverParameters->MainCtrlPos)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("scnd ctrl pos: " + IntToStr(Controlled->MoverParameters->ScndCtrlPos)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("train brk pos: " + FloatToStrF(tmp->MoverParameters->BrakeCtrlPos, ffFixed, 4, 0)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("local brk pos: " + FloatToStrF(tmp->MoverParameters->LocalBrakePos, ffFixed, 4, 0)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Pantograph A : " + FloatToStrF(tmp->MoverParameters->PantFrontUp, ffFixed, 4, 0)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Pantograph B : " + FloatToStrF(tmp->MoverParameters->PantRearUp, ffFixed, 4, 0)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("brake delay  : " + BD).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("BTP          : " + FloatToStrF(tmp->MoverParameters->LoadFlag, ffFixed, 5, 0)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("pantograph   : " + PANTO).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("BT           : " + FloatToStrF(tmp->MoverParameters->BrakePress, ffFixed,5,2)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("PP           : " + FloatToStrF(tmp->MoverParameters->PipePress, ffFixed,5,2)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("BVP          : " + FloatToStrF(tmp->MoverParameters->Volume, ffFixed,5,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("HP           : " + FloatToStrF(tmp->MoverParameters->ScndPipePress, ffFixed,5,2)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("comp power   : " + FloatToStrF(tmp->MoverParameters->CompressorPower, ffFixed,5,0)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("comp speed   : " + FloatToStrF(tmp->MoverParameters->CompressorSpeed, ffFixed,5,0)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("BVP          : " + FloatToStrF(tmp->MoverParameters->Volume, ffFixed,5,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("manual brake : " + MANUALBRAKEACTIVE).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("local brake  : " + LOCALBRAKEACTIVE).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Dl           : " + FloatToStrF(tmp->MoverParameters->dL,ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Fb           : " + FloatToStrF(tmp->MoverParameters->Fb,ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Ff           : " + FloatToStrF(tmp->MoverParameters->Ff, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Ftrain       : " + FloatToStrF(tmp->MoverParameters->FTrain, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Stand        : " + FloatToStrF(tmp->MoverParameters->FStand, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("FTotal       : " + FloatToStrF(tmp->MoverParameters->FTotal, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Sand         : " + FloatToStrF(tmp->MoverParameters->Sand, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("enrot        : " + FloatToStrF(tmp->MoverParameters->enrot, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Im           : " + FloatToStrF(tmp->MoverParameters->Im, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Itot         : " + FloatToStrF(tmp->MoverParameters->Itot, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Mm           : " + FloatToStrF(tmp->MoverParameters->Mm, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Mw           : " + FloatToStrF(tmp->MoverParameters->Mw, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Fw           : " + FloatToStrF(tmp->MoverParameters->Fw, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Ft           : " + FloatToStrF(tmp->MoverParameters->Ft, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Imin         : " + FloatToStrF(tmp->MoverParameters->Imin, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Imax         : " + FloatToStrF(tmp->MoverParameters->Imax, ffFixed,8,3)).c_str());
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Voltage      : " + FloatToStrF(tmp->MoverParameters->Voltage, ffFixed,8,3)).c_str());
+
+        }
+    }
+
+  if (num == 4)  // PANEL 4 - INFORMACJE O NASTEPNEJ STACJI ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   {
+    WriteLog("p4");
+    int posy = 10;
+    char time[25];
+    char p[25];
+    char nextpoint[75];
+    AnsiString np;
+
+    glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+    freetype::print(font16, 10, Global::iWindowHeight-20, "INFORMACJE O NASTEPNEJ STACJI");
+
+    if( Global::iPause) printf(p, " - paused") ;
+
+    sprintf(time, "Time: %02d:%02d:%04i%c", GlobalTime->hh, GlobalTime->mm, floor(GlobalTime->mr), p);
+    freetype::print(font10, 350, iWH-(posy+=00), AnsiString(time).c_str());
+
+    if (Controlled)
+     if (Controlled->Mechanik)
+     {
+      np = Controlled->Mechanik->Relation();
+      if (!np.IsEmpty()) // jeœli jest podana relacja, to dodajemy punkt nastêpnego zatrzymania
+      np = Global::Bezogonkow(np + ": -> " + Controlled->Mechanik->NextStop(),true); // dopisanie punktu zatrzymania
+      sprintf(nextpoint, "nextpoint: %s", np.c_str());
+
+      freetype::print(font10, 350, iWH-(posy+=20), AnsiString(nextpoint).c_str());
+      freetype::print(font10, 350, iWH-(posy+=20), AnsiString("STATION NAME: " + Controlled->asStation + ", TOR " + Controlled->asTrackNum).c_str());
+
+      if (QGlobal::iSTATIONPOSINTAB != -1)
+        {
+          posy+=20;
+          freetype::print(font10, 10, iWH-(posy+=20), AnsiString("ST Name     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name).c_str());
+          freetype::print(font10, 10, iWH-(posy+=20), AnsiString("ST Info     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Info).c_str());
+          freetype::print(font10, 10, iWH-(posy+=20), AnsiString("ST Type     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Type).c_str());
+          freetype::print(font10, 10, iWH-(posy+=20), AnsiString("ST SubT     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].SubType).c_str());
+          freetype::print(font10, 10, iWH-(posy+=20), AnsiString("ST edges    : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].platformedges)).c_str());
+          freetype::print(font10, 10, iWH-(posy+=20), AnsiString("ST tracks n : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].tracksnum)).c_str());
+        }
+      }
+   }
+
+  if (num == 5)  // PANEL 5 - INFORMACJE O NAJBLIZSZYM POJEZDZIE
+   {
+    TDynamicObject *tmp = FreeFlyModeFlag ? Ground.DynamicNearest(Camera.Pos) : Controlled; // w trybie latania lokalizujemy wg mapy
+    int posy = 10;
+    char time[25];
+    char p[25];
+    char nextpoint[75];
+    AnsiString np;
+
+    glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+    freetype::print(font16, 10, Global::iWindowHeight-20, "INFORMACJE O NAJBLIZSZYM POJEZDZIE");
+
+
+    posy = 60;
+    if (tmp)
+        {
+           // if (Global::iScreenMode[Global::iTextMode - VK_F1] == 0)
+            { // jeœli domyœlny ekran po pierwszym naciœniêciu
+                OutText01 = "";
+                OutText03 = "";
+                OutText01 = "Vehicle name: " + AnsiString(tmp->MoverParameters->Name);
+                freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText01).c_str());
+                if (tmp->Mechanik) // jeœli jest prowadz¹cy
+                { // ostatnia komenda dla AI
+                    OutText01 = ", command: " + tmp->Mechanik->OrderCurrent();
+                    freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText01).c_str());
+                }
+                else if (tmp->ctOwner)
+                    OutText01 = ", owned by " + AnsiString(tmp->ctOwner->OwnerName());
+                    freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText01).c_str());
+
+                if (!tmp->MoverParameters->CommandLast.IsEmpty())
+                    OutText01 = AnsiString(", put: ") + tmp->MoverParameters->CommandLast;
+                    freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText01).c_str());
+
+                // OutText01+="; Cab="+AnsiString(tmp->MoverParameters->CabNo);
+                OutText02 = "Damage status: " + tmp->MoverParameters->EngineDescription(0); //+" Engine status: ";
+                freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText02).c_str());
+
+                OutText02 = ", Brake delay: ";
+                if ((tmp->MoverParameters->BrakeDelayFlag & bdelay_G) == bdelay_G)
+                    OutText02 += "G";
+                if ((tmp->MoverParameters->BrakeDelayFlag & bdelay_P) == bdelay_P)
+                    OutText02 += "P";
+                if ((tmp->MoverParameters->BrakeDelayFlag & bdelay_R) == bdelay_R)
+                    OutText02 += "R";
+                if ((tmp->MoverParameters->BrakeDelayFlag & bdelay_M) == bdelay_M)
+                    OutText02 += "+Mg";
+                freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText02).c_str());
+
+                OutText02 = AnsiString(", BTP:") + FloatToStrF(tmp->MoverParameters->LoadFlag, ffFixed, 5, 0);
+                freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText02).c_str());
+                // if ((tmp->MoverParameters->EnginePowerSource.SourceType==CurrentCollector) ||
+                // (tmp->MoverParameters->TrainType==dt_EZT))
+                {
+                    OutText02 += AnsiString("; pant. ") + FloatToStrF(tmp->MoverParameters->PantPress, ffFixed, 8, 2);
+                    OutText02 += (tmp->MoverParameters->bPantKurek3 ? "<ZG" : "|ZG");
+                    freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText02).c_str());
+                }
+
+                //          OutText02+=AnsiString(",
+                //          u:")+FloatToStrF(tmp->MoverParameters->u,ffFixed,3,3);
+                //          OutText02+=AnsiString(",
+                //          N:")+FloatToStrF(tmp->MoverParameters->Ntotal,ffFixed,4,0);
+                OutText02 = AnsiString(", Ft:") + FloatToStrF(tmp->MoverParameters->Ft, ffFixed, 4, 0);
+                freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText02).c_str());
+                //          OutText03= AnsiString("BP:
+                //          ")+FloatToStrF(tmp->MoverParameters->BrakePress,ffFixed,5,2)+AnsiString(",
+                //          ");
+                //          OutText03+= AnsiString("PP:
+                //          ")+FloatToStrF(tmp->MoverParameters->PipePress,ffFixed,5,2)+AnsiString(",
+                //          ");
+                //          OutText03+= AnsiString("BVP:
+                //          ")+FloatToStrF(tmp->MoverParameters->Volume,ffFixed,5,3)+AnsiString(",
+                //          ");
+                //          OutText03+=
+                //          FloatToStrF(tmp->MoverParameters->CntrlPipePress,ffFixed,5,3)+AnsiString(",
+                //          ");
+                //          OutText03+=
+                //          FloatToStrF(tmp->MoverParameters->Hamulec->GetCRP(),ffFixed,5,3)+AnsiString(",
+                //          ");
+                //          OutText03+=
+                //          FloatToStrF(tmp->MoverParameters->BrakeStatus,ffFixed,5,0)+AnsiString(",
+                //          ");
+                //          OutText03+= AnsiString("HP:
+                //          ")+FloatToStrF(tmp->MoverParameters->ScndPipePress,ffFixed,5,2)+AnsiString(".
+                //          ");
+                //      OutText02+=
+                //      FloatToStrF(tmp->MoverParameters->CompressorPower,ffFixed,5,0)+AnsiString(",
+                //      ");
+                // yB      if(tmp->MoverParameters->BrakeSubsystem==Knorr) OutText02+=" Knorr";
+                // yB      if(tmp->MoverParameters->BrakeSubsystem==Oerlikon) OutText02+=" Oerlikon";
+                // yB      if(tmp->MoverParameters->BrakeSubsystem==Hik) OutText02+=" Hik";
+                // yB      if(tmp->MoverParameters->BrakeSubsystem==WeLu) OutText02+=" £estingha³s";
+                // OutText02= " GetFirst:
+                // "+AnsiString(tmp->GetFirstDynamic(1)->MoverParameters->Name)+" Damage
+                // status="+tmp->MoverParameters->EngineDescription(0)+" Engine status: ";
+                // OutText02+= " GetLast:
+                // "+AnsiString(tmp->GetLastDynamic(1)->MoverParameters->Name)+" Damage
+                // status="+tmp->MoverParameters->EngineDescription(0)+" Engine status: ";
+                OutText03 = AnsiString("BP: ") +
+                           FloatToStrF(tmp->MoverParameters->BrakePress, ffFixed, 5, 2) +
+                           AnsiString(", ");
+                OutText03 += FloatToStrF(tmp->MoverParameters->BrakeStatus, ffFixed, 5, 0) +
+                            AnsiString(", ");
+                OutText03 += AnsiString("PP: ") +
+                            FloatToStrF(tmp->MoverParameters->PipePress, ffFixed, 5, 2) +
+                            AnsiString("/");
+                OutText03 += FloatToStrF(tmp->MoverParameters->ScndPipePress, ffFixed, 5, 2) +
+                            AnsiString("/");
+                OutText03 += FloatToStrF(tmp->MoverParameters->EqvtPipePress, ffFixed, 5, 2) +
+                            AnsiString(", ");
+                OutText03 += AnsiString("BVP: ") +
+                            FloatToStrF(tmp->MoverParameters->Volume, ffFixed, 5, 3) +
+                            AnsiString(", ");
+                OutText03 += FloatToStrF(tmp->MoverParameters->CntrlPipePress, ffFixed, 5, 3) +
+                            AnsiString(", ");
+                OutText03 += FloatToStrF(tmp->MoverParameters->Hamulec->GetCRP(), ffFixed, 5, 3) +
+                            AnsiString(", ");
+                OutText03 += FloatToStrF(tmp->MoverParameters->BrakeStatus, ffFixed, 5, 0) +
+                            AnsiString(", ");
+                            freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText03).c_str());
+                //      OutText03+=AnsiString("BVP:
+                //      ")+FloatToStrF(tmp->MoverParameters->BrakeVP(),ffFixed,5,2)+AnsiString(",
+                //      ");
+
+                //      OutText03+=FloatToStrF(tmp->MoverParameters->CntrlPipePress,ffFixed,5,2)+AnsiString(",
+                //      ");
+                //      OutText03+=FloatToStrF(tmp->MoverParameters->HighPipePress,ffFixed,5,2)+AnsiString(",
+                //      ");
+                //      OutText03+=FloatToStrF(tmp->MoverParameters->LowPipePress,ffFixed,5,2)+AnsiString(",
+                //      ");
+
+                if (tmp->MoverParameters->ManualBrakePos > 0)
+                   {
+                    OutText03 = AnsiString("manual brake active. ");
+                    freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText03).c_str());
+                   }
+                else if (tmp->MoverParameters->LocalBrakePos > 0)
+                    OutText03 = AnsiString("local brake active. ");
+                else
+                    OutText03 = AnsiString("local brake inactive. ");
+                    freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText03).c_str());
+                /*
+                       //OutText03+=AnsiString("LSwTim:
+                   ")+FloatToStrF(tmp->MoverParameters->LastSwitchingTime,ffFixed,5,2);
+                       //OutText03+=AnsiString(" Physic:
+                   ")+FloatToStrF(tmp->MoverParameters->PhysicActivation,ffFixed,5,2);
+                       //OutText03+=AnsiString(" ESF:
+                   ")+FloatToStrF(tmp->MoverParameters->EndSignalsFlag,ffFixed,5,0);
+                       OutText03+=AnsiString(" dPAngF: ")+FloatToStrF(tmp->dPantAngleF,ffFixed,5,0);
+                       OutText03+=AnsiString(" dPAngFT:
+                   ")+FloatToStrF(-(tmp->PantTraction1*28.9-136.938),ffFixed,5,0);
+                       if (tmp->lastcabf==1)
+                       {
+                        OutText03+=AnsiString(" pcabc1:
+                   ")+FloatToStrF(tmp->MoverParameters->PantFrontUp,ffFixed,5,0);
+                        OutText03+=AnsiString(" pcabc2:
+                   ")+FloatToStrF(tmp->MoverParameters->PantRearUp,ffFixed,5,0);
+                       }
+                       if (tmp->lastcabf==-1)
+                       {
+                        OutText03+=AnsiString(" pcabc1:
+                   ")+FloatToStrF(tmp->MoverParameters->PantRearUp,ffFixed,5,0);
+                        OutText03+=AnsiString(" pcabc2:
+                   ")+FloatToStrF(tmp->MoverParameters->PantFrontUp,ffFixed,5,0);
+                       }
+                */
+                OutText04 = "";
+                if (tmp->Mechanik)
+                { // o ile jest ktoœ w œrodku
+                    // OutText04=tmp->Mechanik->StopReasonText();
+                    // if (!OutText04.IsEmpty()) OutText04+="; "; //aby ³adniejszy odstêp by³
+                    // if (Controlled->Mechanik && (Controlled->Mechanik->AIControllFlag==AIdriver))
+                    AnsiString flags = "bwaccmlshhhoibsgvdp; "; // flagi AI (definicja w Driver.h)
+                    for (int i = 0, j = 1; i < 19; ++i, j <<= 1)
+                        if (tmp->Mechanik->DrivigFlags() & j) // jak bit ustawiony
+                            flags[i + 1] ^= 0x20; // to zmiana na wielk¹ literê
+                    OutText04 = flags;
+					OutText04 +=
+						AnsiString("Driver: Vd=") +
+						FloatToStrF(tmp->Mechanik->VelDesired, ffFixed, 4, 0) + AnsiString(" ad=") +
+						FloatToStrF(tmp->Mechanik->AccDesired, ffFixed, 5, 2) + AnsiString(" Pd=") +
+						FloatToStrF(tmp->Mechanik->ActualProximityDist, ffFixed, 4, 0) +
+						AnsiString(" Vn=") + FloatToStrF(tmp->Mechanik->VelNext, ffFixed, 4, 0) +
+						AnsiString(" VSm=") + FloatToStrF(tmp->Mechanik->VelSignalLast, ffFixed, 4, 0) +
+						AnsiString(" VLm=") + FloatToStrF(tmp->Mechanik->VelLimitLast, ffFixed, 4, 0) +
+						AnsiString(" VRd=") + FloatToStrF(tmp->Mechanik->VelRoad, ffFixed, 4, 0);
+                    if (tmp->Mechanik->VelNext == 0.0)
+                        if (tmp->Mechanik->eSignNext)
+                        { // jeœli ma zapamiêtany event semafora
+                            // if (!OutText04.IsEmpty()) OutText04+=", "; //aby ³adniejszy odstêp by³
+                            OutText04 += " (" +
+                                        Global::Bezogonkow(tmp->Mechanik->eSignNext->asName) +
+                                        ")"; // nazwa eventu semafora
+                        }
+                        freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText04).c_str());
+                }
+                if (!OutText04.IsEmpty())
+                    OutText04 += "; "; // aby ³adniejszy odstêp by³
+                    freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText04).c_str());
+                // informacja o sprzêgach nawet bez mechanika
+                OutText04 =
+                    "C0=" + (tmp->PrevConnected ?
+                                 tmp->PrevConnected->GetName() + ":" +
+                                     AnsiString(tmp->MoverParameters->Couplers[0].CouplingFlag) :
+                                 AnsiString("NULL"));
+                freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText04).c_str());
+                OutText04 =
+                    " C1=" + (tmp->NextConnected ?
+                                  tmp->NextConnected->GetName() + ":" +
+                                      AnsiString(tmp->MoverParameters->Couplers[1].CouplingFlag) :
+                                  AnsiString("NULL"));
+                freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText04).c_str());
+                if (Console::Pressed(VK_F2))
+                {
+                    WriteLog(OutText01);
+                    WriteLog(OutText02);
+                    WriteLog(OutText03);
+                    WriteLog(OutText04);
+                }
+
+            } // koniec treœci podstawowego ekranu FK_V2
+
+        } // if tmp
+
+
+
+   }
+
+
+
+  } // if !modelprev
+  
   glEnable( GL_TEXTURE_2D );
   glEnable( GL_FOG );
   glEnable( GL_LIGHTING );
+
   true;
 }
 
@@ -3840,11 +4200,12 @@ bool __fastcall TWorld::LOADLOADERCONFIG()
 bool __fastcall TWorld::LOADLOADERFONTS()
 {
  WriteLog("LOADING LOADER FONTS...");
- our_font10.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\arial.ttf").c_str(), 10);
- our_font12.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\arial.ttf").c_str(), 12);
- our_font14.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\creditvz.ttf").c_str(), 14);
- our_font16.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\creditvz.ttf").c_str(), 16);
- our_font18.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\creditvz.ttf").c_str(), 18);			        //Build the freetype font
+ font10.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\" + QGlobal::font10file).c_str(), 10);
+ font11.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\" + QGlobal::font11file).c_str(), 11);
+ font12.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\" + QGlobal::font12file).c_str(), 12);
+ font14.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\" + QGlobal::font14file).c_str(), 14);
+ font16.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\" + QGlobal::font16file).c_str(), 16);
+ font18.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\" + QGlobal::font18file).c_str(), 18);			        //Build the freetype font
 
  if (!floaded) BFONT = new Font();
  if (!floaded) BFONT->init("none");
@@ -3867,6 +4228,10 @@ bool __fastcall TWorld::LOADLOADERTEXTURES()
     AnsiString asSCNBACKG =  "data\\lbacks\\" + cscn + QGlobal::asLBACKEXT;         // tlo wczytywania
     AnsiString asBRIEFTEXT = "data\\briefs\\" + cscn + "-" + clok + ".txt";         // opis misji
 
+    int randn =( std::rand() % 3 ) + 1;
+
+    AnsiString modelviewerbackg = "modelviewer-" + IntToStr(randn) + QGlobal::asLBACKEXT;
+
     //WriteLog(asBRIEFTEXT);
     if (FEX(asBRIEFTEXT)) QGlobal::MBRIEF->LoadFromFile( asBRIEFTEXT);
 
@@ -3882,6 +4247,8 @@ bool __fastcall TWorld::LOADLOADERTEXTURES()
 
     if (!FEX(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString("data\\lbacks\\lbackgdef" + QGlobal::asLBACKEXT).c_str());
     if ( FEX(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString(asSCNBACKG).c_str());
+
+    if (QGlobal::bmodelpreview) loaderbackg = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString("data\\lbacks\\" + modelviewerbackg).c_str());
 
     Global::asCurrentTexturePath = AnsiString(szTexturePath);
  return true;

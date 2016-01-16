@@ -921,7 +921,7 @@ TYPE
                 constructor Init(//LocInitial:TLocation; RotInitial:TRotation;
                                  VelInitial:real; TypeNameInit, NameInit: string; LoadInitial:longint; LoadTypeInitial: string; Cab:integer);
                                                               {wywolac najpierw to}
-                function LoadChkFile(chkpath:string):Boolean;   {potem zaladowac z pliku}
+                function LoadChkFile(chkpath:string; unique:integer):Boolean;   {potem zaladowac z pliku}
                 function CheckLocomotiveParameters(ReadyFlag:boolean;Dir:longint): boolean;  {a nastepnie sprawdzic}
                 function EngineDescription(what:integer): string;  {opis stanu lokomotywy}
 
@@ -6185,10 +6185,10 @@ begin
   SendCtrlToNext('PantRear',0,CabNo); }
 {end;}
 
-function T_MoverParameters.LoadChkFile(chkpath:string):Boolean;
+function T_MoverParameters.LoadChkFile(chkpath:string; unique:integer):Boolean;
 const param_ok=1; wheels_ok=2; dimensions_ok=4;
 var
-  lines,s: string;
+  lines,s, appdir: string;
   bl,i,k:integer;
   b,OKflag:byte;
   fin: text;
@@ -6360,6 +6360,10 @@ begin
   ConversionError:=666;
   Mass:=0;
   filename:=chkpath+TypeName+'.fiz';//'.chk';
+
+  appdir := ExtractFilePath(ParamStr(0));
+ if unique = 1 then filename := appdir + 'dynstates\' + Name + '.fiz';
+ 
   assignfile(fin,filename);
 {$I-}
   reset(fin);

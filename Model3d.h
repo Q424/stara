@@ -238,7 +238,9 @@ class TSubModel
     int bWire; // nie u¿ywane, ale wczytywane
     // short TexAlpha;  //Ra: nie u¿ywane ju¿
     GLuint uiDisplayList; // roboczy numer listy wyœwietlania
+    public:
     float Opacity; // nie u¿ywane, ale wczytywane
+    private:
     // ABu: te same zmienne, ale zdublowane dla Render i RenderAlpha,
     // bo sie chrzanilo przemieszczanie obiektow.
     // Ra: ju¿ siê nie chrzani
@@ -253,7 +255,9 @@ class TSubModel
     TAnimType b_aAnim; // kody animacji oddzielnie, bo zerowane
   public:
     float4x4 *mAnimMatrix; // macierz do animacji kwaternionowych (nale¿y do AnimContainer)
-    char space[8]; // wolne miejsce na przysz³e zmienne (zmniejszyæ w miarê potrzeby)
+    bool bISBLINK;
+    short smID;
+    char space[5]; // wolne miejsce na przysz³e zmienne (zmniejszyæ w miarê potrzeby)
   public:
     TSubModel **
         smLetter; // wskaŸnik na tablicê submdeli do generoania tekstu (docelowo zapisaæ do E3D)
@@ -304,6 +308,7 @@ class TSubModel
     TSubModel *__fastcall GetFromName(char *search, bool i = true);
     void RenderDL();
     void RenderAlphaDL();
+    void RenderAlpha2DL();
     void RenderVBO();
     void RenderAlphaVBO();
     // inline matrix4x4* GetMatrix() {return dMatrix;};
@@ -317,6 +322,15 @@ class TSubModel
         iVisible = 0;
     };
     void RaArrayFill(CVertNormTex *Vert);
+    void SETIDS(AnsiString Name);
+    void setreklam3in1(int id);
+    void setbillboardtex(int id, AnsiString nodename, int num);
+    void setmirrorstex(int id, AnsiString nodename, int num);
+    void setswitchnumber(int id, AnsiString nodename, int num);
+    void sethaslerdistance(int id, AnsiString nodename, int num);
+    void setclockdigital(int id, AnsiString nodename, int num);
+    void setvechcomputer(int id, AnsiString nodename, int num);
+    void getvechicleweight(int id, AnsiString nodename, int num);
     // void Render();
     int FlagsCheck();
     void WillBeAnimated()
@@ -437,29 +451,22 @@ class TModel3d : public CMesh
     void BreakHierarhy();
     // renderowanie specjalne
     void Render(double fSquareDistance, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
-    void RenderAlpha(double fSquareDistance, GLuint *ReplacableSkinId = NULL,
-                     int iAlpha = 0x30300030);
+    void RenderAlpha(double fSquareDistance, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
+    void RenderAlpha2(double fSquareDistance, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
     void RaRender(double fSquareDistance, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
-    void RaRenderAlpha(double fSquareDistance, GLuint *ReplacableSkinId = NULL,
-                       int iAlpha = 0x30300030);
+    void RaRenderAlpha(double fSquareDistance, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
     // jeden k¹t obrotu
-    void Render(vector3 pPosition, double fAngle = 0, GLuint *ReplacableSkinId = NULL,
-                int iAlpha = 0x30300030);
-    void RenderAlpha(vector3 pPosition, double fAngle = 0, GLuint *ReplacableSkinId = NULL,
-                     int iAlpha = 0x30300030);
-    void RaRender(vector3 pPosition, double fAngle = 0, GLuint *ReplacableSkinId = NULL,
-                  int iAlpha = 0x30300030);
-    void RaRenderAlpha(vector3 pPosition, double fAngle = 0, GLuint *ReplacableSkinId = NULL,
-                       int iAlpha = 0x30300030);
+    void Render(vector3 pPosition, double fAngle = 0, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
+    void RenderAlpha(vector3 pPosition, double fAngle = 0, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
+    void RenderAlpha2(vector3 pPosition, double fAngle = 0, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
+    void RaRender(vector3 pPosition, double fAngle = 0, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
+    void RaRenderAlpha(vector3 pPosition, double fAngle = 0, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
     // trzy k¹ty obrotu
-    void Render(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId = NULL,
-                int iAlpha = 0x30300030);
-    void RenderAlpha(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId = NULL,
-                     int iAlpha = 0x30300030);
-    void RaRender(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId = NULL,
-                  int iAlpha = 0x30300030);
-    void RaRenderAlpha(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId = NULL,
-                       int iAlpha = 0x30300030);
+    void Render(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
+    void RenderAlpha(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
+    void RenderAlpha2(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
+    void RaRender(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
+    void RaRenderAlpha(vector3 *vPosition, vector3 *vAngle, GLuint *ReplacableSkinId = NULL, int iAlpha = 0x30300030);
     // inline int GetSubModelsCount() { return (SubModelsCount); };
     int Flags()
     {

@@ -170,6 +170,7 @@ class TGroundNode : public Resource
     void RenderHidden(); // obs³uga dŸwiêków i wyzwalaczy zdarzeñ
     void RenderDL(); // renderowanie nieprzezroczystych w Display Lists
     void RenderAlphaDL(); // renderowanie przezroczystych w Display Lists
+    void RenderAlpha2DL();
     // (McZapkie-131202)
     void RaRenderVBO(); // renderowanie (nieprzezroczystych) ze wspólnego VBO
     void RenderVBO(); // renderowanie nieprzezroczystych z w³asnego VBO
@@ -214,6 +215,7 @@ class TSubRect : public Resource, public CMesh
     void RaAnimate(); // przeliczenie animacji torów
     void RenderDL(); // renderowanie nieprzezroczystych w Display Lists
     void RenderAlphaDL(); // renderowanie przezroczystych w Display Lists
+    void RenderAlpha2DL();
     // (McZapkie-131202)
     void RenderVBO(); // renderowanie nieprzezroczystych z w³asnego VBO
     void RenderAlphaVBO(); // renderowanie przezroczystych z (w³asnego) VBO
@@ -333,6 +335,7 @@ class TGround
     bool GetTraction(TDynamicObject *model);
     bool RenderDL(vector3 pPosition);
     bool RenderAlphaDL(vector3 pPosition);
+    bool RenderAlpha2DL(vector3 pPosition);
     bool RenderVBO(vector3 pPosition);
     bool RenderAlphaVBO(vector3 pPosition);
     bool CheckQuery();

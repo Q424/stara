@@ -23,6 +23,7 @@ http://mozilla.org/MPL/2.0/.
 // McZapkie:
 #include "Texture.h"
 #include "Globals.h"
+#include "qutils.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 //---------------------------------------------------------------------------
@@ -417,6 +418,7 @@ TAnimModel::TAnimModel()
     ReplacableSkinId[3] = 0;
     ReplacableSkinId[4] = 0;
     bISLAMP = false;
+    bISBLINK = false;
     iTYPE = 0;
     asTRAINNUMBER = "";
     asDESTINATION = "";
@@ -524,6 +526,7 @@ bool TAnimModel::Load(cParser *parser, bool ter)
         str = AnsiString(token.c_str());
         do
         {
+            bISBLINK = false;
             ti = str.ToDouble(); // stan œwiat³a jest liczb¹ z u³amkiem
             LightSet(i, ti);
             i++;
@@ -575,12 +578,17 @@ void TAnimModel::RaAnimate()
         pCurrent->UpdateModelIK(); // przeliczenie odwrotnej kinematyki
 };
 
+
+
+
 void TAnimModel::RaPrepare()
 { // ustawia œwiat³a i animacje we wzorcu modelu przed renderowaniem egzemplarza
+
     fBlinkTimer -= Timer::GetDeltaTime();
     if (fBlinkTimer <= 0)
         fBlinkTimer = fOffTime;
     bool state; // stan œwiat³a
+
     for (int i = 0; i < iNumLights; i++)
     {
         switch (lsLights[i])
@@ -594,10 +602,30 @@ void TAnimModel::RaPrepare()
         default: // zapalony albo zgaszony
             state = (lsLights[i] == ls_On);
         }
+
+
+       try  // w instrukcjach poni¿ej mo¿e coœ siê nie udaæ
+       {
+        QGlobal::slc[i].blink = ((lsLights[i] == ls_Blink) && (lsLights[i]));
+
+        if (QGlobal::slc[i].blink) LightsOn[i]->iVisible = false;
+        
+        if (LightsOn[i] != NULL)
+         if (LightsOn[i]->bISBLINK) LightsOn[i]->iVisible = false ;   // tu sie syupie
+
+        if (!QGlobal::slc[i].blink) 
         if (LightsOn[i])
             LightsOn[i]->iVisible = state;
-        if (LightsOff[i])
-            LightsOff[i]->iVisible = !state;
+           
+       // if (LightsOff[i])
+       //     LightsOff[i]->iVisible = !state;
+
+        }
+       catch(std::string obj)
+       {
+
+       }
+       
     }
     TSubModel::iInstance = (int)this; //¿eby nie robiæ cudzych animacji
     TSubModel::pasText = &asText; // przekazanie tekstu do wyœwietlacza (!!!! do przemyœlenia)
@@ -632,8 +660,10 @@ void TAnimModel::RenderDL(vector3 pPosition, double fAngle)
     QGlobal::asPASSDESTINATION = asDESTINATION.c_str();
     RaAnimate(); // jednorazowe przeliczenie animacji
     RaPrepare();
-    if (pModel) // renderowanie rekurencyjne submodeli
+    if (pModel)
+     { // renderowanie rekurencyjne submodeli
         pModel->Render(pPosition, fAngle, ReplacableSkinId, iTexAlpha);
+     }
 }
 
 void TAnimModel::RenderAlphaDL(vector3 pPosition, double fAngle)
@@ -642,7 +672,20 @@ void TAnimModel::RenderAlphaDL(vector3 pPosition, double fAngle)
     QGlobal::asPASSDESTINATION = asDESTINATION.c_str();
     RaPrepare();
     if (pModel)
+    {
         pModel->RenderAlpha(pPosition, fAngle, ReplacableSkinId, iTexAlpha);
+    }
+};
+
+void TAnimModel::RenderAlpha2DL(vector3 pPosition, double fAngle)               // DO RENDEROWANIA PRO SWIATEL SEMAFOROW
+{
+ WriteLog("TAnimModel::RenderAlpha2DL-0");
+    RaPrepare();
+    if (pModel)
+    {
+       pModel->RenderAlpha2(pPosition, fAngle, ReplacableSkinId, iTexAlpha);
+    }
+  WriteLog("TAnimModel::RenderAlpha2DL-1");
 };
 
 int TAnimModel::Flags()
@@ -670,16 +713,32 @@ void TAnimModel::RenderDL(vector3 *vPosition)
     RaAnimate(); // jednorazowe przeliczenie animacji
     RaPrepare();
     if (pModel) // renderowanie rekurencyjne submodeli
+    {
         pModel->Render(vPosition, &vAngle, ReplacableSkinId, iTexAlpha);
+    }
 };
+
+
 void TAnimModel::RenderAlphaDL(vector3 *vPosition)
 {
     QGlobal::asPASSTRAINNUMBER = asTRAINNUMBER.c_str();
     QGlobal::asPASSDESTINATION = asDESTINATION.c_str();
     RaPrepare();
     if (pModel) // renderowanie rekurencyjne submodeli
+    {
         pModel->RenderAlpha(vPosition, &vAngle, ReplacableSkinId, iTexAlpha);
+    }
 };
+
+void TAnimModel::RenderAlpha2DL(vector3 *vPosition)
+{
+    RaPrepare();
+    if (pModel) // renderowanie rekurencyjne submodeli
+    {
+        pModel->RenderAlpha2(vPosition, &vAngle, ReplacableSkinId, iTexAlpha);
+    }
+};
+
 void TAnimModel::RenderVBO(vector3 *vPosition)
 {
     RaAnimate(); // jednorazowe przeliczenie animacji
@@ -854,6 +913,7 @@ void TAnimModel::LightSet(int n, float v)
     case 1: // ustalenie wype³nienia u³amkiem, np. 1.25 => zapalony przez 1/4 okresu
         break;
     case 2: // ustalenie czêstotliwoœci migotania, f<1Hz (t>1s), np. 2.2 => f=0.2Hz (t=5s)
+            bISBLINK = true;
         break;
     case 3: // zapalenie œwiate³ zale¿ne od oœwietlenia scenerii
         if (v > 3.0)

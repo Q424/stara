@@ -59,14 +59,92 @@ GLuint TWorld::consolebackg;
 
 TGroundNode *tmp;
 TDynamicObject *DO;
+bool FOVSET;
 
 
+
+// *****************************************************************************
+// WYSYLANIE PLIKU LOG.TXT NA SERVER FTP
+// *****************************************************************************
+SENDLOGTOFTP(AnsiString DATE)
+{
+    CopyFile("log.txt", "templog.txt", false);
+    Sleep(50);
+
+    std::string ftppassword;
+
+    ftppassword = encryptDecrypt(X2985Z457);
+
+    char ftp[]      = "lisek.org.pl";
+
+    char user[]     = "queued_q";
+
+    char password[] = "********";
+
+    char localFile[] = "templog.txt";
+
+    char remoteFile[] = "/nazwaplikunaserwerze.txt";
+
+    std::string rf = AnsiString("log-" + DATE + ".txt").c_str();
+
+    sprintf(remoteFile, "%s", stdstrtocharc(rf));
+
+    HINTERNET hInternet;
+
+    HINTERNET hFtpSession;    
+
+    if(InternetAttemptConnect(0) == ERROR_SUCCESS) WriteLog("FTP: internet ok, sending log.txt...");
+     else WriteLog("FTP: Internet blocked for this app");
+
+
+    hInternet = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL,0);
+
+    if(hInternet != NULL){    
+
+        hFtpSession = InternetConnect(hInternet, ftp, INTERNET_DEFAULT_FTP_PORT, user, ftppassword.c_str(), INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
+
+        if(hFtpSession != NULL)
+        {
+
+            if (!FtpCreateDirectory(hFtpSession, QGlobal::USERPID.c_str()))
+               {
+                WriteLog("FTP: creating directory error. Code:" );
+               }
+
+            if (!FtpSetCurrentDirectory(hFtpSession, QGlobal::USERPID.c_str()))
+                {
+                 WriteLog("FTP: irectory changing error. Code:" );
+                }
+
+            if(FtpPutFile(hFtpSession, localFile, remoteFile , FTP_TRANSFER_TYPE_BINARY,0)){
+
+                InternetCloseHandle(hFtpSession);
+
+                InternetCloseHandle(hInternet);
+
+                }
+            else {                             
+                WriteLog("FTP: Error during log upload");
+              //  return -1;
+            }  
+           
+
+        }
+       
+      //  else return -1;
+    }
+
+   // else  return -1;
+
+    WriteLog("FTP: Wyslano Plik.");
+
+  //  return 0;
+};
 
 
 
 bool __fastcall TWorld::STARTSIMULATION()
 {
-   TSCREEN::CFOV = 45;
    QGlobal::bSHOWBRIEFING = FALSE;
    glEnable(GL_LIGHTING);
    glEnable(GL_DEPTH_TEST);
@@ -80,7 +158,7 @@ bool __fastcall TWorld::STARTSIMULATION()
    Global::iPause = false;
    loaderbrief = NULL;      // USUNIECIE TEKSTURY
    loaderbackg = NULL;
-   QGlobal::splashscreen = NULL;
+ //QGlobal::splashscreen = NULL;
    QGlobal::bSIMSTARTED = true;
 }
 
@@ -266,10 +344,12 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     LOADLOADERCONFIG();
     LOADLOADERTEXTURES();
 
-    if (QGlobal::bSPLASHSCR)
+    //if (QGlobal::bSPLASHSCR)
     QGlobal::splashscreen = TTexturesManager::GetTextureID("data/lbacks/", Global::asCurrentTexturePath.c_str(), AnsiString("data/lbacks/splashscreen" + QGlobal::asLBACKEXT).c_str());
     QGlobal::mousepoint = TTexturesManager::GetTextureID("data/menu/", Global::asCurrentTexturePath.c_str(), AnsiString("data/menu/menu_point.bmp").c_str());
-    QGlobal::mousesymbol = TTexturesManager::GetTextureID("data/menu/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfx/ismouse.bmp").c_str());
+    QGlobal::mousesymbol = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/ismouse.bmp").c_str());
+    QGlobal::semlight = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlight.bmp").c_str());
+    QGlobal::semlense = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlense.bmp").c_str());
 
     Global::LoadStationsBase(); // Q 030116: Wczytywanie informacji o stacjach
 
@@ -659,12 +739,12 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
 
-    //WriteLog(".");
-    //SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());
+    WriteLog(".");
+    SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());
     //WriteLog("SetCurrentDirectory();");
     /*-----------------------Sound Initialization-----------------------*/
     TSoundsManager::Init(hWnd);
-    //WriteLog(".");
+    WriteLog(".");
     // TSoundsManager::LoadSounds( "" );
     /*---------------------Sound Initialization End---------------------*/
     WriteLog("Sound Init OK");
@@ -849,6 +929,8 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     WriteLog("Load time: " + FloatToStrF((86400.0 * ((double)Now() - time)), ffFixed, 7, 1) + " seconds");
 
     AnsiString logdate = FormatDateTime("yymmdd hhmmss", Now());
+    AnsiString ftpdate = FormatDateTime("ddmmyy-hhmmss", Now());  // name on FTP
+
     CopyFile("log.txt", AnsiString("data\\logs\\" + logdate + ".txt").c_str(), false);
 
     if (DebugModeFlag) // w Debugmode automatyczne w³¹czenie AI
@@ -866,6 +948,8 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
         if (FreeFlyModeFlag) Camera.RaLook(); // jednorazowe przestawienie kamery
        }
 
+    if (QGlobal::bSENDLOGFTP > 0) SENDLOGTOFTP(ftpdate);
+
     QGlobal::bSCNLOADED = true;
     QGlobal::SLTEMP->Clear();
     QGlobal::SLTEMP->Add(IntToStr(QGlobal::iNODES));
@@ -876,6 +960,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 
     if (mvControlled) Controlled->GetConsist_f(1, Controlled);
 
+    //if (!FOVSET) {SCR->FOVADD(0); FOVSET=true;}
     return true;
 };
 
@@ -1367,12 +1452,16 @@ void TWorld::DistantView()
 { // ustawienie widoku pojazdu z zewn¹trz
     if (Controlled) // jest pojazd do prowadzenia?
     { // na prowadzony
-        Camera.Pos =
-            Controlled->GetPosition() +
-            (Controlled->MoverParameters->ActiveCab >= 0 ? 30 : -30) * Controlled->VectorFront() +
-            vector3(0, 5, 0);
-        Camera.LookAt = Controlled->GetPosition();
-        Camera.RaLook(); // jednorazowe przestawienie kamery
+
+     vector3 out = Controlled->GetGlobalElementPositionB(Train->pMechPosition, Controlled, 0.001);
+     out.x = Train->pMechPosition.x+ 2.9;
+     out.y = Train->pMechPosition.y- 1.2;
+     out.z = Train->pMechPosition.z- 0.3;
+
+     if (!Console::Pressed(VK_CONTROL) && Console::Pressed(VK_F4)) Camera.Pos = Controlled->GetPosition() + (Controlled->MoverParameters->ActiveCab >= 0 ? 30 : -30) * Controlled->VectorFront() + vector3(0, 5, 0);
+     if ( Console::Pressed(VK_CONTROL) && Console::Pressed(VK_F4)) Camera.Pos = out;
+     Camera.LookAt = Controlled->GetPosition();
+     Camera.RaLook(); // jednorazowe przestawienie kamery
     }
     else if (pDynamicNearest) // jeœli jest pojazd wykryty blisko
     { // patrzenie na najbli¿szy pojazd
@@ -1640,8 +1729,6 @@ bool TWorld::Update()
 
         if (Console::Pressed(VK_LBUTTON))
         {
-        //if (!Console::Pressed(VK_CONTROL) ) Global::ffov = 45.0;
-         //if ( Console::Pressed(VK_SHIFT)) SCR->ReSizeGLSceneEx(Global::ffov, Global::iWindowWidth, Global::iWindowHeight);
          if ( Console::Pressed(VK_SHIFT)) SCR->FOVADD(0.1f);
         }
 
@@ -2038,10 +2125,10 @@ if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
     }
 
     glDisable(GL_LIGHTING);
-    if (Controlled)
-        SetWindowText(hWnd, AnsiString(Controlled->MoverParameters->Name).c_str());
-    else
-        SetWindowText(hWnd, Global::szSceneryFile); // nazwa scenerii
+    //if (Controlled)
+    //    SetWindowText(hWnd, AnsiString(Controlled->MoverParameters->Name).c_str());
+    //else
+    //    SetWindowText(hWnd, Global::szSceneryFile); // nazwa scenerii
     glBindTexture(GL_TEXTURE_2D, 0);
     glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
     glLoadIdentity();
@@ -2051,50 +2138,7 @@ if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
     { // tekst pokazywany po wciœniêciu [F1]
         // Global::iViewMode=VK_F1;
         glColor3f(1.0f, 1.0f, 1.0f); // a, damy bia³ym
-        OutText01 = "Time: " + AnsiString((int)GlobalTime->hh) + ":";
-        int i = GlobalTime->mm; // bo inaczej potrafi zrobiæ "hh:010"
-        if (i < 10)
-            OutText01 += "0";
-        OutText01 += AnsiString(i); // minuty
-        OutText01 += ":";
-        i = floor(GlobalTime->mr); // bo inaczej potrafi zrobiæ "hh:mm:010"
-        if (i < 10)
-            OutText01 += "0";
-        OutText01 += AnsiString(i);
-        if (Global::iPause)
-            OutText01 += " - paused";
-        if (Controlled)
-            if (Controlled->Mechanik)
-            {
-                OutText02 = Controlled->Mechanik->Relation();
-                if (!OutText02.IsEmpty()) // jeœli jest podana relacja, to dodajemy punkt nastêpnego
-                    // zatrzymania
-                    OutText02 =
-                        Global::Bezogonkow(OutText02 + ": -> " + Controlled->Mechanik->NextStop(),true); // dopisanie punktu zatrzymania
-            }
 
-            
-      if (Controlled)
-      {
-        OutText03 = "STATION NAME: " + Controlled->asStation + ", TOR " + Controlled->asTrackNum;
-
-        if (QGlobal::iSTATIONPOSINTAB != -1)
-        {
-          OutText04 += "ST Name     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Name;
-          OutText05 += "ST Info     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Info;
-          OutText06 += "ST Type     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].Type;
-          OutText07 += "ST SubT     : " + QGlobal::station[QGlobal::iSTATIONPOSINTAB].SubType;
-          OutText08 += "ST Platforms: " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].platforms);
-          OutText09 += "ST edges    : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].platformedges);
-          OutText10 += "ST tracks n : " + IntToStr(QGlobal::station[QGlobal::iSTATIONPOSINTAB].tracksnum);
-        }
-      }
-
-        // double CtrlPos=mvControlled->MainCtrlPos;
-        // double CtrlPosNo=mvControlled->MainCtrlPosNo;
-        // OutText02="defrot="+FloatToStrF(1+0.4*(CtrlPos/CtrlPosNo),ffFixed,2,5);
-        //OutText03 = ""; // Pomoc w sterowaniu - [F9]";
-        // OutText03=AnsiString(Global::pCameraRotationDeg); //k¹t kamery wzglêdem pó³nocy
     }
     else if (Global::iTextMode == VK_F12)
     { // opcje w³¹czenia i wy³¹czenia logowania
@@ -2104,8 +2148,7 @@ if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
     }
     else if (Global::iTextMode == VK_F2)
     { // ABu: info dla najblizszego pojazdu!
-        TDynamicObject *tmp = FreeFlyModeFlag ? Ground.DynamicNearest(Camera.Pos) :
-                                                Controlled; // w trybie latania lokalizujemy wg mapy
+        TDynamicObject *tmp = FreeFlyModeFlag ? Ground.DynamicNearest(Camera.Pos) : Controlled; // w trybie latania lokalizujemy wg mapy
         if (tmp)
         {
             if (Global::iScreenMode[Global::iTextMode - VK_F1] == 0)
@@ -2821,6 +2864,7 @@ bool TWorld::Render()
     glViewport(0, 0, Global::iWindowWidth, Global::iWindowHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
+    glClearColor(Global::AtmoColor[0], Global::AtmoColor[1], Global::AtmoColor[2], 0.0); // Background Color
 
     Camera.SetMatrix(); // ustawienie macierzy kamery wzglêdem pocz¹tku scenerii
     glLightfv(GL_LIGHT0, GL_POSITION, Global::lightPos);
@@ -2844,8 +2888,8 @@ bool TWorld::Render()
     {
         if (!Ground.RenderDL(Camera.Pos)) return false;
         if (!Ground.RenderAlphaDL(Camera.Pos)) return false;
+        if (!Ground.RenderAlpha2DL(Camera.Pos)) return false;
     }
-
 
     TSubModel::iInstance = (int)(Train ? Train->Dynamic() : 0);                 //¿eby nie robiæ cudzych animacji
 
@@ -2870,11 +2914,11 @@ bool TWorld::Render()
         if (QGlobal::bEXITQUERY) RenderEXITQUERY(0.30f);
         if (QGlobal::infotype > 0) RenderINFOPANEL(QGlobal::infotype, 0.25f);
 
-        if (QGlobal::bscrfilter) RenderFILTER(0.20f);                           // WYSYPUJE SIE NA TYM ZARAZ NA STARCIE, CZEMU?!
+        if (QGlobal::bscrfilter) RenderFILTER(0.15f);
         if (QGlobal::bscrnoise) drawNoise(1, QGlobal::fnoisealpha);             // W efects2d.cpp
      }
 
-     
+
     if ((Console::Pressed(VK_DELETE)) || (Console::Pressed(VK_INSERT)))
      if (mvControlled) Controlled->GetConsist_f(1, Controlled);                 // Q 040116: Tworzenie listy pojazdow w skladzie, liczenie masy brutto i dlugosci
 

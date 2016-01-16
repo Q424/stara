@@ -113,6 +113,7 @@ USEUNIT("screen.cpp");
 USEUNIT("menu\bitmap_Font.cpp");
 USEUNIT("orthorender.cpp");
 USEUNIT("effects2d.cpp");
+USEUNIT("submodelsops.cpp");
 USEFORM("frm_debugger.cpp", DEBUGGER);
 //---------------------------------------------------------------------------
 #include "World.h"
@@ -137,7 +138,7 @@ static int mx=0, my=0;
 char **argv = NULL;  // zmienna trzymajaca mocne argumenty
 
 AnsiString appath, commandline, filetoopen, FDT;
-std::string ftppassword;
+
 TStringList *ss;
 HMENU hMenubar;
 HMENU hMenu;
@@ -856,85 +857,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
 
 
 // *****************************************************************************
-// WYSYLANIE PLIKU LOG.TXT NA SERVER FTP
-// *****************************************************************************
-SENDLOGTOFTP()
-{
-    CopyFile("log.txt", "templog.txt", false);
-
-    FDT = FormatDateTime("ddmmyy-hhmmss", Now());
-
-    ftppassword = encryptDecrypt(X2985Z457);
-
-    char ftp[]      = "lisek.org.pl";
-
-    char user[]     = "queued_q";
-
-    char password[] = "********";
-
-    char localFile[] = "templog.txt";
-
-    char remoteFile[] = "/nazwaplikunaserwerze.txt";
-
-    std::string rf = AnsiString("log-" + FDT + ".txt").c_str();
-
-    sprintf(remoteFile, "%s", stdstrtocharc(rf));
-    //sprintf(password, "%s", stdstrtocharc(password));
-
-    HINTERNET hInternet;
-
-    HINTERNET hFtpSession;    
-
-    if(InternetAttemptConnect(0) == ERROR_SUCCESS) WriteLog("FTP: internet ok, sending log.txt...");
-     else WriteLog("FTP: Internet blocked for this app");
-
-
-    hInternet = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL,0);
-
-    if(hInternet != NULL){    
-
-        hFtpSession = InternetConnect(hInternet, ftp, INTERNET_DEFAULT_FTP_PORT, user, ftppassword.c_str(), INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
-
-        if(hFtpSession != NULL)
-        {
-
-            if (!FtpCreateDirectory(hFtpSession, QGlobal::USERPID.c_str()))
-               {
-                WriteLog("FTP: creating directory error. Code:" );
-               }
-
-            if (!FtpSetCurrentDirectory(hFtpSession, QGlobal::USERPID.c_str()))
-                {
-                 WriteLog("FTP: irectory changing error. Code:" );
-                }
-
-            if(FtpPutFile(hFtpSession, localFile, remoteFile , FTP_TRANSFER_TYPE_BINARY,0)){
-
-                InternetCloseHandle(hFtpSession);
-
-                InternetCloseHandle(hInternet);
-
-                }
-            else {                             
-                WriteLog("FTP: Error during log upload");
-              //  return -1;
-            }  
-           
-
-        }
-       
-      //  else return -1;
-    }
-
-   // else  return -1;
-
-    WriteLog("FTP: Wyslano Plik.");
-
-  //  return 0;
-};
-
-
-// *****************************************************************************
 // POCZATEK WSZYSTKIEGO
 // *****************************************************************************
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -980,6 +902,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
  MV = new TModelViewer;
  AnsiString FULLEXE = Application->ExeName;
 
+ srand( time( NULL ) );
+ 
  Global::GetKbdLayout();                                                        // POBIERANIE UKLADU KLAWIATURY
 
  appath = GETCWD();                                                             // POBIERA SCIEZKE APLIKACJI DO ZMIENNEJ GLOBALNEJ Global::asCWD
@@ -1138,6 +1062,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 	        if (test == "exitlogons") QGlobal::logwinname = par1;
                 if (test == "sendlogftp") QGlobal::bSENDLOGFTP = atoi(par1.c_str());
                 if (test == "scrshotext") QGlobal::asSSHOTEXT = par1;
+                if (test == "scrshotqlt") QGlobal::asSSHOTQLT = par1;
                 if (test == "scrshotdir") QGlobal::asSSHOTDIR = par1;
                 if (test == "scrshotsub") QGlobal::asSSHOTSUB = par1;
                 if (test == "ldrbackext") QGlobal::asLBACKEXT = par1;
@@ -1158,8 +1083,17 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
                 if (test == "env_moon") QGlobal::bRENDERMOON = atoi(par1.c_str());
                 if (test == "trwiresize") QGlobal::ftrwiresize = StrToFloat(Trim(par1));
                 if (test == "noisealpha") QGlobal::fnoisealpha = StrToFloat(Trim(par1));
+                if (test == "fovonstart") QGlobal::ffov = StrToFloat(Trim(par1));
+
+                if (test == "font10file") QGlobal::font10file = Trim(par1);
+                if (test == "font11file") QGlobal::font11file = Trim(par1);
+                if (test == "font12file") QGlobal::font12file = Trim(par1);
+                if (test == "font14file") QGlobal::font14file = Trim(par1);
+                if (test == "font16file") QGlobal::font16file = Trim(par1);
+                if (test == "font18file") QGlobal::font18file = Trim(par1);
               //if (test == "deftextext") Global::szDefaultExt = par1;
 
+               TSCREEN::CFOV = QGlobal::ffov;
                //if (sh > 0) QGlobal::iWW = sh;
                //if (sv > 0) QGlobal::iWH = sv;
                Global::iWindowWidth = QGlobal::iWW;
@@ -1394,7 +1328,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 
        if (QGlobal::bAPPDONE ) done = true;
 
-       if (QGlobal::bSENDLOGFTP > 0) SENDLOGTOFTP();
+       //if (QGlobal::bSENDLOGFTP > 0) SENDLOGTOFTP();   // PRZENOSZE DO WORLD.CPP
 
        while (!done) // loop that runs while done=FALSE
         {

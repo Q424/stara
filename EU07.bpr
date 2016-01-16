@@ -15,15 +15,15 @@
       Float3d.obj Classes.obj Driver.obj Names.obj Console.obj Mover.obj 
       Console\PoKeys55.obj Forth.obj Console\LPT.obj qutils.obj modelpreview.obj 
       freetype.obj screen.obj menu\bitmap_Font.obj orthorender.obj effects2d.obj 
-      frm_debugger.obj"/>
+      submodelsops.obj frm_debugger.obj"/>
     <RESFILES value="EU07.res"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) frm_debugger.dfm"/>
     <LIBFILES value="opengl\glut32.lib DirectX\Dsound.lib freetype.lib"/>
-    <LIBRARIES value="IcsBcb50.lib dclocx50.bpi bcbsmp50.bpi VCLX50.lib bcbsmp50.lib Vcl50.lib"/>
-    <SPARELIBS value="Vcl50.lib bcbsmp50.lib VCLX50.lib bcbsmp50.bpi dclocx50.bpi IcsBcb50.lib"/>
+    <LIBRARIES value="dclocx50.bpi bcbsmp50.bpi VCLX50.lib bcbsmp50.lib Vcl50.lib"/>
+    <SPARELIBS value="Vcl50.lib bcbsmp50.lib VCLX50.lib bcbsmp50.bpi dclocx50.bpi"/>
     <PACKAGES value="Vcl50.bpi Vclx50.bpi"/>
     <PATHCPP value=".;opengl;Console;menu"/>
     <PATHPAS value=".;McZapkie"/>

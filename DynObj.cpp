@@ -288,7 +288,7 @@ TDynamicObject* TDynamicObject::GetConsist_f(int cpl_type, TDynamicObject *lok)
 
  QGlobal::consistlen = CONSISTLEN;
  QGlobal::CONSISTF->Add("");
- QGlobal::CONSISTF->Add("-----------------------------------------------------------------------------");
+ QGlobal::CONSISTF->Add("-----------------------------------");
  QGlobal::CONSISTF->Add("WAGONOW: " + AnsiString(vechcount));
  QGlobal::CONSISTF->Add("DLUGOSC: " + AnsiString(FormatFloat("0.00", (CONSISTLEN))) + "m");
  QGlobal::CONSISTF->Add("MASA BR: " + AnsiString(FormatFloat("0.00", (CONSISTMASS/1000))) + "t" );
@@ -1793,7 +1793,7 @@ double TDynamicObject::Init(
     MoverParameters = new TMoverParameters(iDirection ? fVel : -fVel, Type_Name, asName, Load, LoadType, Cab);
     iLights = MoverParameters->iLights; // wskaŸnik na stan w³asnych œwiate³ (zmienimy dla rozrz¹dczych EZT)
     // McZapkie: TypeName musi byc nazw¹ CHK/MMD pojazdu
-    if (!MoverParameters->LoadChkFile(asBaseDir))
+    if (!MoverParameters->LoadChkFile(asBaseDir, 0))
     { // jak wczytanie CHK siê nie uda, to b³¹d
         if (ConversionError == -8)
             ErrorLog("Missed file: " + BaseDir + "\\" + Type_Name + ".fiz");
@@ -4052,8 +4052,15 @@ void TDynamicObject::RenderAlpha()
 // *****************************************************************************
 void TDynamicObject::LoadUniqueSpecs(AnsiString asName)
 {
- WriteLog("Loading - " + asName + ".add");
+ AnsiString asFIZFILE, asMMDFILE;
 
+ asFIZFILE = QGlobal::asAPPDIR + "dynstates\\" + asName + ".fiz";
+
+ if (FileExists(asFIZFILE))
+   {
+    WriteLog("Loading - uniques: " + asName + ".add");
+    MoverParameters->LoadChkFile(asFIZFILE, 1);
+   }
 }
 
 

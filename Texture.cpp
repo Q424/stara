@@ -449,6 +449,9 @@ TTexturesManager::AlphaValue   TTexturesManager::LOADJPG(char* szPathName)				//
 		strcat(szPath, "\\");						// Append "\" After The Working Directory
 		strcat(szPath, szPathName);					// Append The PathName
 	}
+        AnsiString x =StringReplace( szPath, "\\", "/", TReplaceFlags() << rfReplaceAll );
+      //WriteLog(x);
+        DeleteUrlCacheEntry(x.c_str());
 
 	MultiByteToWideChar(CP_ACP, 0, szPath, -1, wszPath, MAX_PATH);		// Convert From ASCII To Unicode
 	HRESULT hr = OleLoadPicturePath(wszPath, 0, 0, 0, IID_IPicture, (void**)&pPicture);

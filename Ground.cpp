@@ -53,6 +53,7 @@ AnsiString LogComment;
 float gtc1 = 0;
 float gtc2 = 0;
 float rtim = 0;
+bool rls = true;
 //---------------------------------------------------------------------------
 // Obiekt renderuj¹cy siatkê jest sztucznie tworzonym obiektem pomocniczym,
 // grupuj¹cym siatki obiektów dla danej tekstury. Obiektami sk³adowymi mog¹
@@ -701,6 +702,69 @@ void TGroundNode::RenderAlphaDL()
 #endif
 }
 
+
+void TGroundNode::RenderAlpha2DL()
+{
+    double mgn = SquareMagnitude(pCenter - Global::pCameraPosition);
+    float r, g, b;
+    if (mgn < fSquareMinRadius)
+        return;
+    if (mgn > fSquareRadius)
+        return;
+    int i, a;
+    switch (iType)
+    {
+
+    case TP_MODEL:
+        Model->RenderAlpha2DL(&pCenter);
+        return;
+    };
+
+    // TODO: sprawdzic czy jest potrzebny warunek fLineThickness < 0
+    if ((iNumVerts && (iFlags & 0x20)) || (iNumPts && (fLineThickness > 0)))
+    {
+#ifdef _PROBLEND
+        if ((PROBLEND)) // sprawdza, czy w nazwie nie ma @    //Q: 13122011 - Szociu: 27012012
+        {
+            glDisable(GL_BLEND);
+            glAlphaFunc(GL_GREATER, 0.45); // im mniejsza wartoœæ, tym wiêksza ramka, domyœlnie 0.1f
+        };
+#endif
+        if (!DisplayListID) //||Global::bReCompile) //Ra: wymuszenie rekompilacji
+        {
+            Compile();
+            if (Global::bManageNodes)
+                ResourceManager::Register(this);
+        };
+
+        // GL_LINE, GL_LINE_STRIP, GL_LINE_LOOP
+        if (iNumPts)
+        {
+            float linealpha = 255000 * fLineThickness / (mgn + 1.0);
+            if (linealpha > 255)
+                linealpha = 255;
+            r = Diffuse[0] * Global::ambientDayLight[0]; // w zaleznosci od koloru swiatla
+            g = Diffuse[1] * Global::ambientDayLight[1];
+            b = Diffuse[2] * Global::ambientDayLight[2];
+            glColor4ub(r, g, b, linealpha); // przezroczystosc dalekiej linii
+            glCallList(DisplayListID);
+        }
+        // GL_TRIANGLE etc
+        else
+            glCallList(DisplayListID);
+        SetLastUsage(Timer::GetSimulationTime());
+    };
+#ifdef _PROBLEND
+    if ((PROBLEND)) // sprawdza, czy w nazwie nie ma @    //Q: 13122011 - Szociu: 27012012
+    {
+        glEnable(GL_BLEND);
+        glAlphaFunc(GL_GREATER, 0.04);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    };
+#endif
+}
+
+
 //------------------------------------------------------------------------------
 //------------------ Podstawowy pojemnik terenu - sektor -----------------------
 //------------------------------------------------------------------------------
@@ -1188,6 +1252,18 @@ void TSubRect::RenderAlphaDL()
         tTracks[j]->RenderDynAlpha(); // przezroczyste fragmenty pojazdów na torach
 };
 
+void TSubRect::RenderAlpha2DL()
+{ // renderowanie przezroczystych modeli oraz pojazdów (DL)
+
+    TGroundNode *node;
+    for (node = nRenderMixed; node; node = node->nNext3)
+        node->RenderAlpha2DL(); // przezroczyste z mieszanych modeli
+    for (node = nRenderAlpha; node; node = node->nNext3)
+        node->RenderAlpha2DL(); // przezroczyste modele
+};
+
+
+
 void TSubRect::RenderVBO()
 { // renderowanie nieprzezroczystych (VBO)
     TGroundNode *node;
@@ -1655,7 +1731,7 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
     QGlobal::rtim = 0;
     AnsiString element;
     element = str + " >> " + asNodeName;
-    Global::pWorld->RenderLoader(QGlobal::glHDC, 77, element);    // Q: Wywolywanie stad powoduje krzaczenie sie znakow w opisie scenerii, czemu?
+    if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, element);    // Q: Wywolywanie stad powoduje krzaczenie sie znakow w opisie scenerii, czemu?
 
     }
 
@@ -1875,7 +1951,7 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
     case TP_DYNAMIC:
         tmp->DynamicObject = new TDynamicObject();
 
-        Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "dynamic: " + QGlobal::asNODENAME);
+        if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "dynamic: " + QGlobal::asNODENAME);
         // tmp->DynamicObject->Load(Parser);
         parser->getTokens();
         *parser >> token;
@@ -2356,7 +2432,7 @@ void TGround::FirstInit()
     if (bInitDone)
         return; // Ra: ¿eby nie robi³o siê dwa razy
     bInitDone = true;
-    Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "FIRSTINIT");
+    if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "FIRSTINIT");
     WriteLog("");
     WriteLog("InitNormals");
     Sleep(500);
@@ -2411,25 +2487,25 @@ void TGround::FirstInit()
             Rects[i][j].Optimize(); // optymalizacja obiektów w sektorach
     WriteLog("InitNormals OK");
 
-    Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Tracks...");
+    if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Tracks...");
     WriteLog("");
     WriteLog("InitTracks");
     InitTracks(); //³¹czenie odcinków ze sob¹ i przyklejanie eventów
     WriteLog("InitTracks OK");
 
-    Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Traction...");
+    if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Traction...");
     WriteLog("");
     WriteLog("InitTraction");
     InitTraction(); //³¹czenie drutów ze sob¹
     WriteLog("InitTraction OK");
 
-    Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Events...");
+    if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Events...");
     WriteLog("");
     WriteLog("InitEvents");
     InitEvents();
     WriteLog("InitEvents OK");
 
-    Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Launchers...");
+    if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Initializing Launchers...");
     WriteLog("");
     WriteLog("InitLaunchers");
     InitLaunchers();
@@ -2438,13 +2514,10 @@ void TGround::FirstInit()
     WriteLog("");
     WriteLog("InitGlobalTime");
     // ABu 160205: juz nie TODO :)
-    GlobalTime = new TMTableTime(
-        hh, mm, srh, srm, ssh,
-        ssm); // McZapkie-300302: inicjacja czasu rozkladowego - TODO: czytac z trasy!
+    GlobalTime = new TMTableTime(hh, mm, srh, srm, ssh,ssm); // McZapkie-300302: inicjacja czasu rozkladowego - TODO: czytac z trasy!
     WriteLog("InitGlobalTime OK");
     // jeszcze ustawienie pogody, gdyby nie by³o w scenerii wpisów
-    glClearColor(Global::AtmoColor[0], Global::AtmoColor[1], Global::AtmoColor[2],
-                 0.0); // Background Color
+    glClearColor(Global::AtmoColor[0], Global::AtmoColor[1], Global::AtmoColor[2], 0.0); // Background Color
     if (Global::fFogEnd > 0)
     {
         glFogi(GL_FOG_MODE, GL_LINEAR);
@@ -2929,7 +3002,7 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
         }
         else if (str == AnsiString("sky"))
         { // youBy - niebo z pliku
-            Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "SKY...");
+            if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "SKY...");
             WriteLog("Scenery sky definition");
             parser.getTokens();
             parser >> token;
@@ -4780,6 +4853,29 @@ bool TGround::RenderAlphaDL(vector3 pPosition)
         tmp = pRendered[i];
         for (node = tmp->nRenderWires; node; node = node->nNext3)
             node->RenderAlphaDL(); // druty
+    }
+    return true;
+}
+
+
+bool TGround::RenderAlpha2DL(vector3 pPosition)
+{ // renderowanie scenerii z Display List - faza przezroczystych
+    glEnable(GL_BLEND);
+    glAlphaFunc(GL_GREATER, 0.04); // im mniejsza wartoœæ, tym wiêksza ramka, domyœlnie 0.1f
+    TGroundNode *node;
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    TSubRect *tmp;
+    // Ra: renderowanie progresywne - zale¿ne od FPS oraz kierunku patrzenia
+    int i;
+    for (i = iRendered - 1; i >= 0; --i) // od najdalszych
+    { // przezroczyste trójk¹ty w oddzielnym cyklu przed modelami
+        tmp = pRendered[i];
+        for (node = tmp->nRenderRectAlpha; node; node = node->nNext3)
+            node->RenderAlpha2DL(); // przezroczyste modele
+    }
+    for (i = iRendered - 1; i >= 0; --i) // od najdalszych
+    { // renderowanie przezroczystych modeli oraz pojazdów
+        pRendered[i]->RenderAlpha2DL();
     }
     return true;
 }

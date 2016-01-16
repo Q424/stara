@@ -71,6 +71,12 @@ struct pentrypointscontainer
  AnsiString dyndestination;
 };
 
+struct semlightcontainer
+{
+  bool state;
+  bool blink;
+};
+
 struct a
 {
     static int sort_by;// determines which member to sort by
@@ -446,6 +452,7 @@ class QGlobal
  static AnsiString asSSHOTDIR;
  static AnsiString asSSHOTSUB;
  static AnsiString asSSHOTEXT;
+ static AnsiString asSSHOTQLT;
  static AnsiString asLBACKEXT;
  static AnsiString asAPPVERS;
  static AnsiString asAPPDATE;
@@ -471,7 +478,14 @@ class QGlobal
  static AnsiString asDynamicTexturePath;
  static AnsiString asKBDLAYOUT;
  static AnsiString asKBDLAYOUTSTR;
-
+ static AnsiString astempx;
+ static AnsiString font10file;
+ static AnsiString font11file;
+ static AnsiString font12file;
+ static AnsiString font14file;
+ static AnsiString font16file;
+ static AnsiString font18file;
+ 
  static GLblendstate GLBLENDSTATE;
  static GLlightstate GLLIGHTSTATE;
 
@@ -565,11 +579,19 @@ class QGlobal
  static GLuint consolebackg;
  static GLuint SCRFILTER;
  static GLfloat selcolor[4];
+ static GLuint semlight;
+ static GLuint semlense;
 
  static a array[MAXPASSENGERENTYPOINTS];
  static stationscontainer station[MAXSTATIONS];     // POWODUJE KRZACZENIE PODCZAS WYCHODZENIA???
  static pentrypointscontainer PEP[MAXPASSENGERENTYPOINTS];
+ static semlightcontainer slc[128];
  static int currententrypoint;
+
+ static float rekrot3_rot;
+ static float rekrot3_time;
+ static int rekrot_step;
+ static bool rekrot_timepause;
 };
 
 class Global

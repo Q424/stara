@@ -21,6 +21,66 @@
 #include "globals.h"
 #include "logs.h"
 #include "model3d.h"
+//float emm2[] = {0, 0, 0, 1};
+
+void drawcube(float size, float r, float g, float b)
+{
+//glBindTexture(GL_TEXTURE_2D, QGlobal::semlight);
+   glDisable(GL_LIGHTING);
+   //glBindTexture(GL_TEXTURE_2D, 0);
+   //glDisable(GL_TEXTURE_2D);
+   //   glColorMaterial(GL_FRONT, GL_EMISSION);
+ // White side - BACK
+glBegin(GL_POLYGON);
+glColor4f(   r,  g, b, 1.0 );
+glVertex3f(  size, -size, size );
+glVertex3f(  size,  size, size );
+glVertex3f( -size,  size, size );
+glVertex3f( -size, -size, size );
+glEnd();
+ 
+// Purple side - RIGHT
+glBegin(GL_POLYGON);
+glColor4f(  r,  g,  b, 1.0 );
+glVertex3f( size, -size, -size );
+glVertex3f( size,  size, -size );
+glVertex3f( size,  size,  size );
+glVertex3f( size, -size,  size );
+glEnd();
+ 
+// Green side - LEFT
+glBegin(GL_POLYGON);
+glColor4f(   r,  g,  b, 1.0 );
+glVertex3f( -size, -size,  size );
+glVertex3f( -size,  size,  size );
+glVertex3f( -size,  size, -size );
+glVertex3f( -size, -size, -size );
+glEnd();
+ 
+// Blue side - TOP
+glBegin(GL_POLYGON);
+glColor4f(   255.0,  g,  b, 1.0 );
+glVertex3f(  size,  size,  size );
+glVertex3f(  size,  size, -size );
+glVertex3f( -size,  size, -size );
+glVertex3f( -size,  size,  size );
+glEnd();
+ 
+// Red side - BOTTOM
+glBegin(GL_POLYGON);
+glColor4f(   r,  g,  b, 1.0 );
+glVertex3f(  size, -size, -size );
+glVertex3f(  size, -size,  size );
+glVertex3f( -size, -size,  size );
+glVertex3f( -size, -size, -size );
+glEnd();
+   glEnable(GL_TEXTURE_2D);
+   glEnable(GL_LIGHTING);
+//   glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+ //  glMaterialfv(GL_FRONT, GL_EMISSION, emm2);
+}
+
+
 
 /*********************************************************************************************************************
 WIN32 command line parser function
@@ -29,7 +89,6 @@ WIN32 command line parser function
 /*******************************************************************************
 WIN32 command line parser function
 *******************************************************************************/
-
 
 int ParseCommandline2()
 {
