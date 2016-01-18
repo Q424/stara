@@ -3215,6 +3215,9 @@ bool __fastcall TWorld::RenderEXITQUERY(double alpha)
 }
 
 
+// *****************************************************************************
+// NOWE PANELE INFORMACYJNE
+// *****************************************************************************
 bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
 {
   QGlobal::bTUTORIAL = false;
@@ -3228,7 +3231,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   glDisable( GL_FOG );
   glEnable( GL_TEXTURE_2D );
 
-
+ /*
   if (!QGlobal::bSCNLOADED)
   {
   glColor4f(0.1,0.1,0.1, alpha);
@@ -3241,30 +3244,224 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+0, margin, 0);   // GORNY PRAWY
   glEnd( );
    }
-
-  if (!QGlobal::bmodelpreview)
-  {
+ */
+  if (num > 0 && !QGlobal::bEXITQUERY && QGlobal::bSIMSTARTED && !QGlobal::bmodelpreview)  // PANEL 0 - INFORMACJE W DEBUGMODE ^^
+   {
   // TLO BOCZNE
-  glColor4f(0.0,0.0,0.0, 0.4);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glBindTexture(GL_TEXTURE_2D, QGlobal::splashscreen);
-  glBegin( GL_QUADS );
-  glTexCoord2f(0, 1); glVertex3i(margin-0,   40+margin, 0);   // GORNY LEWY
-  glTexCoord2f(0, 0); glVertex3i(margin-0,   iWH-margin, 0); // DOLY LEWY
-  glTexCoord2f(1, 0); glVertex3i(300-margin+0, iWH-margin, 0); // DOLNY PRAWY
-  glTexCoord2f(1, 1); glVertex3i(300-margin+0, 40+margin, 0);   // GORNY PRAWY
-  glEnd( );
+   glColor4f(0.0,0.0,0.0, alpha);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   glBindTexture(GL_TEXTURE_2D, QGlobal::splashscreen);
+   glBegin( GL_QUADS );
+   glTexCoord2f(0, 1); glVertex3i(margin-0,   40+margin, 0);   // GORNY LEWY
+   glTexCoord2f(0, 0); glVertex3i(margin-0,   iWH-margin, 0); // DOLY LEWY
+   glTexCoord2f(1, 0); glVertex3i(300-margin+0, iWH-margin, 0); // DOLNY PRAWY
+   glTexCoord2f(1, 1); glVertex3i(300-margin+0, 40+margin, 0);   // GORNY PRAWY
+   glEnd( );
 
   // ETYKIETA PANELU
-  glColor4f(0.0,0.0,0.0, 0.4);
-  glBegin( GL_QUADS );
-  glTexCoord2f(0, 1); glVertex3i(margin-0,   margin, 0);   // GORNY LEWY
-  glTexCoord2f(0, 0); glVertex3i(margin-0,   40, 0); // DOLY LEWY
-  glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+0, 40-margin, 0); // DOLNY PRAWY
-  glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+0, margin, 0);   // GORNY PRAWY
-  glEnd( );
+   glColor4f(0.0,0.0,0.0, alpha+0.05);
+   glBegin( GL_QUADS );
+   glTexCoord2f(0, 1); glVertex3i(margin-0,   margin, 0);   // GORNY LEWY
+   glTexCoord2f(0, 0); glVertex3i(margin-0,   40, 0); // DOLY LEWY
+   glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+0, 40-margin, 0); // DOLNY PRAWY
+   glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+0, margin, 0);   // GORNY PRAWY
+   glEnd( );
+  }
 
-  
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  if (num == 0 && Controlled && DebugModeFlag && !QGlobal::bEXITQUERY && QGlobal::bSIMSTARTED && !QGlobal::bmodelpreview)  // PANEL 0 - INFORMACJE W DEBUGMODE ^^
+   {
+    int posy = 60;
+    // Train->DynamicSet(temp);
+    // Controlled = temp;
+     mvControlled = Controlled->ControlledFind()->MoverParameters;
+
+     glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+     freetype::print(font16, 10, Global::iWindowHeight-20, AnsiString("INFORMACJE DEBUGMODE ").c_str());
+     OutText01 = "FPS: ";
+     OutText01 += FloatToStrF(Timer::GetFPS(), ffFixed, 6, 2);
+     OutText01 += Global::iSlowMotion ? "s" : "n";
+     OutText01 += (Timer::GetDeltaTime() >= 0.2) ? "!" : " ";
+
+     OutText01 += AnsiString(";  vel ") + FloatToStrF(Controlled->GetVelocity(), ffFixed, 6, 2);
+     OutText01 += AnsiString(";  pos ") + FloatToStrF(Controlled->GetPosition().x, ffFixed, 6, 2);
+     OutText01 += AnsiString(" ; ") + FloatToStrF(Controlled->GetPosition().y, ffFixed, 6, 2);
+     OutText01 += AnsiString(" ; ") + FloatToStrF(Controlled->GetPosition().z, ffFixed, 6, 2);
+     OutText01 += AnsiString("; dist=") + FloatToStrF(Controlled->MoverParameters->DistCounter, ffFixed, 8, 4);
+
+        // double a= acos( DotProduct(Normalize(Controlled->GetDirection()),vWorldFront));
+        //      OutText0+= AnsiString(";   angle ")+FloatToStrF(a/M_PI*180,ffFixed,6,2);
+     OutText01 += AnsiString("; d_omega ") + FloatToStrF(Controlled->MoverParameters->dizel_engagedeltaomega, ffFixed, 6, 3);
+     freetype::print(font10, 20, iWH-(posy+=20), AnsiString(OutText01).c_str());
+
+     OutText02 = AnsiString("HamZ=") + FloatToStrF(Controlled->MoverParameters->fBrakeCtrlPos, ffFixed, 6, 1);
+     OutText02 += AnsiString("; HamP=") + AnsiString(Controlled->MoverParameters->LocalBrakePos);
+        // mvControlled->MainCtrlPos;
+        // if (mvControlled->MainCtrlPos<0)
+        //    OutText02+= AnsiString("; nastawnik 0");
+        //      if (mvControlled->MainCtrlPos>iPozSzereg)
+     OutText02 += AnsiString("; NasJ=") + AnsiString(mvControlled->MainCtrlPos);
+//   else
+//   OutText02+= AnsiString("; nastawnik S") + mvControlled->MainCtrlPos;
+     OutText02 += AnsiString("(") + AnsiString(mvControlled->MainCtrlActualPos);
+     OutText02 += AnsiString("); NasB=") + AnsiString(mvControlled->ScndCtrlPos);
+     OutText02 += AnsiString("(") + AnsiString(mvControlled->ScndCtrlActualPos);
+     if (mvControlled->TrainType == dt_EZT)
+     OutText02 += AnsiString("); I=") + AnsiString(int(mvControlled->ShowCurrent(0))); else
+     OutText02 += AnsiString("); I=") + AnsiString(int(mvControlled->Im));
+
+        // OutText02+=AnsiString(";
+        // I2=")+FloatToStrF(Controlled->NextConnected->MoverParameters->Im,ffFixed,6,2);
+     OutText02 += AnsiString("; U=") + AnsiString(int(mvControlled->RunningTraction.TractionVoltage + 0.5));
+ //  OutText02+=AnsiString("; rvent=")+FloatToStrF(mvControlled->RventRot,ffFixed,6,2);
+     OutText02 += AnsiString("; R=") + FloatToStrF(Controlled->MoverParameters->RunningShape.R, ffFixed, 4, 1);
+     OutText02 += AnsiString(" An=") + FloatToStrF(Controlled->MoverParameters->AccN, ffFixed, 4, 2); // przyspieszenie poprzeczne
+     OutText02 += AnsiString("; As=") + FloatToStrF(Controlled->MoverParameters->AccS, ffFixed, 4, 2); // przyspieszenie wzd³u¿ne
+ //  OutText02+=AnsiString("; P=")+FloatToStrF(mvControlled->EnginePower,ffFixed,6,1);
+ freetype::print(font10, 20, iWH-(posy+=20), AnsiString(OutText02).c_str());
+     OutText03 ="";
+     OutText03 += AnsiString("cyl.ham. ") + FloatToStrF(Controlled->MoverParameters->BrakePress, ffFixed, 5, 2);
+     OutText03 += AnsiString("; prz.gl. ") + FloatToStrF(Controlled->MoverParameters->PipePress, ffFixed, 5, 2);
+     OutText03 += AnsiString("; zb.gl. ") + FloatToStrF(Controlled->MoverParameters->CompressedVolume, ffFixed, 6, 2);
+ // youBy - drugi wezyk
+     OutText03 += AnsiString("; p.zas. ") + FloatToStrF(Controlled->MoverParameters->ScndPipePress, ffFixed, 6, 2);
+     freetype::print(font10, 20, iWH-(posy+=20), AnsiString(OutText03).c_str());
+
+     if (Controlled->MoverParameters->EngineType == ElectricInductionMotor)
+        {
+            // glTranslatef(0.0f,0.0f,-0.50f);
+            glColor3f(1.0f, 1.0f, 1.0f); // a, damy bia³ym
+            for (int i = 0; i <= 20; i++)
+            {
+                glRasterPos2f(-0.25f, 0.16f - 0.01f * i);
+                if (Controlled->MoverParameters->eimc[i] < 10)
+                    OutText04 = FloatToStrF(Controlled->MoverParameters->eimc[i], ffFixed, 6, 3);
+                else
+                    OutText04 = FloatToStrF(Controlled->MoverParameters->eimc[i], ffGeneral, 5, 3);
+                //glPrint(OutText04.c_str());
+                     freetype::print(font10, 20, iWH-(posy+=20), AnsiString(OutText04).c_str());
+
+            }
+            for (int i = 0; i <= 20; i++)
+            {
+                //glRasterPos2f(-0.2f, 0.16f - 0.01f * i);
+                if (Controlled->MoverParameters->eimv[i] < 10)
+                    OutText04 = FloatToStrF(Controlled->MoverParameters->eimv[i], ffFixed, 6, 3);
+                else
+                    OutText04 = FloatToStrF(Controlled->MoverParameters->eimv[i], ffGeneral, 5, 3);
+              //  glPrint(OutText04.c_str());
+              freetype::print(font10, 20, iWH-(posy+=20), AnsiString(OutText04).c_str());
+            }
+            OutText04 = "";
+            // glTranslatef(0.0f,0.0f,+0.50f);
+          //  glColor3f(1.0f, 0.0f, 0.0f); // a, damy czerwonym
+        }
+
+        // ABu: testy sprzegow-> (potem przeniesc te zmienne z public do protected!)
+        // OutText03+=AnsiString("; EnginePwr=")+FloatToStrF(mvControlled->EnginePower,ffFixed,1,5);
+        // OutText03+=AnsiString("; nn=")+FloatToStrF(Controlled->NextConnectedNo,ffFixed,1,0);
+        // OutText03+=AnsiString("; PR=")+FloatToStrF(Controlled->dPantAngleR,ffFixed,3,0);
+        // OutText03+=AnsiString("; PF=")+FloatToStrF(Controlled->dPantAngleF,ffFixed,3,0);
+        // if(Controlled->bDisplayCab==true)
+        // OutText03+=AnsiString("; Wysw. kab");//+Controlled->mdKabina->GetSMRoot()->Name;
+        // else
+        // OutText03+=AnsiString("; test:")+AnsiString(Controlled->MoverParameters->TrainType[1]);
+
+        // OutText03+=FloatToStrF(Train->Dynamic()->MoverParameters->EndSignalsFlag,ffFixed,3,0);;
+
+        // OutText03+=FloatToStrF(Train->Dynamic()->MoverParameters->EndSignalsFlag&byte(((((1+Train->Dynamic()->MoverParameters->CabNo)/2)*30)+2)),ffFixed,3,0);;
+
+        // OutText03+=AnsiString(";
+        // Ftmax=")+FloatToStrF(Controlled->MoverParameters->Ftmax,ffFixed,3,0);
+        // OutText03+=AnsiString(";
+        // FTotal=")+FloatToStrF(Controlled->MoverParameters->FTotal/1000.0f,ffFixed,3,2);
+        // OutText03+=AnsiString(";
+        // FTrain=")+FloatToStrF(Controlled->MoverParameters->FTrain/1000.0f,ffFixed,3,2);
+        // Controlled->mdModel->GetSMRoot()->SetTranslate(vector3(0,1,0));
+        OutText03 = " ";
+        // McZapkie: warto wiedziec w jakim stanie sa przelaczniki
+        if (mvControlled->ConvOvldFlag)
+            OutText03 += " C! ";
+        else if (mvControlled->FuseFlag)
+            OutText03 += " F! ";
+        else if (!mvControlled->Mains)
+            OutText03 += " () ";
+        else
+            switch (mvControlled->ActiveDir * (mvControlled->Imin == mvControlled->IminLo ? 1 : 2))
+            {
+            case 2:
+            {
+                OutText03 += " >> ";
+                break;
+            }
+            case 1:
+            {
+                OutText03 += " -> ";
+                break;
+            }
+            case 0:
+            {
+                OutText03 += " -- ";
+                break;
+            }
+            case -1:
+            {
+                OutText03 += " <- ";
+                break;
+            }
+            case -2:
+            {
+                OutText03 += " << ";
+                break;
+            }
+            }
+        // OutText03+=AnsiString("; dpLocal
+        // ")+FloatToStrF(Controlled->MoverParameters->dpLocalValve,ffFixed,10,8);
+        // OutText03+=AnsiString("; dpMain
+        // ")+FloatToStrF(Controlled->MoverParameters->dpMainValve,ffFixed,10,8);
+        // McZapkie: predkosc szlakowa
+        if (Controlled->MoverParameters->RunningTrack.Velmax == -1)
+        {
+            OutText03 += AnsiString(" Vtrack=Vmax");
+        }
+        else
+        {
+            OutText03 +=
+                AnsiString(" Vtrack ") +
+                FloatToStrF(Controlled->MoverParameters->RunningTrack.Velmax, ffFixed, 8, 2);
+        }
+        //      WriteLog(Controlled->MoverParameters->TrainType.c_str());
+        if ((mvControlled->EnginePowerSource.SourceType == CurrentCollector) ||
+            (mvControlled->TrainType == dt_EZT))
+        {
+            OutText03 +=
+                AnsiString("; pant. ") + FloatToStrF(mvControlled->PantPress, ffFixed, 8, 2);
+            OutText03 += (mvControlled->bPantKurek3 ? "=ZG" : "|ZG");
+        }
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString(OutText03).c_str());
+
+        // McZapkie: komenda i jej parametry
+        OutText04 = "";
+        if (Controlled->MoverParameters->CommandIn.Command != AnsiString(""))
+            OutText04 = AnsiString("C:") +
+                       AnsiString(Controlled->MoverParameters->CommandIn.Command) +
+                       AnsiString(" V1=") +
+                       FloatToStrF(Controlled->MoverParameters->CommandIn.Value1, ffFixed, 5, 0) +
+                       AnsiString(" V2=") +
+                       FloatToStrF(Controlled->MoverParameters->CommandIn.Value2, ffFixed, 5, 0);
+        freetype::print(font10, 20, iWH-(posy+=20), AnsiString(OutText04).c_str());
+        OutText04 = "";
+        if (Controlled->Mechanik && (Controlled->Mechanik->AIControllFlag == AIdriver))
+            OutText04 +=
+                AnsiString("AI: Vd=") +
+                FloatToStrF(Controlled->Mechanik->VelDesired, ffFixed, 4, 0) + AnsiString(" ad=") +
+                FloatToStrF(Controlled->Mechanik->AccDesired, ffFixed, 5, 2) + AnsiString(" Pd=") +
+                FloatToStrF(Controlled->Mechanik->ActualProximityDist, ffFixed, 4, 0) +
+                AnsiString(" Vn=") + FloatToStrF(Controlled->Mechanik->VelNext, ffFixed, 4, 0);
+        freetype::print(font10, 20, iWH-(posy+=20), AnsiString(OutText04).c_str());
+   }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
   if (num == 1)  // PANEL 1 - INFORMACJE O SKLADZIE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
     int posy = 60;
@@ -3276,8 +3473,9 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
      posy+= 20;
     }
    }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  if (num == 2)  // PANEL 2 - INFORMACJE O STACJI ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  if (num == 2)  // PANEL 2 - INFORMACJE O STACJI ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
     int posy = 160;
     glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
@@ -3317,8 +3515,9 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
      freetype::print(font10, 12, Global::iWindowHeight-posy, "linie wychodzace i pierwsza stacja na nich");
      }
    }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  if (num == 3)  // PANEL 1 - INFORMACJE O LOKOMOTYWIE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  if (num == 3)  // PANEL 1 - INFORMACJE O LOKOMOTYWIE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
     int posy = 60;
      TDynamicObject *tmp = FreeFlyModeFlag ? Ground.DynamicNearest(Camera.Pos) : Controlled;
@@ -3396,10 +3595,10 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
 
         }
     }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  if (num == 4)  // PANEL 4 - INFORMACJE O NASTEPNEJ STACJI ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  if (num == 4)  // PANEL 4 - INFORMACJE O NASTEPNEJ STACJI ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
-    WriteLog("p4");
     int posy = 10;
     char time[25];
     char p[25];
@@ -3437,6 +3636,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
         }
       }
    }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
   if (num == 5)  // PANEL 5 - INFORMACJE O NAJBLIZSZYM POJEZDZIE
    {
@@ -3463,7 +3663,6 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
                 if (tmp->Mechanik) // jeœli jest prowadz¹cy
                 { // ostatnia komenda dla AI
                     OutText01 = ", command: " + tmp->Mechanik->OrderCurrent();
-                    freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText01).c_str());
                 }
                 else if (tmp->ctOwner)
                     OutText01 = ", owned by " + AnsiString(tmp->ctOwner->OwnerName());
@@ -3474,7 +3673,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
                     freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText01).c_str());
 
                 // OutText01+="; Cab="+AnsiString(tmp->MoverParameters->CabNo);
-                OutText02 = "Damage status: " + tmp->MoverParameters->EngineDescription(0); //+" Engine status: ";
+                OutText02 = ", Damage status: " + tmp->MoverParameters->EngineDescription(0); //+" Engine status: ";
                 freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText02).c_str());
 
                 OutText02 = ", Brake delay: ";
@@ -3538,7 +3737,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
                 // OutText02+= " GetLast:
                 // "+AnsiString(tmp->GetLastDynamic(1)->MoverParameters->Name)+" Damage
                 // status="+tmp->MoverParameters->EngineDescription(0)+" Engine status: ";
-                OutText03 = AnsiString("BP: ") +
+                OutText03 = AnsiString(", BP: ") +
                            FloatToStrF(tmp->MoverParameters->BrakePress, ffFixed, 5, 2) +
                            AnsiString(", ");
                 OutText03 += FloatToStrF(tmp->MoverParameters->BrakeStatus, ffFixed, 5, 0) +
@@ -3573,13 +3772,13 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
 
                 if (tmp->MoverParameters->ManualBrakePos > 0)
                    {
-                    OutText03 = AnsiString("manual brake active. ");
+                    OutText03 = AnsiString(", manual brake active. ");
                     freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText03).c_str());
                    }
                 else if (tmp->MoverParameters->LocalBrakePos > 0)
-                    OutText03 = AnsiString("local brake active. ");
+                    OutText03 = AnsiString(", local brake active. ");
                 else
-                    OutText03 = AnsiString("local brake inactive. ");
+                    OutText03 = AnsiString(", local brake inactive. ");
                     freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText03).c_str());
                 /*
                        //OutText03+=AnsiString("LSwTim:
@@ -3612,7 +3811,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
                     // OutText04=tmp->Mechanik->StopReasonText();
                     // if (!OutText04.IsEmpty()) OutText04+="; "; //aby ³adniejszy odstêp by³
                     // if (Controlled->Mechanik && (Controlled->Mechanik->AIControllFlag==AIdriver))
-                    AnsiString flags = "bwaccmlshhhoibsgvdp; "; // flagi AI (definicja w Driver.h)
+                    AnsiString flags = ", bwaccmlshhhoibsgvdp; "; // flagi AI (definicja w Driver.h)
                     for (int i = 0, j = 1; i < 19; ++i, j <<= 1)
                         if (tmp->Mechanik->DrivigFlags() & j) // jak bit ustawiony
                             flags[i + 1] ^= 0x20; // to zmiana na wielk¹ literê
@@ -3637,17 +3836,15 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
                         freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText04).c_str());
                 }
                 if (!OutText04.IsEmpty())
-                    OutText04 += "; "; // aby ³adniejszy odstêp by³
+                    OutText04 = " "; // aby ³adniejszy odstêp by³
                     freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText04).c_str());
                 // informacja o sprzêgach nawet bez mechanika
                 OutText04 =
-                    "C0=" + (tmp->PrevConnected ?
-                                 tmp->PrevConnected->GetName() + ":" +
-                                     AnsiString(tmp->MoverParameters->Couplers[0].CouplingFlag) :
-                                 AnsiString("NULL"));
+                    ", C0=" + (tmp->PrevConnected ?
+                                 tmp->PrevConnected->GetName() + ":" + AnsiString(tmp->MoverParameters->Couplers[0].CouplingFlag) : AnsiString("NULL"));
                 freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText04).c_str());
                 OutText04 =
-                    " C1=" + (tmp->NextConnected ?
+                    ", C1=" + (tmp->NextConnected ?
                                   tmp->NextConnected->GetName() + ":" +
                                       AnsiString(tmp->MoverParameters->Couplers[1].CouplingFlag) :
                                   AnsiString("NULL"));
@@ -3663,14 +3860,205 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
             } // koniec treœci podstawowego ekranu FK_V2
 
         } // if tmp
+      else
+        { // wyœwietlenie wspó³rzêdnych w scenerii oraz k¹ta kamery, gdy nie mamy wskaŸnika
+            OutText01 = "Camera position: " + FloatToStrF(Camera.Pos.x, ffFixed, 6, 2) + " " +
+                                              FloatToStrF(Camera.Pos.y, ffFixed, 6, 2) + " " +
+                                              FloatToStrF(Camera.Pos.z, ffFixed, 6, 2);
+            OutText01 += ", azimuth: " + FloatToStrF(180.0 - RadToDeg(Camera.Yaw), ffFixed, 3, 0); // ma byæ azymut, czyli 0 na pó³nocy i roœnie na wschód
+            OutText01 += " " + AnsiString("S SEE NEN NWW SW").SubString(1 + 2 * floor(fmod(8 + (Camera.Yaw + 0.5 * M_PI_4) / M_PI_4, 8)), 2);
 
-
+            freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText01).c_str());
+        }
 
    }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+  if (num == 6)  // PANEL 5 - INFORMACJE O NAJBLIZSZYM POJEZDZIE
+   {
+    TDynamicObject *tmp = FreeFlyModeFlag ? Ground.DynamicNearest(Camera.Pos) : Controlled; // w trybie latania lokalizujemy wg mapy
+    int posy = 10;
+    char time[25];
+    AnsiString np;
 
+    glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
+    freetype::print(font16, 10, Global::iWindowHeight-20, "TABELA SKANOWANIA AI");
 
-  } // if !modelprev
+    posy = 60;
+    if (tmp)
+        {
+       // ekran drugi, czyli tabelka skanowania AI
+                if (tmp->Mechanik) //¿eby by³a tabelka, musi byæ AI
+                { // tabelka jest na u¿ytek testuj¹cych scenerie, wiêc nie musi byæ "³adna"
+                    glColor3f(1.0f, 1.0f, 1.0f); // a, damy zielony. GF: jednak bia³y
+                    glRasterPos2f(-0.25f, 0.20f);
+                    // OutText01="Scan distance: "+AnsiString(tmp->Mechanik->scanmax)+", back:
+                    // "+AnsiString(tmp->Mechanik->scanback);
+                    OutText01 = "Time: " + AnsiString((int)GlobalTime->hh) + ":";
+                    int i = GlobalTime->mm; // bo inaczej potrafi zrobiæ "hh:010"
+                    if (i < 10) OutText01 += "0";
+                    OutText01 += AnsiString(i); // minuty
+                    OutText01 += ":";
+                    i = floor(GlobalTime->mr); // bo inaczej potrafi zrobiæ "hh:mm:010"
+                    if (i < 10) OutText01 += "0";
+                    OutText01 += AnsiString(i);
+                    OutText01 += AnsiString(". Vel: ") + FloatToStrF(tmp->GetVelocity(), ffFixed, 6, 1);
+                    OutText01 += ". Scan table:";
+                    glPrint(Global::Bezogonkow(OutText01).c_str());
+                    freetype::print(font10, 10, iWH-(posy+=20), AnsiString(OutText01).c_str());
+                    freetype::print(font10, 10, iWH-(posy+=20), AnsiString("").c_str());
+                    i = -1;
+
+                    while ((OutText01 = tmp->Mechanik->TableText(++i)) != "")
+                    {
+                        freetype::print(font10, 10, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText01)).c_str()); // wyœwietlenie pozycji z tabelki
+                    }
+                    // podsumowanie sensu tabelki
+                    OutText04 =
+                        AnsiString("Driver: Vd=") +
+                        FloatToStrF(tmp->Mechanik->VelDesired, ffFixed, 4, 0) + AnsiString(" ad=") +
+                        FloatToStrF(tmp->Mechanik->AccDesired, ffFixed, 5, 2) + AnsiString(" Pd=") +
+                        FloatToStrF(tmp->Mechanik->ActualProximityDist, ffFixed, 4, 0) +
+                        AnsiString(" Vn="   ) + FloatToStrF(tmp->Mechanik->VelNext, ffFixed, 4, 0) +
+		       	AnsiString("\n VSm=") + FloatToStrF(tmp->Mechanik->VelSignalLast, ffFixed, 4, 0) +
+			AnsiString(" VLm="  ) + FloatToStrF(tmp->Mechanik->VelLimitLast, ffFixed, 4, 0) +
+			AnsiString(" VRd="  ) + FloatToStrF(tmp->Mechanik->VelRoad, ffFixed, 4, 0) +
+                        AnsiString(" VSig=" ) + FloatToStrF(tmp->Mechanik->VelSignal, ffFixed, 4, 0);
+
+                    if (tmp->Mechanik->VelNext == 0.0)
+                        if (tmp->Mechanik->eSignNext)
+                        { // jeœli ma zapamiêtany event semafora
+                            // if (!OutText04.IsEmpty()) OutText04+=", "; //aby ³adniejszy odstêp by³
+                            OutText04 += " (" + Global::Bezogonkow(tmp->Mechanik->eSignNext->asName) + ")"; // nazwa eventu semafora
+                        }
+
+                    freetype::print(font10, 10, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText04)).c_str());
+                }
+        }
+   }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  if (num == 7)  // PANEL 7 - ISRJ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   {
+
+    glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
+    freetype::print(font16, 10, Global::iWindowHeight-20, "SLUZBOWY ROSKLAD JAZDY (SRJ)");
+
+    int posy = 50;
+      TDynamicObject *tmp = FreeFlyModeFlag ? Ground.DynamicNearest(Camera.Pos) : Controlled; // w trybie latania lokalizujemy wg mapy
+      Mtable::TTrainParameters *tt = NULL;
+      
+            if (tmp)
+                if (tmp->Mechanik)
+                {
+                    tt = tmp->Mechanik->Timetable();
+                    if (tt) // musi byæ rozk³ad
+                    { // wyœwietlanie rozk³adu
+                        glColor3f(1.0f, 1.0f, 1.0f); // a, damy bia³ym
+                        // glTranslatef(0.0f,0.0f,-0.50f);
+                        glRasterPos2f(-0.25f, 0.20f);
+                        OutText01 = tmp->Mechanik->Relation() + " (" + tmp->Mechanik->Timetable()->TrainName + ")";
+                        //glPrint(Global::Bezogonkow(OutText01, true).c_str());
+                        freetype::print(font10, 10, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText01)).c_str());
+                        //glRasterPos2f(-0.25f, 0.19f);
+                        // glPrint("|============================|=======|=======|=====|");
+                        // glPrint("| Posterunek                 | Przyj.| Odjazd| Vmax|");
+                        // glPrint("|============================|=======|=======|=====|");
+                        // glPrint("|----------------------------|-------|-------|-----|");
+                        freetype::print(font10, 10, iWH-(posy+=20), AnsiString("|----------------------------|-------|-------|-----|").c_str());
+                        TMTableLine *t;
+                        for (int i = tmp->Mechanik->iStationStart; i <= tt->StationCount; ++i)
+                        { // wyœwietlenie pozycji z rozk³adu
+                            t = tt->TimeTable + i; // linijka rozk³adu
+                            AnsiString sp10 = "                       ";
+                            OutText01 = AnsiString(AnsiString(t->StationName) + sp10 + sp10 + sp10).SubString(1, 35);
+                            OutText02 = (t->Ah >= 0) ?
+                                           " " + AnsiString(int(100 + t->Ah)).SubString(2, 2) + ":" + AnsiString(int(100 + t->Am)).SubString(2, 2) + " " : AnsiString("        ");
+                            OutText03 = (t->Dh >= 0) ?
+                                           " " + AnsiString(int(100 + t->Dh)).SubString(2, 2) + ":" + AnsiString(int(100 + t->Dm)).SubString(2, 2) + " " :
+                                           AnsiString("..........");
+                            OutText04 = "     " + FloatToStrF(t->vmax, ffFixed, 3, 0) + "   ";
+                            OutText04 = OutText04.SubString(OutText04.Length() - 2, 3); // z wyrównaniem do prawej
+                            // if (AnsiString(t->StationWare).Pos("@"))
+
+                            OutText01 = "| " + OutText01 + " | " + OutText02 + " | " + OutText03 + " | " + OutText04 + " | " + AnsiString(t->StationWare);
+                            //glRasterPos2f(-0.25f, 0.18f - 0.02f * (i - tmp->Mechanik->iStationStart));
+
+                            if ((tmp->Mechanik->iStationStart < tt->StationIndex) ? (i < tt->StationIndex) : false)
+                            { // czas min¹³ i odjazd by³, to nazwa stacji bêdzie na zielono
+                                glColor3f(0.0f, 1.0f, 0.0f); // zielone
+                                //glRasterPos2f(-0.25f, 0.18f - 0.02f * (i - tmp->Mechanik->iStationStart)); // dopiero
+                                // ustawienie
+                                // pozycji
+                                // ustala
+                                // kolor,
+                                // dziwne...
+                                //glPrint(Global::Bezogonkow(OutText01, true).c_str());
+                                freetype::print(font10, 10, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText01)).c_str());
+                                glColor3f(1.0f, 1.0f, 1.0f); // a reszta bia³ym
+                            }
+                            else // normalne wyœwietlanie, bez zmiany kolorów
+                              freetype::print(font10, 10, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText01)).c_str());
+                              //  glPrint(Global::Bezogonkow(OutText01, true).c_str());
+                            glRasterPos2f(-0.25f, 0.17f - 0.02f * (i - tmp->Mechanik->iStationStart));
+                            //glPrint("|----------------------------|-------|-------|-----|");
+                            freetype::print(font10, 10, iWH-(posy+=20), AnsiString("|----------------------------|-------|-------|-----|").c_str());
+                        }
+                    }
+                }
+            OutText01 = OutText02 = OutText03 = OutText04 = "";
+    freetype::print(font10, 10, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText01)).c_str());
+
+   }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  if (num == 8)  // PANEL 8 - IKLAWISZOLOGIA POJAZDU ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   {
+    int posy = 60;
+    glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+    freetype::print(font16, 10, Global::iWindowHeight-20, "KLAWISZOLOGIA POJAZDU");
+
+    glColor4f(0.8f, 0.8f, 0.8f, 0.7f);
+    for (int j = 0; j < QGlobal::LOKKBD->Count-1; j++)
+         {
+          AnsiString LINE = QGlobal::LOKKBD->Strings[j];
+
+          freetype::print(font10, 10, iWH-posy, AnsiString(LINE).c_str());
+          posy+=15;
+
+         }
+   }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  if (num == 9)  // PANEL 5 - INFORMACJE O NAJBLIZSZYM POJEZDZIE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   {
+
+    glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
+    freetype::print(font16, 10, Global::iWindowHeight-20, "INFORMACJE O WERSJI I OpenGL");
+
+    int posy = 0;
+
+         // informacja o wersji, sposobie wyœwietlania i b³êdach OpenGL
+            OutText01 = Global::asVersion; // informacja o wersji
+            freetype::print(font10, 310, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText01)).c_str());
+            OutText02 = AnsiString("Rendering mode: ") + (Global::bUseVBO ? "VBO" : "Display Lists");
+            if (Global::iMultiplayer)
+                OutText02 += ". Multiplayer is active";
+            OutText02 += ".";
+            GLenum err = glGetError();
+            if (err != GL_NO_ERROR)
+            {
+                OutText03 = "OpenGL error " + AnsiString(err) + ": " +
+                           Global::Bezogonkow(AnsiString((char *)gluErrorString(err)));
+
+            }
+
+        freetype::print(font10, 310, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText02)).c_str());
+        freetype::print(font10, 310, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText03)).c_str());
+
+     }
+
+ // } // if !modelprev
   
   glEnable( GL_TEXTURE_2D );
   glEnable( GL_FOG );
@@ -4181,6 +4569,8 @@ bool __fastcall TWorld::LOADLOADERCONFIG()
        if (TEST == "BRIEF_X:") LDR_BRIEF_X = StrToFloat(PAR);
        if (TEST == "BRIEF_Y:") LDR_BRIEF_Y = StrToFloat(PAR);
        if (TEST == "REFRESH:") QGlobal::LDRREFRESH = StrToFloat(PAR);
+       if (TEST == "BORDERS:") QGlobal::LDRBORDER = StrToInt(PAR);
+
 
        //if (TEST == "SKYLO_MODEL:") SKYLO_MODEL = PAR;
        //if (TEST == "SKYHI_GLBLENDFUNC:") if (PAR == "GL_SRC_ALPHA,GL_ONE") SKYHI_BLENDFUNC = 1;
@@ -4418,7 +4808,7 @@ bool __fastcall TWorld::RenderLoaderU(HDC hDC, int node, AnsiString text)
 
    //glColor4f(1.0,1.0,1.0,1);
    glColor4f(LDR_COLOR_R, LDR_COLOR_G, LDR_COLOR_B, 1.0);
-   int margin = 1;
+   int margin = QGlobal::LDRBORDER;
 
    //glBlendFunc(GL_SRC_ALPHA,GL_ONE);
    //glEnable(GL_BLEND);
@@ -4626,7 +5016,7 @@ bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
 
    //glColor4f(1.0,1.0,1.0,1);
    glColor4f(LDR_COLOR_R, LDR_COLOR_G, LDR_COLOR_B, 1.0);
-   int margin = 1;
+   int margin = QGlobal::LDRBORDER;
 
    //glBlendFunc(GL_SRC_ALPHA,GL_ONE);
    //glEnable(GL_BLEND);
@@ -4762,7 +5152,7 @@ if ( QGlobal::fscreenfade > 0.01 )
     GWH = Global::iWindowHeight;
 
     int i =1;
-    int margin = 1;
+    int margin = QGlobal::LDRBORDER;
     glEnable( GL_TEXTURE_2D);
     BFONT->Begin();
 

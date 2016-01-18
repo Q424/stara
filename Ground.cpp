@@ -721,6 +721,7 @@ void TGroundNode::RenderAlpha2DL()
     };
 
     // TODO: sprawdzic czy jest potrzebny warunek fLineThickness < 0
+/*
     if ((iNumVerts && (iFlags & 0x20)) || (iNumPts && (fLineThickness > 0)))
     {
 #ifdef _PROBLEND
@@ -738,6 +739,7 @@ void TGroundNode::RenderAlpha2DL()
         };
 
         // GL_LINE, GL_LINE_STRIP, GL_LINE_LOOP
+        /*
         if (iNumPts)
         {
             float linealpha = 255000 * fLineThickness / (mgn + 1.0);
@@ -751,9 +753,11 @@ void TGroundNode::RenderAlpha2DL()
         }
         // GL_TRIANGLE etc
         else
+
             glCallList(DisplayListID);
         SetLastUsage(Timer::GetSimulationTime());
     };
+     */
 #ifdef _PROBLEND
     if ((PROBLEND)) // sprawdza, czy w nazwie nie ma @    //Q: 13122011 - Szociu: 27012012
     {

@@ -562,6 +562,7 @@ class QGlobal
  static float rtim;
  static float ffov;
  static float LDRREFRESH;
+ static int   LDRBORDER;
  static float GUITUTOPAC;
  static float ffovblocktime;
  static float ftrwiresize;

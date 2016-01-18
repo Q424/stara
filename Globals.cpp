@@ -194,6 +194,7 @@ float QGlobal::lsec = 0;
 float QGlobal::rtim = 0;
 float QGlobal::ffov = 45.0f;
 float QGlobal::LDRREFRESH = 0.1f;
+int   QGlobal::LDRBORDER = 1;
 float QGlobal::GUITUTOPAC = 0.1f;
 double QGlobal::fscreenfade = 1.0;
 double QGlobal::fscreenfade2 = 1.0;
@@ -437,11 +438,11 @@ void Global::LoadIniFile(AnsiString asFileName)
 void Global::ConfigParse(TQueryParserComp *qp, cParser *cp)
 { // Ra: trzeba by przerobiæ na cParser, ¿eby to dzia³a³o w scenerii
  WriteLog("Config parsing...");
-    pParser = cp;
-    qParser = qp;
-    AnsiString str;
-    int i;
-    do
+ pParser = cp;
+ qParser = qp;
+ AnsiString str;
+ int i;
+  do
     {
         str = GetNextSymbol().LowerCase();
         if (str == AnsiString("sceneryfile"))

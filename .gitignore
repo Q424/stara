@@ -59,3 +59,5 @@ MaSzyna.sln
 MaSzyna.vcxproj
 MaSzyna.vcxproj.filters
 *.suo
+qutils.asm
+*.~hpp

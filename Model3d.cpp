@@ -1532,8 +1532,10 @@ void TSubModel::RenderAlphaDL()
 // *****************************************************************************
 void TSubModel::RenderAlpha2DL()
 {
+ if ((smID >= 100) || (smID <= 108))
+  {
    if ( ( (fSquareDist >= fSquareMinDist) && (fSquareDist < fSquareMaxDist)))
-    {
+     {
 
         if (iFlags & 0xC000)
         {
@@ -1542,10 +1544,6 @@ void TSubModel::RenderAlpha2DL()
          if (b_aAnim) RaAnimation(b_aAnim);
         }
 
-        //AnsiString test = LowerCase(pName);
-
-        if ((smID >= 100) || (smID <= 108))
-         {
           bool isblink;
           if (smID == 100) isblink= QGlobal::slc[0].blink;
           if (smID == 101) isblink= QGlobal::slc[1].blink;
@@ -1556,7 +1554,7 @@ void TSubModel::RenderAlpha2DL()
           if (smID == 106) isblink= QGlobal::slc[6].blink;
           
           if (eType == TP_FREESPOTLIGHT  && isblink) RenderProLight(0.11, 0, true, QGlobal::semlight, f4Diffuse[0], f4Diffuse[1], f4Diffuse[2]);
-        }
+
 
         if (Child != NULL)
             if (eType == TP_TEXT)
@@ -1568,14 +1566,13 @@ void TSubModel::RenderAlpha2DL()
             Child->RenderAlpha2DL();
         if (iFlags & 0xC000)
             glPopMatrix();
-   }  //vis
+    }  //vis
+  }
 
-   // if (b_aAnim < at_SecondsJump)
-   //     b_aAnim = at_None; // wy³¹czenie animacji dla kolejnego u¿ycia submodelu
-    if (Next != NULL)
-        if (iAlpha & iFlags & 0x2F000000)
-            Next->RenderAlpha2DL();
-}; // RenderAlpha2DL
+  if (Next != NULL)
+    if (iAlpha & iFlags & 0x2F000000)
+         Next->RenderAlpha2DL();
+}; 
 
 
 void TSubModel::RenderVBO()
