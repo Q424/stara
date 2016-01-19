@@ -3472,6 +3472,8 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
      freetype::print(font10, 10, Global::iWindowHeight-posy, QGlobal::CONSISTF->Strings[l].c_str());
      posy+= 20;
     }
+    freetype::print(font10, 10, iWH-(posy+=20), FloatToStr(Global::fFogStart).c_str());
+    freetype::print(font10, 10, iWH-(posy+=20), FloatToStr(Global::fFogEnd).c_str());
    }
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -3507,7 +3509,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
           AnsiString PERON =     StrToPERON(QGlobal::station[itempos].trackinfo[j].platformav.c_str());
           AnsiString PERONL =      IntToStr(QGlobal::station[itempos].trackinfo[j].platformlen) + "m";
 
-          freetype::print(font10, 20, iWH-posy, AnsiString("  tor " + NUMBER + " : " + LENGTH + "m,   " + ELECTRIFIED  + ",     " + PERON + " " + PERONL).c_str());
+          freetype::print(font10, 20, iWH-(posy), AnsiString("  tor " + NUMBER + " : " + LENGTH + "m,   " + ELECTRIFIED  + ",     " + PERON + " " + PERONL).c_str());
           posy+=20;
 
          }
@@ -3517,7 +3519,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
    }
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  if (num == 3)  // PANEL 1 - INFORMACJE O LOKOMOTYWIE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  if (num == 3)  // PANEL 3 - INFORMACJE O LOKOMOTYWIE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
     int posy = 60;
      TDynamicObject *tmp = FreeFlyModeFlag ? Ground.DynamicNearest(Camera.Pos) : Controlled;
@@ -3874,7 +3876,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
    }
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  if (num == 6)  // PANEL 5 - INFORMACJE O NAJBLIZSZYM POJEZDZIE
+  if (num == 6)  // PANEL 6 - TABELA SKANOWANIA AI
    {
     TDynamicObject *tmp = FreeFlyModeFlag ? Ground.DynamicNearest(Camera.Pos) : Controlled; // w trybie latania lokalizujemy wg mapy
     int posy = 10;

@@ -151,14 +151,14 @@ bool __fastcall TWorld::STARTSIMULATION()
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   gluPerspective(TSCREEN::CFOV, (GLdouble)Global::iWindowWidth/(GLdouble)Global::iWindowHeight, 0.1f, 13234566.0f);  //1999950600.0f
+   gluPerspective(TSCREEN::CFOV, (GLdouble)Global::iWindowWidth/(GLdouble)Global::iWindowHeight, 0.1f, 132566.0f);  //1999950600.0f
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity( );
    Camera.Reset();
    Global::iPause = false;
    loaderbrief = NULL;      // USUNIECIE TEKSTURY
    loaderbackg = NULL;
- //QGlobal::splashscreen = NULL;
+   QGlobal::splashscreen = NULL;
    QGlobal::bSIMSTARTED = true;
 }
 
@@ -2244,8 +2244,8 @@ bool TWorld::Render()
 {
     glColor3b(255, 255, 255);
     glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(TSCREEN::CFOV, (GLdouble)Global::iWindowWidth/(GLdouble)Global::iWindowHeight, 0.05f, 19961.0f);
+    glLoadIdentity();                                                                                    //19961
+    gluPerspective(TSCREEN::CFOV, (GLdouble)Global::iWindowWidth/(GLdouble)Global::iWindowHeight, 0.1f, 2500.012f);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glViewport(0, 0, Global::iWindowWidth, Global::iWindowHeight);
@@ -2256,9 +2256,24 @@ bool TWorld::Render()
     Camera.SetMatrix(); // ustawienie macierzy kamery wzglêdem pocz¹tku scenerii
     glLightfv(GL_LIGHT0, GL_POSITION, Global::lightPos);
 
+    // przypadek A: gdy aktualny koniec mgly mniejszy niz docelowy
+    if (QGlobal::bchangingfoga) { if (Global::fFogEnd < QGlobal::fdestfogend) Global::fFogEnd = Global::fFogEnd + QGlobal::fogchangef; else QGlobal::bchangingfoga = false; }
+    // przypadek B: gdy koniec wiekszy niz docelowy
+    if (QGlobal::bchangingfogb) { if (Global::fFogEnd > QGlobal::fdestfogend) Global::fFogEnd = Global::fFogEnd - QGlobal::fogchangef; else QGlobal::bchangingfogb = false; }
+
+    if (QGlobal::bchangingfogsa) { if (Global::fFogStart < QGlobal::fdestfogstart) Global::fFogStart += QGlobal::fogchangef; else QGlobal::bchangingfogsa = false; }
+    // przypadek B: gdy koniec wiekszy niz docelowy
+    if (QGlobal::bchangingfogsb) { if (Global::fFogStart > QGlobal::fdestfogstart) Global::fFogStart -= QGlobal::fogchangef; else QGlobal::bchangingfogsb = false; }
+
+    if (QGlobal::bchangingfoga || QGlobal::bchangingfogb || QGlobal::bchangingfogsa || QGlobal::bchangingfogsb)
+      {
+        glFogf(GL_FOG_START, Global::fFogStart);
+        glFogf(GL_FOG_END, Global::fFogEnd);
+      }
+      
     if (!Global::bWireFrame)
     { // bez nieba w trybie rysowania linii
-        glDisable(GL_FOG);
+      //  glDisable(GL_FOG);
         Clouds.Render();
         glEnable(GL_FOG);
     }

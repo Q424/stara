@@ -339,6 +339,7 @@ class TGround
     bool RenderVBO(vector3 pPosition);
     bool RenderAlphaVBO(vector3 pPosition);
     bool CheckQuery();
+    bool READADDFILE(AnsiString ADDFILENAME, TDynamicObject *DYN);   // Q 180116: wczytywanie pliku dodatkowych ustawien pojazdu
     //    GetRect(double x, double z) { return
     //    &(Rects[int(x/fSubRectSize+fHalfNumRects)][int(z/fSubRectSize+fHalfNumRects)]); };
     /*

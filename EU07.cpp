@@ -114,6 +114,7 @@ USEUNIT("menu\bitmap_Font.cpp");
 USEUNIT("orthorender.cpp");
 USEUNIT("effects2d.cpp");
 USEUNIT("submodelsops.cpp");
+USEUNIT("dynamicmodules.cpp");
 USEFORM("frm_debugger.cpp", DEBUGGER);
 //---------------------------------------------------------------------------
 #include "World.h"
@@ -1370,6 +1371,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     KillGLWindow(); // kill the window
     return (msg.wParam); // exit the program
 }
+
 
 
 

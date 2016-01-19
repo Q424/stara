@@ -166,6 +166,13 @@ bool QGlobal::bOPENLOGONX = false;
 bool QGlobal::bEXITQUERY = false;
 bool QGlobal::bKBDREVERSED = false;
 bool QGlobal::bSIMSTARTED = false;
+bool QGlobal::bchangingfoga = false;
+bool QGlobal::bchangingfogb = false;
+bool QGlobal::bchangingfogsa = false;
+bool QGlobal::bchangingfogsb = false;
+double QGlobal::fdestfogend = 0;
+double QGlobal::fdestfogstart = 0;
+double QGlobal::fogchangef = 0;
 
 int QGlobal::objectid = 0;
 int QGlobal::cabelementid = 0;
@@ -202,6 +209,7 @@ float QGlobal::ffovblocktime = 0.0;
 float QGlobal::ftrwiresize = 1.2f;
 float QGlobal::consistlen = 0.0;
 float QGlobal::fnoisealpha = 0.06f;
+
 
 GLuint QGlobal::reflecttex;
 GLuint QGlobal::mousesymbol;
@@ -1323,6 +1331,5 @@ std::string Global::GetKbdLayout()
  if (kl == "415") QGlobal::asKBDLAYOUTSTR = "Polish";
  return skbdlayout;
 }
-
 
 #pragma package(smart_init)

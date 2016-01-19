@@ -1154,6 +1154,7 @@ const vector6 iglica[nnumPts] = // iglica - vextor3(x,y,mapowanie tekstury)
              0.000) // 1mm wiêcej, ¿eby nie nachodzi³y tekstury?
 };
 
+
 void TTrack::Compile(GLuint tex)
 { // generowanie treœci dla Display Lists - model proceduralny
     if (!tex)
@@ -1214,7 +1215,7 @@ void TTrack::Compile(GLuint tex)
         for (i = 0; i < 12; ++i)
         {
             rpts1[i] = vector6((fHTW + szyna[i].x) * cos1 + szyna[i].y * sin1,
-                               -(fHTW + szyna[i].x) * sin1 + szyna[i].y * cos1, szyna[i].z,
+                              -(fHTW + szyna[i].x) * sin1 + szyna[i].y * cos1, szyna[i].z,
                                +szyna[i].n.x * cos1 + szyna[i].n.y * sin1,
                                -szyna[i].n.x * sin1 + szyna[i].n.y * cos1, 0.0);
             rpts2[11 - i] = vector6((-fHTW - szyna[i].x) * cos1 + szyna[i].y * sin1,
@@ -1339,6 +1340,7 @@ void TTrack::Compile(GLuint tex)
                     if (!tex)
                         glBindTexture(GL_TEXTURE_2D, TextureID2);
                     Segment->RenderLoft(bpts1, iTrapezoid ? -4 : 4, fTexLength);
+                    if (DebugModeFlag) Segment->Render();                       // Q 18.01.16: Linia na osi toru w debugmode
                 }
             if (TextureID1)
                 if (tex ? TextureID1 == tex : true) // jeœli pasuje do grupy (tex)
@@ -1384,42 +1386,32 @@ void TTrack::Compile(GLuint tex)
                 if (SwitchExtension->RightSwitch)
                 { // zwrotnica prawa
                     glBindTexture(GL_TEXTURE_2D, TextureID1);
-                    SwitchExtension->Segments[0]->RenderLoft(rpts1, nnumPts, fTexLength,
-                                                             2); // prawa szyna za iglic¹
-                    SwitchExtension->Segments[0]->RenderSwitchRail(
-                        rpts1, rpts3, nnumPts, fTexLength, 2,
-                        SwitchExtension->fOffset2); // prawa iglica
-                    SwitchExtension->Segments[0]->RenderLoft(
-                        rpts2, nnumPts, fTexLength); // lewa szyna normalnie ca³a
+                    SwitchExtension->Segments[0]->RenderLoft(rpts1, nnumPts, fTexLength,2); // prawa szyna za iglic¹
+                    SwitchExtension->Segments[0]->RenderSwitchRail(rpts1, rpts3, nnumPts, fTexLength, 2,SwitchExtension->fOffset2); // prawa iglica
+                    SwitchExtension->Segments[0]->RenderLoft(rpts2, nnumPts, fTexLength); // lewa szyna normalnie ca³a
+                    
                     if (TextureID2 != TextureID1) // nie wiadomo, czy OpenGL to optymalizuje
                         glBindTexture(GL_TEXTURE_2D, TextureID2);
-                    SwitchExtension->Segments[1]->RenderLoft(
-                        rpts1, nnumPts, fTexLength); // prawa szyna normalna ca³a
-                    SwitchExtension->Segments[1]->RenderLoft(rpts2, nnumPts, fTexLength,
-                                                             2); // lewa szyna za iglic¹
-                    SwitchExtension->Segments[1]->RenderSwitchRail(
-                        rpts2, rpts4, nnumPts, fTexLength, 2,
-                        -fMaxOffset + SwitchExtension->fOffset1); // lewa iglica
+                    SwitchExtension->Segments[1]->RenderLoft(rpts1, nnumPts, fTexLength); // prawa szyna normalna ca³a
+                    SwitchExtension->Segments[1]->RenderLoft(rpts2, nnumPts, fTexLength,2); // lewa szyna za iglic¹
+                    SwitchExtension->Segments[1]->RenderSwitchRail(rpts2, rpts4, nnumPts, fTexLength, 2,-fMaxOffset + SwitchExtension->fOffset1); // lewa iglica
+                    if (DebugModeFlag) SwitchExtension->Segments[0]->Render();
+                    if (DebugModeFlag) SwitchExtension->Segments[1]->Render();
                 }
                 else
                 { // lewa kiedyœ dzia³a³a lepiej ni¿ prawa
                     glBindTexture(GL_TEXTURE_2D, TextureID1);
-                    SwitchExtension->Segments[0]->RenderLoft(
-                        rpts1, nnumPts, fTexLength); // prawa szyna normalna ca³a
-                    SwitchExtension->Segments[0]->RenderLoft(rpts2, nnumPts, fTexLength,
-                                                             2); // lewa szyna za iglic¹
-                    SwitchExtension->Segments[0]->RenderSwitchRail(
-                        rpts2, rpts4, nnumPts, fTexLength, 2,
-                        -SwitchExtension->fOffset2); // lewa iglica
+                    SwitchExtension->Segments[0]->RenderLoft(rpts1, nnumPts, fTexLength); // prawa szyna normalna ca³a
+                    SwitchExtension->Segments[0]->RenderLoft(rpts2, nnumPts, fTexLength,2); // lewa szyna za iglic¹
+                    SwitchExtension->Segments[0]->RenderSwitchRail(rpts2, rpts4, nnumPts, fTexLength, 2,-SwitchExtension->fOffset2); // lewa iglica
+                    
                     if (TextureID2 != TextureID1) // nie wiadomo, czy OpenGL to optymalizuje
                         glBindTexture(GL_TEXTURE_2D, TextureID2);
-                    SwitchExtension->Segments[1]->RenderLoft(rpts1, nnumPts, fTexLength,
-                                                             2); // prawa szyna za iglic¹
-                    SwitchExtension->Segments[1]->RenderSwitchRail(
-                        rpts1, rpts3, nnumPts, fTexLength, 2,
-                        fMaxOffset - SwitchExtension->fOffset1); // prawa iglica
-                    SwitchExtension->Segments[1]->RenderLoft(
-                        rpts2, nnumPts, fTexLength); // lewa szyna normalnie ca³a
+                    SwitchExtension->Segments[1]->RenderLoft(rpts1, nnumPts, fTexLength,2); // prawa szyna za iglic¹
+                    SwitchExtension->Segments[1]->RenderSwitchRail(rpts1, rpts3, nnumPts, fTexLength, 2,fMaxOffset - SwitchExtension->fOffset1); // prawa iglica
+                    SwitchExtension->Segments[1]->RenderLoft(rpts2, nnumPts, fTexLength); // lewa szyna normalnie ca³a
+                    if (DebugModeFlag) SwitchExtension->Segments[0]->Render();
+                    if (DebugModeFlag) SwitchExtension->Segments[1]->Render();
                 }
             }
             break;

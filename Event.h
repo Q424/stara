@@ -39,7 +39,9 @@ typedef enum
     tp_Visible,
     tp_Voltage,
     tp_Message,
-    tp_Friction
+    tp_Friction,
+    tp_setfog,
+    tp_dynevent
 } TEventType;
 
 const int update_memstring = 0x0000001; // zmodyfikowaæ tekst (UpdateValues)
@@ -99,6 +101,11 @@ class TEvent // zmienne: ev*
     AnsiString asNodeName; // McZapkie-100302 - dodalem zeby zapamietac nazwe toru
     TEvent *evJoined; // kolejny event z t¹ sam¹ nazw¹ - od wersji 378
     double fRandomDelay; // zakres dodatkowego opóŸnienia
+    AnsiString asctime1;
+    AnsiString asctime2;
+    AnsiString asfog_s;
+    AnsiString asfog_e;
+    AnsiString asfog_f;
   public: // metody
     TEvent(AnsiString m = "");
     ~TEvent();

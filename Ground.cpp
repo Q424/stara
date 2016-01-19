@@ -2059,19 +2059,17 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
             */
             tf3 = tmp->DynamicObject->Init(asNodeName, str1, Skin, str3, Track,
                                            (tf1 == -1.0 ? fTrainSetDist : fTrainSetDist - tf1),
-                                           DriverType, tf3, asTrainName, int2, str2, (tf1 == -1.0),
-                                           str4);
+                                           DriverType, tf3, asTrainName, int2, str2, (tf1 == -1.0), str4);
             if (tf3 != 0.0) // zero oznacza b³¹d
             {
-                fTrainSetDist -=
-                    tf3; // przesuniêcie dla kolejnego, minus bo idziemy w stronê punktu 1
+                fTrainSetDist -= tf3; // przesuniêcie dla kolejnego, minus bo idziemy w stronê punktu 1
                 tmp->pCenter = tmp->DynamicObject->GetPosition();
+
+                //--READADDFILE("0", tmp->DynamicObject);
+
                 if (TempConnectionType[iTrainSetWehicleNumber]) // jeœli jest sprzêg
-                    if (tmp->DynamicObject->MoverParameters->Couplers[tf1 == -1.0 ? 0 : 1]
-                            .AllowedFlag &
-                        ctrain_depot) // jesli zablokowany
-                        TempConnectionType[iTrainSetWehicleNumber] |= ctrain_depot; // bêdzie
-                // blokada
+                    if (tmp->DynamicObject->MoverParameters->Couplers[tf1 == -1.0 ? 0 : 1].AllowedFlag & ctrain_depot) // jesli zablokowany
+                        TempConnectionType[iTrainSetWehicleNumber] |= ctrain_depot; // bêdzie blokada
                 iTrainSetWehicleNumber++;
             }
             else
@@ -2646,6 +2644,7 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
                 else if (Global::bLoadTraction ? false : LastNode->iType == TP_TRACTION)
                     SafeDelete(LastNode); // usuwamy druty, jeœli wy³¹czone
                 if (LastNode) // dopiero na koniec dopisujemy do tablic
+                 {
                     if (LastNode->iType != TP_DYNAMIC)
                     { // jeœli nie jest pojazdem
                         LastNode->nNext = nRootOfType[LastNode->iType]; // ostatni dodany do³¹czamy
@@ -2658,10 +2657,11 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
                     { // jeœli jest pojazdem
                         // if (!bInitDone) FirstInit(); //jeœli nie by³o w scenerii
                         if (LastNode->DynamicObject->Mechanik) // ale mo¿e byæ pasa¿er
-                            if (LastNode->DynamicObject->Mechanik
-                                    ->Primary()) // jeœli jest g³ównym (pasa¿er nie jest)
-                                nTrainSetDriver =
-                                    LastNode; // pojazd, któremu zostanie wys³any rozk³ad
+                           if (LastNode->DynamicObject->Mechanik->Primary()) // jeœli jest g³ównym (pasa¿er nie jest)
+                                nTrainSetDriver = LastNode; // pojazd, któremu zostanie wys³any rozk³ad
+
+                        //--if (LastNode->iType == TP_DYNAMIC)  READADDFILE("0", LastNode->DynamicObject);
+
                         LastNode->nNext = nRootDynamic;
                         nRootDynamic = LastNode; // dopisanie z przodu do listy
                         // if (bTrainSet && (LastNode?(LastNode->iType==TP_DYNAMIC):false))
@@ -2670,19 +2670,21 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
                                 LastNode->DynamicObject,
                                 TempConnectionType[iTrainSetWehicleNumber - 2]);
                         nTrainSetNode = LastNode; // ostatnio wczytany
-                        if (TempConnectionType[iTrainSetWehicleNumber - 1] ==
-                            0) // jeœli sprzêg jest zerowy, to wys³aæ rozk³ad do sk³adu
+
+                        if (TempConnectionType[iTrainSetWehicleNumber - 1] == 0) // jeœli sprzêg jest zerowy, to wys³aæ rozk³ad do sk³adu
                         { // powinien te¿ tu wchodziæ, gdy pojazd bez trainset
                             if (nTrainSetDriver) // pojazd, któremu zostanie wys³any rozk³ad
                             { // wys³anie komendy "Timetable" ustawia odpowiedni tryb jazdy
                                 nTrainSetDriver->DynamicObject->Mechanik->DirectionInitial();
-                                nTrainSetDriver->DynamicObject->Mechanik->PutCommand(
-                                    "Timetable:" + asTrainName, fTrainSetVel, 0, NULL);
-                                nTrainSetDriver =
-                                    NULL; // a przy "endtrainset" ju¿ wtedy nie potrzeba
+                                nTrainSetDriver->DynamicObject->Mechanik->PutCommand( "Timetable:" + asTrainName, fTrainSetVel, 0, NULL);
+                             //-- READADDFILE("0", nTrainSetDriver->DynamicObject);
+                                nTrainSetDriver = NULL; // a przy "endtrainset" ju¿ wtedy nie potrzeba
                             }
                         }
+
                     }
+
+                }
             }
             else
             {
@@ -2712,16 +2714,17 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
                 if (nTrainSetDriver) // pojazd, któremu zostanie wys³any rozk³ad
                 { // wys³anie komendy "Timetable" ustawia odpowiedni tryb jazdy
                     nTrainSetDriver->DynamicObject->Mechanik->DirectionInitial();
-                    nTrainSetDriver->DynamicObject->Mechanik->PutCommand("Timetable:" + asTrainName,
-                                                                         fTrainSetVel, 0, NULL);
+                    nTrainSetDriver->DynamicObject->Mechanik->PutCommand("Timetable:" + asTrainName, fTrainSetVel, 0, NULL);
+                    //--READADDFILE("0", nTrainSetDriver->DynamicObject);
                 }
+             //--if (LastNode->iType == TP_DYNAMIC)  READADDFILE("0", LastNode->DynamicObject);  // OSTATNI POJAZD W TRAINSECIE
             }
             if (LastNode) // ostatni wczytany obiekt
-                if (LastNode->iType ==
-                    TP_DYNAMIC) // o ile jest pojazdem (na ogó³ jest, ale kto wie...)
-                    if (iTrainSetWehicleNumber ? !TempConnectionType[iTrainSetWehicleNumber - 1] :
-                                                 false) // jeœli ostatni pojazd ma sprzêg 0
+                if (LastNode->iType == TP_DYNAMIC) // o ile jest pojazdem (na ogó³ jest, ale kto wie...)
+                 {
+                    if (iTrainSetWehicleNumber ? !TempConnectionType[iTrainSetWehicleNumber - 1] : false) // jeœli ostatni pojazd ma sprzêg 0
                         LastNode->DynamicObject->RaLightsSet(-1, 2 + 32 + 64); // to za³o¿ymy mu
+                  }
             // koñcówki blaszane
             // (jak AI siê
             // odpali, to sobie
@@ -4147,6 +4150,17 @@ bool TGround::CheckQuery()
                                             AnsiString("")));
             switch (tmpEvent->Type)
             {
+            case tp_setfog:
+
+                QGlobal::fdestfogend = StrToFloat(tmpEvent->asfog_e);
+                QGlobal::fdestfogstart = StrToFloat(tmpEvent->asfog_s);
+                QGlobal::fogchangef = StrToFloat(tmpEvent->asfog_f);
+
+               if (Global::fFogEnd < QGlobal::fdestfogend)  QGlobal::bchangingfoga = true;
+               if (Global::fFogEnd > QGlobal::fdestfogend)  QGlobal::bchangingfogb = true;
+               if (Global::fFogStart < QGlobal::fdestfogstart)  QGlobal::bchangingfogsa = true;
+               if (Global::fFogStart > QGlobal::fdestfogstart)  QGlobal::bchangingfogsb = true;
+            break;
             case tp_CopyValues: // skopiowanie wartoœci z innej komórki
                 tmpEvent->Params[5].asMemCell->UpdateValues(
                     tmpEvent->Params[9].asMemCell->Text(), tmpEvent->Params[9].asMemCell->Value1(),

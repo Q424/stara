@@ -332,6 +332,11 @@ vector3 TSegment::FastGetPoint(double t)
     return (bCurve ? RaInterpolate(t) : ((1.0 - t) * Point1 + (t)*Point2));
 }
 
+float rand_fr(float a, float b)
+{
+return ((b-a)*((float)rand()/RAND_MAX))+a;
+}
+
 void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, double fTextureLength,
                           int iSkip, int iQualityFactor, vector3 **p, bool bRender)
 { // generowanie trójk¹tów dla odcinka trajektorii ruchu
@@ -470,15 +475,18 @@ void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, doubl
         pos1 = FastGetPoint((fStep * iSkip) / fLength);
         pos2 = FastGetPoint_1();
         dir = GetDirection();
+
         // parallel1=Normalize(CrossProduct(dir,vector3(0,1,0)));
         parallel1 = Normalize(vector3(-dir.z, 0.0, dir.x)); // wektor poprzeczny
         glBegin(GL_TRIANGLE_STRIP);
         if (trapez)
             for (j = 0; j < iNumShapePoints; j++)
             {
+              //float rand= rand_fr(-0.2, 0.2);
+
                 norm = ShapePoints[j].n.x * parallel1;
                 norm.y += ShapePoints[j].n.y;
-                pt = parallel1 * ShapePoints[j].x + pos1;
+                pt = parallel1 * (ShapePoints[j].x) + pos1;
                 pt.y += ShapePoints[j].y;
                 glNormal3f(norm.x, norm.y, norm.z);
                 glTexCoord2f(ShapePoints[j].z, 0);
@@ -495,14 +503,16 @@ void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, doubl
         else
             for (j = 0; j < iNumShapePoints; j++)
             {
+               //float rand= rand_fr(-0.2, 0.2);
+
                 norm = ShapePoints[j].n.x * parallel1;
                 norm.y += ShapePoints[j].n.y;
-                pt = parallel1 * ShapePoints[j].x + pos1;
+                pt = parallel1 * (ShapePoints[j].x) + pos1;
                 pt.y += ShapePoints[j].y;
                 glNormal3f(norm.x, norm.y, norm.z);
                 glTexCoord2f(ShapePoints[j].z, 0);
                 glVertex3f(pt.x, pt.y, pt.z);
-                pt = parallel1 * ShapePoints[j].x + pos2;
+                pt = parallel1 * (ShapePoints[j].x) + pos2;
                 pt.y += ShapePoints[j].y;
                 glNormal3f(norm.x, norm.y, norm.z);
                 glTexCoord2f(ShapePoints[j].z, fLength / fTextureLength);
@@ -651,22 +661,28 @@ void TSegment::RenderSwitchRail(const vector6 *ShapePoints1, const vector6 *Shap
 };
 
 void TSegment::Render()
-{
+{   float emm2[] = {0, 0, 0, 1};
     vector3 pt;
-    glBindTexture(GL_TEXTURE_2D, 0);
+    GLfloat lw;
+    glGetFloatv(GL_LINE_WIDTH,  &lw);
+    glDisable(GL_LIGHTING);
+    //glColorMaterial(GL_FRONT, GL_EMISSION);
+    //glBindTexture(GL_TEXTURE_2D, 0);
     int i;
+    glLineWidth(3.0f);
     if (bCurve)
     {
-        glColor3f(0, 0, 1.0f);
-        glBegin(GL_LINE_STRIP);
-        glVertex3f(Point1.x, Point1.y, Point1.z);
-        glVertex3f(CPointOut.x, CPointOut.y, CPointOut.z);
-        glEnd();
+        //glColor3f(0.0, 0.0, 1.0f);
+        //glBegin(GL_LINE_STRIP);
+        //glVertex3f(Point1.x, Point1.y, Point1.z);
+        //glVertex3f(CPointOut.x, CPointOut.y, CPointOut.z);
+        //glEnd();
 
-        glBegin(GL_LINE_STRIP);
-        glVertex3f(Point2.x, Point2.y, Point2.z);
-        glVertex3f(CPointIn.x, CPointIn.y, CPointIn.z);
-        glEnd();
+
+        //glBegin(GL_LINE_STRIP);
+        //glVertex3f(Point2.x, Point2.y, Point2.z);
+        //glVertex3f(CPointIn.x, CPointIn.y, CPointIn.z);
+        //glEnd();
 
         glColor3f(1.0f, 0, 0);
         glBegin(GL_LINE_STRIP);
@@ -684,18 +700,23 @@ void TSegment::Render()
         glVertex3f(Point1.x, Point1.y, Point1.z);
         glVertex3f(Point1.x + CPointOut.x, Point1.y + CPointOut.y, Point1.z + CPointOut.z);
         glEnd();
-
+        glColor3f(0.0, 1.0, 0.0f);
         glBegin(GL_LINE_STRIP);
         glVertex3f(Point2.x, Point2.y, Point2.z);
         glVertex3f(Point2.x + CPointIn.x, Point2.y + CPointIn.y, Point2.z + CPointIn.z);
         glEnd();
 
-        glColor3f(0.5f, 0, 0);
+        glColor3f(1.0f, 0, 0);
         glBegin(GL_LINE_STRIP);
         glVertex3f(Point1.x + CPointOut.x, Point1.y + CPointOut.y, Point1.z + CPointOut.z);
         glVertex3f(Point2.x + CPointIn.x, Point2.y + CPointIn.y, Point2.z + CPointIn.z);
         glEnd();
+
     }
+    glLineWidth(lw);
+     glEnable(GL_LIGHTING);
+     glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+     glMaterialfv(GL_FRONT, GL_EMISSION, emm2);
 }
 
 void TSegment::RaRenderLoft(CVertNormTex *&Vert, const vector6 *ShapePoints, int iNumShapePoints,
@@ -832,6 +853,7 @@ void TSegment::RaRenderLoft(CVertNormTex *&Vert, const vector6 *ShapePoints, int
         pos1 = FastGetPoint((fStep * iSkip) / fLength);
         pos2 = FastGetPoint_1();
         dir = GetDirection();
+
         // parallel1=Normalize(CrossProduct(dir,vector3(0,1,0)));
         parallel1 = Normalize(vector3(-dir.z, 0.0, dir.x)); // wektor poprzeczny
         if (trapez)
@@ -853,8 +875,8 @@ void TSegment::RaRenderLoft(CVertNormTex *&Vert, const vector6 *ShapePoints, int
                 // dla trapezu drugi koniec ma inne wspó³rzêdne
                 norm = ShapePoints[j + iNumShapePoints].n.x * parallel1;
                 norm.y += ShapePoints[j + iNumShapePoints].n.y;
-                pt = parallel1 * (ShapePoints[j + iNumShapePoints].x - fOffsetX) +
-                     pos2; // odsuniêcie
+                
+                pt = parallel1 * (ShapePoints[j + iNumShapePoints].x - fOffsetX) +pos2; // odsuniêcie
                 pt.y += ShapePoints[j + iNumShapePoints].y; // wysokoœæ
                 Vert->nx = norm.x; // niekoniecznie tak
                 Vert->ny = norm.y;

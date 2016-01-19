@@ -33,6 +33,7 @@ http://mozilla.org/MPL/2.0/.
 #include "Console.h"
 #include "Traction.h"
 #include "qutils.h"
+#include "ground.h"
 #pragma package(smart_init)
 
 // Ra: taki zapis funkcjonuje lepiej, ale mo¿e nie jest optymalny
@@ -681,14 +682,32 @@ void __inline TDynamicObject::ABuLittleUpdate(double ObjSqrDist)
             // ABu290105: rzucanie pudlem
             // te animacje wymagaj¹ bananów w modelach!
             mdModel->GetSMRoot()->SetTranslate(modelShake);
-            if (mdKabina)
-                mdKabina->GetSMRoot()->SetTranslate(modelShake);
-            if (mdLoad)
-                mdLoad->GetSMRoot()->SetTranslate(modelShake + vFloor);
-            if (mdLowPolyInt)
-                mdLowPolyInt->GetSMRoot()->SetTranslate(modelShake);
-            if (mdPrzedsionek)
-                mdPrzedsionek->GetSMRoot()->SetTranslate(modelShake);
+            if (mdKabina) mdKabina->GetSMRoot()->SetTranslate(modelShake);
+            if (mdLoad) mdLoad->GetSMRoot()->SetTranslate(modelShake + vFloor);
+            if (mdLowPolyInt) mdLowPolyInt->GetSMRoot()->SetTranslate(modelShake);
+            if (mdPrzedsionek) mdPrzedsionek->GetSMRoot()->SetTranslate(modelShake);
+        if (mdClock1) mdClock1->GetSMRoot()->SetTranslate(modelShake);
+        if (mdClock2) mdClock2->GetSMRoot()->SetTranslate(modelShake);
+        if (mdVentilator1) mdVentilator1->GetSMRoot()->SetTranslate(modelShake);
+        if (mdVentilator2) mdVentilator2->GetSMRoot()->SetTranslate(modelShake);
+        if (mdFotel1) mdFotel1->GetSMRoot()->SetTranslate(modelShake);
+        if (mdFotel2) mdFotel2->GetSMRoot()->SetTranslate(modelShake);
+        if (mdWycieraczkaAR) mdWycieraczkaAR->GetSMRoot()->SetTranslate(modelShake);
+        if (mdWycieraczkaAL) mdWycieraczkaAL->GetSMRoot()->SetTranslate(modelShake);
+        if (mdDIRTABLE1) mdDIRTABLE1->GetSMRoot()->SetTranslate(modelShake);
+        if (mdDIRTABLE2) mdDIRTABLE2->GetSMRoot()->SetTranslate(modelShake);
+        if (mdMirrorAR) mdMirrorAR->GetSMRoot()->SetTranslate(modelShake);
+        if (mdMirrorAL) mdMirrorAL->GetSMRoot()->SetTranslate(modelShake);
+        if (mdSTATIC01) mdSTATIC01->GetSMRoot()->SetTranslate(modelShake);
+        if (mdSTATIC02) mdSTATIC02->GetSMRoot()->SetTranslate(modelShake);
+        if (mdSTATIC03) mdSTATIC03->GetSMRoot()->SetTranslate(modelShake);
+        if (mdSTATIC04) mdSTATIC04->GetSMRoot()->SetTranslate(modelShake);
+        if (mdSTATIC05) mdSTATIC05->GetSMRoot()->SetTranslate(modelShake);
+        if (mdSTATIC06) mdSTATIC06->GetSMRoot()->SetTranslate(modelShake);
+        if (mdSTATIC07) mdSTATIC07->GetSMRoot()->SetTranslate(modelShake);
+        if (mdSTATIC08) mdSTATIC08->GetSMRoot()->SetTranslate(modelShake);
+        if (mdSTATIC09) mdSTATIC09->GetSMRoot()->SetTranslate(modelShake);
+        if (mdSTATIC10) mdSTATIC10->GetSMRoot()->SetTranslate(modelShake);
             // ABu: koniec rzucania
             // ABu011104: liczenie obrotow wozkow
             ABuBogies();
@@ -1183,10 +1202,38 @@ TDynamicObject *__fastcall TDynamicObject::ABuScanNearestObject(TTrack *Track, d
 void TDynamicObject::ABuModelRoll()
 { // ustawienie przechy³ki pojazdu i jego zawartoœci
     // Ra: przechy³kê za³atwiamy na etapie przesuwania modelu
+
+ double modelRoll=RadToDeg(0.5*(Axle0.GetRoll()+Axle1.GetRoll())); //Ra: tu nie by³o DegToRad
+ //if (ABuGetDirection()<0) modelRoll=-modelRoll;
+ if (modelRoll!=0.0)
+ {//jak nie ma przechy³ki, to nie ma po co przechylaæ modeli
+
+  if (mdClock1) mdClock1->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdClock2) mdClock2->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdVentilator1) mdVentilator1->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdVentilator2) mdVentilator2->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdFotel1) mdFotel1->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdFotel2) mdFotel2->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdWycieraczkaAR) mdWycieraczkaAR->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdWycieraczkaAL) mdWycieraczkaAR->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdDIRTABLE1) mdDIRTABLE1->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdDIRTABLE2) mdDIRTABLE2->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdMirrorAR) mdMirrorAR->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdMirrorAL) mdMirrorAL->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdSTATIC01) mdSTATIC01->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdSTATIC02) mdSTATIC02->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdSTATIC03) mdSTATIC03->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdSTATIC04) mdSTATIC04->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdSTATIC05) mdSTATIC05->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdSTATIC06) mdSTATIC06->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdSTATIC07) mdSTATIC07->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdSTATIC08) mdSTATIC08->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdSTATIC09) mdSTATIC09->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+  if (mdSTATIC10) mdSTATIC10->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+ }
 }
 
 // ABu 06.05.04 poczatek wyliczania obrotow wozkow **********************
-
 void TDynamicObject::ABuBogies()
 { // Obracanie wozkow na zakretach. Na razie uwzglêdnia tylko zakrêty,
     // bez zadnych gorek i innych przeszkod.
@@ -1203,7 +1250,7 @@ void TDynamicObject::ABuBogies()
         smBogie[1]->SetRotateXYZ(bogieRot[1]);
     }
 };
-// ABu 06.05.04 koniec wyliczania obrotow wozkow ************************
+
 
 // ABu 16.03.03 sledzenie toru przed obiektem: **************************
 void TDynamicObject::ABuCheckMyTrack()
@@ -1669,6 +1716,29 @@ TDynamicObject::TDynamicObject()
     mdBogieA = NULL;
     mdBogieB = NULL;
     mdBogieC = NULL;
+    mdVentilator1=NULL;        //Q
+    mdVentilator2=NULL;        //Q
+    mdWycieraczkaAR=NULL;      //Q
+    mdWycieraczkaAL=NULL;      //Q
+    mdDIRTABLE1=NULL;          //Q
+    mdDIRTABLE2=NULL;          //Q
+    mdMirrorAR=NULL;           //Q
+    mdMirrorAL=NULL;           //Q
+    mdSTATIC01=NULL;           //Q
+    mdSTATIC02=NULL;           //Q
+    mdSTATIC03=NULL;           //Q
+    mdSTATIC04=NULL;           //Q
+    mdSTATIC05=NULL;           //Q
+    mdSTATIC06=NULL;           //Q
+    mdSTATIC07=NULL;           //Q
+    mdSTATIC08=NULL;           //Q
+    mdSTATIC09=NULL;           //Q
+    mdSTATIC10=NULL;           //Q
+    mdClock1=NULL;             //Q
+    mdClock2=NULL;             //Q
+    mdFotel1=NULL;             //Q
+    mdFotel2=NULL;             //Q
+
     smMechanik0 = smMechanik1 = NULL;
     smBuforLewy[0] = smBuforLewy[1] = NULL;
     smBuforPrawy[0] = smBuforPrawy[1] = NULL;
@@ -1976,8 +2046,7 @@ double TDynamicObject::Init(
     { // McZapkie-040602: jeœli coœ siedzi w pojeŸdzie
         if (Name == AnsiString(Global::asHumanCtrlVehicle)) // jeœli pojazd wybrany do prowadzenia
         {
-            if (DebugModeFlag ? false : MoverParameters->EngineType !=
-                                            Dumb) // jak nie Debugmode i nie jest dumbem
+            if (DebugModeFlag ? false : MoverParameters->EngineType != Dumb) // jak nie Debugmode i nie jest dumbem
                 Controller = Humandriver; // wsadzamy tam steruj¹cego
             else // w przeciwnym razie trzeba w³¹czyæ pokazywanie kabiny
                 bDisplayCab = true;
@@ -1991,12 +2060,14 @@ double TDynamicObject::Init(
             if (TrainName.IsEmpty()) // jeœli nie w sk³adzie
             {
                 Mechanik->DirectionInitial(); // za³¹czenie rozrz¹du (wirtualne kabiny) itd.
-                Mechanik->PutCommand(
-                    "Timetable:", iDirection ? -fVel : fVel, 0,
-                    NULL); // tryb poci¹gowy z ustalon¹ prêdkoœci¹ (wzglêdem sprzêgów)
+                Mechanik->PutCommand("Timetable:", iDirection ? -fVel : fVel, 0,  NULL); // tryb poci¹gowy z ustalon¹ prêdkoœci¹ (wzglêdem sprzêgów)
+                LoadAdditionals("", this, Mechanik);  // WCZYTUJE TABLICE TYLKO GDY NIE headdriver LUB reardriver, czemu?
+             // !UWAGA! JEZELI NIE MA PLIKU O NAZWIE STACJI DOCELOWEJ PODANEJ W ROZKLADZIE TO WSKAZNIK Mechanik jest NULL!!!
             }
+
             // if (TrainName!="none")
             // Mechanik->PutCommand("Timetable:"+TrainName,fVel,0,NULL);
+
         }
         else if (DriverType == "p")
         { // obserwator w charakterze pasa¿era
@@ -2009,6 +2080,7 @@ double TDynamicObject::Init(
     // wczytywanie z pliku nazwatypu.mmd, w tym model
     LoadMMediaFile(asBaseDir, Type_Name, asReplacableSkin);
     LoadUniqueSpecs(asName);
+    LoadAdditionals("", this, Mechanik);  // WCZYTUJE TABLICE TYLKO GDY NIE headdriver LUB reardriver, czemu?
 
     // McZapkie-100402: wyszukiwanie submodeli sprzegów
     btCoupler1.Init("coupler1", mdModel, false); // false - ma byæ wy³¹czony
@@ -3471,16 +3543,20 @@ void TDynamicObject::Render()
             if (mdPrzedsionek)
                 mdPrzedsionek->RaRender(ObjSqrDist, ReplacableSkinID, iAlpha);
             // Renderowanie wozkow z oddzielnych modeli
+            if (mdBogieA)
+               {
                 glPushMatrix();
                 glTranslatef(pBogieA.x, pBogieA.y, pBogieA.z);
-            if (mdBogieA)
                 mdBogieA->RaRender(ObjSqrDist, ReplacableSkinID, iAlpha);
                 glPopMatrix();
+               }
+            if (mdBogieB)
+               {
                 glPushMatrix();
                 glTranslatef(pBogieB.x, pBogieB.y, pBogieB.z);
-            if (mdBogieB)
                 mdBogieB->RaRender(ObjSqrDist, ReplacableSkinID, iAlpha);
                 glPopMatrix();
+               }
         }
         else
         { // wersja Display Lists
@@ -3494,17 +3570,46 @@ void TDynamicObject::Render()
             if (mdPrzedsionek)
                 mdPrzedsionek->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
 
+            if (mdClock1 != NULL) mdClock1->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdClock2 != NULL) mdClock2->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdVentilator1 != NULL) mdVentilator1->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdVentilator2 != NULL) mdVentilator2->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdFotel1 != NULL) mdFotel1->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdFotel2 != NULL) mdFotel2->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdWycieraczkaAR != NULL) mdWycieraczkaAR->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdWycieraczkaAL != NULL) mdWycieraczkaAL->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdDIRTABLE1 != NULL) mdDIRTABLE1->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdDIRTABLE2 != NULL) mdDIRTABLE2->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC01 != NULL) mdSTATIC01->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC02 != NULL) mdSTATIC02->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC03 != NULL) mdSTATIC03->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC04 != NULL) mdSTATIC04->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC05 != NULL) mdSTATIC05->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC06 != NULL) mdSTATIC06->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC07 != NULL) mdSTATIC07->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC08 != NULL) mdSTATIC08->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC09 != NULL) mdSTATIC09->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC10 != NULL) mdSTATIC10->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdMirrorAR != NULL) mdMirrorAR->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdMirrorAL != NULL) mdMirrorAL->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
+
             // Renderowanie wozkow z oddzielnych modeli
+            if (mdBogieA)
+               {
                 glPushMatrix();
                 glTranslatef(pBogieA.x, pBogieA.y, pBogieA.z);
-            if (mdBogieA)
                 mdBogieA->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
                 glPopMatrix();
+                }
+            if (mdBogieB)
+               {
                 glPushMatrix();
                 glTranslatef(pBogieB.x, pBogieB.y, pBogieB.z);
-            if (mdBogieB)
                 mdBogieB->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
                 glPopMatrix();
+                }
+
+
         }
 
         // Ra: czy ta kabina tu ma sens?
@@ -3951,8 +4056,8 @@ void TDynamicObject::RenderAlpha()
         if (Global::bUseVBO)
         { // wersja VBO
             if (mdLowPolyInt)
-                if (FreeFlyModeFlag ? true : !mdKabina || !bDisplayCab)
-                    mdLowPolyInt->RaRenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
+            if (FreeFlyModeFlag ? true : !mdKabina || !bDisplayCab)
+                mdLowPolyInt->RaRenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
             if (mdModel)
                 mdModel->RaRenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
             if (mdLoad)
@@ -3969,6 +4074,30 @@ void TDynamicObject::RenderAlpha()
                 mdModel->RenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
             if (mdLoad)
                 mdLoad->RenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
+
+            if (mdVentilator1 != NULL) mdVentilator1->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdVentilator2 != NULL) mdVentilator2->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdFotel1 != NULL) mdFotel1->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdFotel2 != NULL) mdFotel2->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdDIRTABLE1 != NULL) mdDIRTABLE1->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdDIRTABLE2 != NULL) mdDIRTABLE2->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdClock1 != NULL) mdClock1->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdClock2 != NULL) mdClock2->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC01 != NULL) mdSTATIC01->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC02 != NULL) mdSTATIC02->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC03 != NULL) mdSTATIC03->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC04 != NULL) mdSTATIC04->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC05 != NULL) mdSTATIC05->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC06 != NULL) mdSTATIC06->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC07 != NULL) mdSTATIC07->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC08 != NULL) mdSTATIC08->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC09 != NULL) mdSTATIC09->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdSTATIC10 != NULL) mdSTATIC10->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+
+            //glDisable(GL_LIGHT2);                                                        // SWIATLO W LUSTERKACH WYLACZAMy :)
+            if (mdMirrorAR != NULL) mdMirrorAR->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+            if (mdMirrorAL != NULL) mdMirrorAL->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
+
     glPushMatrix();
     glTranslatef(pBogieA.x, pBogieA.y, pBogieA.z);
             if (mdBogieA)
@@ -4136,6 +4265,7 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
             { // tekstura wymienna jest raczej jedynie w "dynamic\"
                 ReplacableSkin =
                     Global::asCurrentTexturePath + ReplacableSkin; // skory tez z dynamic/...
+                /*
                 if ((i = ReplacableSkin.Pos("|")) > 0) // replacable dzielone
                 {
                     iMultiTex = -1;
@@ -4228,8 +4358,11 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
                     }
                 }
                 else
+                */
                     ReplacableSkinID[1] = TTexturesManager::GetTextureID(
                         NULL, NULL, ReplacableSkin.c_str(), Global::iDynamicFiltering);
+
+
                 if (TTexturesManager::GetAlpha(ReplacableSkinID[1]))
                     iAlpha = 0x31310031; // tekstura -1 z kana³em alfa - nie renderowaæ w cyklu
                 // nieprzezroczystych
@@ -4249,6 +4382,7 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
                         iAlpha |= 0x08080008; // tekstura -4 z kana³em alfa - nie renderowaæ w cyklu
                 // nieprzezroczystych
             }
+
             // Winger 040304 - ladowanie przedsionkow dla EZT
             if (MoverParameters->TrainType == dt_EZT)
             {

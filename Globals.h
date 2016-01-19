@@ -532,6 +532,13 @@ class QGlobal
  static bool bEXITQUERY;
  static bool bKBDREVERSED;
  static bool bSIMSTARTED;
+ static bool bchangingfoga;
+ static bool bchangingfogb;
+ static bool bchangingfogsa;
+ static bool bchangingfogsb;
+ static double fdestfogend;
+ static double fdestfogstart;
+ static double fogchangef;
 
  static int objectid;
  static int cabelementid;

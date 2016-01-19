@@ -209,7 +209,70 @@ class TDynamicObject
     TModel3d *mdBogieA;    // Q 020116: modele wozkow dla pojazdu - przedni A, tylny B, ewentualnie srodkowy (C - center)
     TModel3d *mdBogieB;
     TModel3d *mdBogieC;
+
+    TModel3d *mdDIRECT_TABLE;
+    TModel3d *mdSRJ_TABLE;
+    TModel3d *mdHASLER_A_A;
+    TModel3d *mdHASLER_B_A;
+    TModel3d *mdHASLER_A_E;
+    TModel3d *mdHASLER_B_E;
+    TModel3d *mdCZUWAK_A;
+    TModel3d *mdCZUWAK_B;
+    TModel3d *mdClock1;
+    TModel3d *mdClock2;
+    TModel3d *mdFotel1;
+    TModel3d *mdFotel2;
+    TModel3d *mdFotel3;
+    TModel3d *mdFotel4;
+    TModel3d *mdVentilator1;
+    TModel3d *mdVentilator2;
+    TModel3d *mdSRJTABLE1;
+    TModel3d *mdSRJTABLE2;
+    TModel3d *mdDIRTABLE1;
+    TModel3d *mdDIRTABLE2;
+    TModel3d *mdComputer;
+    TModel3d *mdWycieraczkaAR;
+    TModel3d *mdWycieraczkaAL;
+    TModel3d *mdWindowNumber;
+    TModel3d *mdNastawnikA;
+    TModel3d *mdNastawnikB;
+    TModel3d *mdSWsocketA;
+    TModel3d *mdSWsocketB;
+    TModel3d *mdKranZasadniczyA;
+    TModel3d *mdKranPomocniczyA;
+    TModel3d *mdOdbierakA1;
+    TModel3d *mdOdbierakA2;
+    TModel3d *mdOdbierakB1;
+    TModel3d *mdOdbierakB2;
+    TModel3d *mdZgarniaczA;
+    TModel3d *mdZgarniaczB;
+    TModel3d *mdGrzejnikSzybAR;
+    TModel3d *mdGrzejnikSzybAL;
+    TModel3d *mdStolikA;
+    TModel3d *mdStolikB;
+    TModel3d *mdMECH;
+    TModel3d *mdMECHPOM;
+    TModel3d *mdMirrorAR;
+    TModel3d *mdMirrorAL;
+    TModel3d *mdMirrorBR;
+    TModel3d *mdMirrorBL;
+    TModel3d *mdSTATIC01;
+    TModel3d *mdSTATIC02;
+    TModel3d *mdSTATIC03;
+    TModel3d *mdSTATIC04;
+    TModel3d *mdSTATIC05;
+    TModel3d *mdSTATIC06;
+    TModel3d *mdSTATIC07;
+    TModel3d *mdSTATIC08;
+    TModel3d *mdSTATIC09;
+    TModel3d *mdSTATIC10;
     float fShade; // zacienienie: 0:normalnie, -1:w ciemnoœci, +1:dodatkowe œwiat³o (brak koloru?)
+ 
+    AnsiString SRJ1token;
+    AnsiString SRJ2token;
+    AnsiString directtabletoken;
+    AnsiString roomslightstoken;
+    AnsiString associatedtrain;
 
   private: // zmienne i metody do animacji submodeli; Ra: sprzatam animacje w pojeŸdzie
   public: // tymczasowo udostêpnione do wyszukiwania drutu
@@ -494,6 +557,7 @@ class TDynamicObject
     // McZapkie-260202
     void LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName, AnsiString ReplacableSkin);
     void LoadUniqueSpecs(AnsiString asName);
+    bool LoadAdditionals(AnsiString ADDFILENAME, TDynamicObject *D, TController *M);   // Q 180116: wczytywanie pliku dodatkowych ustawien pojazdu
 
     inline double ABuGetDirection() // ABu.
     {

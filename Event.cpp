@@ -211,6 +211,10 @@ void TEvent::Load(cParser *parser, vector3 *org)
         Type = tp_Message; // wyœwietlenie komunikatu
     else if (str == AnsiString("friction"))
         Type = tp_Friction; // zmiana tarcia na scenerii
+    else if (str==AnsiString("setfog"))
+        Type= tp_setfog;
+     else if (str==AnsiString("dynevent"))
+        Type= tp_dynevent;
     else
         Type = tp_Unknown;
 
@@ -591,6 +595,40 @@ void TEvent::Load(cParser *parser, vector3 *org)
             *parser >> token;
             str = AnsiString(token.c_str());
         } while (str != "endevent");
+        break;
+    case tp_setfog:
+
+        asctime1 = asNodeName;
+        //Form3->Memo5->Lines->Add(asctime1);
+
+            i= 0;
+            Params[8].asInt= 0;
+
+            parser->getTokens();
+            *parser >> token;
+            str= AnsiString(token.c_str());
+
+            while (str!=AnsiString("endevent") && str!=AnsiString("condition"))
+            {
+                if (str!=AnsiString("none"))
+                {
+                    if (i<8)
+                    {
+                        Params[i].asText= new char[255];
+                        strcpy(Params[i].asText,str.c_str());
+
+                        if (i == 0) asfog_s = str;
+                        if (i == 1) asfog_e = str;
+                        if (i == 2) asfog_f = str;
+                    }
+                    i++;
+
+                };
+               parser->getTokens();
+               *parser >> token;
+               str= AnsiString(token.c_str());
+
+            }
         break;
     case tp_Ignored: // ignorowany
     case tp_Unknown: // nieznany

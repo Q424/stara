@@ -745,6 +745,7 @@ GLuint TTexturesManager::GetTextureID(char *dir, char *where, std::string fileNa
     { // Ra: wypróbowanie rozszerzeñ po kolei, zaczynaj¹c od domyœlnego
         fileName.append("."); // kropka bêdze na pewno, resztê trzeba próbowaæ
         std::string test; // zmienna robocza
+
         for (int i = 0; i < 4; ++i)
         { // najpierw szukamy w magazynie
             test = fileName;
@@ -775,6 +776,7 @@ GLuint TTexturesManager::GetTextureID(char *dir, char *where, std::string fileNa
             }
         }
     }
+    //WriteLog(fileName.c_str());
     iter = _names.find(fileName); // czy mamy ju¿ w magazynie
     if (iter == _names.end())
         iter = LoadFromFile(fileName, filter);
