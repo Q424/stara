@@ -31,6 +31,7 @@ class TWorld
 
   public:
     bool Init(HWND NhWnd, HDC hDC);
+    bool Load(HWND NhWnd, HDC hDC);
     HWND hWnd;
     GLvoid glPrint(const char *fmt);
     void OnKeyDown(int cKey);
@@ -80,7 +81,8 @@ class TWorld
     bool __fastcall RenderConsoleText();
     bool __fastcall RenderIRCEU07Text();
     bool __fastcall RenderDOC();
-    bool __fastcall RenderMenu();
+    bool __fastcall RenderSplash(HDC hDC);
+    bool __fastcall RenderMenu(HDC hDC);
     bool __fastcall RenderMenuCheckBox(int w, int h, int x, int y, int ident, bool check, bool selected, AnsiString label);
     bool __fastcall RenderMenuInputBox(int w, int h, int x, int y, int ident, bool selected, AnsiString label);
     bool __fastcall RenderMenuButton(int w, int h, int x, int y, int ident, bool selected, AnsiString label);

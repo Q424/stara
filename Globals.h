@@ -536,6 +536,7 @@ class QGlobal
  static bool bchangingfogb;
  static bool bchangingfogsa;
  static bool bchangingfogsb;
+ static bool brendermenu;
  static double fdestfogend;
  static double fdestfogstart;
  static double fogchangef;
@@ -755,6 +756,7 @@ class Global
     // metody
     static void TrainDelete(TDynamicObject *d);
     static void ConfigParse(Queryparsercomp::TQueryParserComp *qp, cParser *cp = NULL);
+    static void ConfigParseQ(AnsiString filename);
     static AnsiString GetNextSymbol();
     static TDynamicObject *__fastcall DynamicNearest();
     static TDynamicObject *__fastcall CouplerNearest();

@@ -35,6 +35,7 @@ http://mozilla.org/MPL/2.0/.
 #include "screen.h"
 #include "freetype.h"		// Header for our little font library.
 #include "effects2d.h"
+#include "frm_debugger.h"
 
 #define TEXTURE_FILTER_CONTROL_EXT 0x8500
 #define TEXTURE_LOD_BIAS_EXT 0x8501
@@ -91,7 +92,7 @@ SENDLOGTOFTP(AnsiString DATE)
 
     HINTERNET hInternet;
 
-    HINTERNET hFtpSession;    
+    HINTERNET hFtpSession;
 
     if(InternetAttemptConnect(0) == ERROR_SUCCESS) WriteLog("FTP: internet ok, sending log.txt...");
      else WriteLog("FTP: Internet blocked for this app");
@@ -99,7 +100,7 @@ SENDLOGTOFTP(AnsiString DATE)
 
     hInternet = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL,0);
 
-    if(hInternet != NULL){    
+    if(hInternet != NULL){
 
         hFtpSession = InternetConnect(hInternet, ftp, INTERNET_DEFAULT_FTP_PORT, user, ftppassword.c_str(), INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
 
@@ -123,14 +124,14 @@ SENDLOGTOFTP(AnsiString DATE)
                 InternetCloseHandle(hInternet);
 
                 }
-            else {                             
+            else {
                 WriteLog("FTP: Error during log upload");
               //  return -1;
-            }  
+            }
 
 
         }
-       
+
       //  else return -1;
     }
 
@@ -158,7 +159,7 @@ bool __fastcall TWorld::STARTSIMULATION()
    Global::iPause = false;
    loaderbrief = NULL;      // USUNIECIE TEKSTURY
    loaderbackg = NULL;
-   QGlobal::splashscreen = NULL;
+ //QGlobal::splashscreen = NULL;
    QGlobal::bSIMSTARTED = true;
 }
 
@@ -319,7 +320,7 @@ BOOL GetDisplayMonitorInfo(int nDeviceIndex, LPSTR lpszMonitorInfo)
 }
 */
 
-
+double timex;
 // **********************************************************************************************************
 // INICJALIZACJA USTAWIEN OpenGL, WCZYTYWANIE SCENERII - FUNKCJA WYWOLYWANA W EU07.CPP W int InitGL(GLvoid)
 // **********************************************************************************************************
@@ -358,7 +359,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     WriteLog("");
     WriteLog("");
 
-    double time = (double)Now();
+    timex = (double)Now();
     Global::hWnd = NhWnd; // do WM_COPYDATA
     Global::pCamera = &Camera; // Ra: wskaŸnik potrzebny do likwidacji drgañ
     Global::detonatoryOK = true;
@@ -373,7 +374,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     WriteLog("");
     WriteLog("Renderer: " + AnsiString((char*) glGetString(GL_RENDERER)));
     WriteLog("Vendor: " + AnsiString((char*) glGetString(GL_VENDOR)));
- 
+
 //Winger030405: sprawdzanie sterownikow
     AnsiString glver=((char*)glGetString(GL_VERSION));
     WriteLog("OpenGL Version: " + AnsiString((char*)glGetString(GL_VERSION)));
@@ -647,7 +648,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     QGlobal::fscreenfade2 = 1;
 
     /*--------------------Render Initialization End---------------------*/
-
+    /*
     WriteLog("Font init"); // pocz¹tek inicjacji fontów 2D
     if (Global::bGlutFont) // jeœli wybrano GLUT font, próbujemy zlinkowaæ GLUT32.DLL
     {
@@ -688,65 +689,36 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     }
     WriteLog("Font init OK"); //+AnsiString(glGetError())
     WriteLog("");
-
+    */
+    hWnd = NhWnd;
     SetForegroundWindow(hWnd);
 
     Timer::ResetTimers();
 
-    hWnd = NhWnd;
+
     glColor4f(1.0f, 3.0f, 3.0f, 0.0f);
     //    SwapBuffers(hDC);					                // Swap Buffers (Double Buffering)
     //    glClear(GL_COLOR_BUFFER_BIT);
     //    glFlush();
 
+
+
+    glDisable(GL_DEPTH_TEST); // Disables depth testing
+    //glColor3f(3.0f, 3.0f, 3.0f);
+
+    SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());
+    RenderMenu(hDC);
+    //Load(NhWnd, hDC);
+}
+
+bool TWorld::Load(HWND NhWnd, HDC hDC)
+{
     RenderLoader(hDC, 77, "SOUND INITIALIZATION...");
     WriteLog("Sound Init");
 
-//--    glLoadIdentity();
-    //    glColor4f(0.3f,0.0f,0.0f,0.0f);
-//--    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-/*
-    glTranslatef(0.0f, 0.0f, -0.50f);
-    //    glRasterPos2f(-0.25f, -0.10f);
-    glDisable(GL_DEPTH_TEST); // Disables depth testing
-    glColor3f(3.0f, 3.0f, 3.0f);
 
-    GLuint logo;
-    logo = TTexturesManager::GetTextureID(szTexturePath, szSceneryPath, "logo", 6);
-    glBindTexture(GL_TEXTURE_2D, logo); // Select our texture
-
-    glBegin(GL_QUADS); // Drawing using triangles
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-0.28f, -0.22f, 0.0f); // bottom left of the texture and quad
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(0.28f, -0.22f, 0.0f); // bottom right of the texture and quad
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(0.28f, 0.22f, 0.0f); // top right of the texture and quad
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(-0.28f, 0.22f, 0.0f); // top left of the texture and quad
-    glEnd();
-    //~logo; Ra: to jest bez sensu zapis
-    */
-
-
-
-
-    //if (Global::detonatoryOK)
-    //{
-    //    glRasterPos2f(-0.25f, -0.09f);
-    //    glPrint("Uruchamianie / Initializing...");
-    //    glRasterPos2f(-0.25f, -0.10f);
-    //    glPrint("Dzwiek / Sound...");
-    //}
-    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
-
-
-    WriteLog(".");
-    SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());
-    //WriteLog("SetCurrentDirectory();");
     /*-----------------------Sound Initialization-----------------------*/
     TSoundsManager::Init(hWnd);
-    WriteLog(".");
     // TSoundsManager::LoadSounds( "" );
     /*---------------------Sound Initialization End---------------------*/
     WriteLog("Sound Init OK");
@@ -930,7 +902,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     light = TTexturesManager::GetTextureID(szTexturePath, szSceneryPath, "smuga.tga");
     // Camera.Reset();
     ResetTimers();
-    WriteLog("Load time: " + FloatToStrF((86400.0 * ((double)Now() - time)), ffFixed, 7, 1) + " seconds");
+    WriteLog("Load time: " + FloatToStrF((86400.0 * ((double)Now() - timex)), ffFixed, 7, 1) + " seconds");
 
     AnsiString logdate = FormatDateTime("yymmdd hhmmss", Now());
     AnsiString ftpdate = FormatDateTime("ddmmyy-hhmmss", Now());  // name on FTP
@@ -1005,7 +977,7 @@ void TWorld::OnKeyDown(int cKey)
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('f'))) QGlobal::bscrfilter = !QGlobal::bscrfilter;
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('n'))) QGlobal::bscrnoise = !QGlobal::bscrnoise;
  
- if (Global::iPause && cKey == Global::Keys[k_Czuwak]) STARTSIMULATION();       // Q 291215: Bo po zaladowaniu symulacji jest pauza i pozostaje obraz wczytywania jako tlo pauzy
+ if (QGlobal::bSCNLOADED && Global::iPause && cKey == Global::Keys[k_Czuwak]) STARTSIMULATION();       // Q 291215: Bo po zaladowaniu symulacji jest pauza i pozostaje obraz wczytywania jako tlo pauzy
 
  if (!Console::Pressed(VK_SHIFT) && cKey == VK_F11) SCR->SaveScreen_xxx();      // Q 261215: zrut ekranu do jpg, tga lub bmp w zaleznosci od opcji w config.txt
 

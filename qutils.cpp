@@ -158,12 +158,12 @@ std::vector<std::string> &split(const std::string &s, char delim, std::vector<st
     return elems;
 }
 
-//std::vector<std::string> split(const std::string &s, char delim)
-//{
-//    std::vector<std::string> elems;
-//    split(s, delim, elems);
-//    return elems;
-//}
+std::vector<std::string> split(const std::string &s, char delim)
+{
+    std::vector<std::string> elems;
+    split(s, delim, elems);
+    return elems;
+}
 
 
 // *****************************************************************************
@@ -362,6 +362,12 @@ AnsiString BoolToYN(bool value)
  {
   if (value == true) return "tak";
   if (value == false) return "nie";
+ }
+
+bool YNToBool(AnsiString value)
+ {
+  if (value == "yes") return true;
+  if (value == "no") return false;
  }
 
 AnsiString StrToPERON(AnsiString value)

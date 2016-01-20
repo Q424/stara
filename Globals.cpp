@@ -18,6 +18,10 @@ http://mozilla.org/MPL/2.0/.
 #include<vector.h>
 #include<algorithm>
 #include "assert.h"
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <istream>
 
 #pragma hdrstop
 
@@ -35,6 +39,7 @@ http://mozilla.org/MPL/2.0/.
 #include "qutils.h"
 #include "world.h"
 #include "timer.h"
+#include "qutils.h"
 // namespace Global {
 
 //using namespace Math3d
@@ -170,6 +175,7 @@ bool QGlobal::bchangingfoga = false;
 bool QGlobal::bchangingfogb = false;
 bool QGlobal::bchangingfogsa = false;
 bool QGlobal::bchangingfogsb = false;
+bool QGlobal::brendermenu = false;
 double QGlobal::fdestfogend = 0;
 double QGlobal::fdestfogstart = 0;
 double QGlobal::fogchangef = 0;
@@ -410,9 +416,15 @@ AnsiString Global::GetNextSymbol()
     return "";
 };
 
+
+// ************************************************************************************************
+// Wczytywanie konfiguracji z pliku EU07.INI
+// Q 20.01.16: Wprowadzam nowy parser do tego celu, u niektorych czasem sie sypalo tutaj
+// ************************************************************************************************
 void Global::LoadIniFile(AnsiString asFileName)
 {
- WriteLog("LoadIniFile() - 1");
+ //WriteLog("LoadIniFile() - 1");
+ /*
     int i;
     for (i = 0; i < 10; ++i)
     { // zerowanie pozycji kamer
@@ -438,10 +450,117 @@ void Global::LoadIniFile(AnsiString asFileName)
     Parser->TextToParse = str;
     // Parser->LoadStringToParse(asFile);
     Parser->First();
-    ConfigParse(Parser);
+    //---ConfigParse(Parser);
+
     delete Parser; // Ra: tego jak zwykle nie by³o wczeœniej :]
-  WriteLog("LoadIniFile() - 5");
+    */
+ // WriteLog("LoadIniFile() - 5");
+
+  ConfigParseQ(asFileName);
 };
+
+
+// ************************************************************************************************
+// Alternatywny parser plikow konfiguracyjnych
+// ************************************************************************************************
+void Global::ConfigParseQ(AnsiString filename)
+{
+TStringList *slINI;
+slINI = new TStringList();
+
+// char szINIFILE[200];
+ AnsiString line;
+ AnsiString test, key, p01, p02, debuglog, skyen, maxtexsize, defaultext;
+// sprintf(szINIFILE,"%s%s", QGlobal::asAPPDIR , "eu07.ini");
+// WriteLog("READING CONFIG FILE... (" + AnsiString(szINIFILE) + ")");
+
+    char *strings[30];
+    char Policystr[4096] = "the|string|to|split";
+    char delims[] = " ";
+
+slINI->LoadFromFile(QGlobal::asAPPDIR + "eu07.ini");
+// std::ifstream FileINI("eu07.ini");
+
+//    if(FileINI)
+//    {
+//        while(std::getline(FileINI,line))
+//        {
+for (int l = 0; l<slINI->Count-1; l++)
+     {
+      line = slINI->Strings[l];
+      
+                int pos1 = 0;
+		int pos2 = 0;
+                int pos3 = 0;
+		pos1 = line.Pos("//");
+		pos2 = line.Pos(":");                     //14
+                pos3 = line.Pos("//");                     //33
+		test = line.SubString(1, pos1-1);
+
+                strcpy(Policystr, test.c_str());
+
+                int i = 0;
+                strings[i] = strtok( Policystr, delims );
+                while( strings[i] != NULL  )
+                {
+                 printf("%d '%s'\n", i, strings[i]);
+                 strings[++i] = strtok( NULL, delims );
+                }
+
+                if (pos1 > 4)
+                {
+
+                WriteLog(test + ": " + strings[0] + "-> [" + Trim(strings[1]) + "][" + Trim(strings[2]) + "]");
+
+                key = LowerCase(Trim(strings[0]));
+                p01 = LowerCase(Trim(strings[1]));
+                p02 = LowerCase(Trim(strings[2]));
+              //WriteLog(key);
+                if (key == "sceneryfile") strcpy(szSceneryFile, p01.c_str());
+                if (key == "humanctrlvehicle") asHumanCtrlVehicle = p01;
+                if (key == "width") iWindowWidth = p01.ToIntDef(800);
+                if (key == "height") iWindowHeight = p01.ToIntDef(600);
+                if (key == "fullscreen") bFullScreen = YNToBool(p01);
+                if (key == "bpp") iBpp = p01.ToIntDef(32);
+                if (key == "debugmode") DebugModeFlag = YNToBool(p01);
+                if (key == "soundenabled") bSoundEnabled = YNToBool(p01);
+                if (key == "physicslog") WriteLogFlag = YNToBool(p01);
+                if (key == "debuglog") debuglog = p01;
+                if (key == "wireframe") bWireFrame = YNToBool(p01);
+                if (key == "physicsdeactivation") PhysicActivationFlag = YNToBool(p01);
+                if (key == "adjustscreenfreq") bAdjustScreenFreq = YNToBool(p01);
+                if (key == "enabletraction") bEnableTraction = YNToBool(p01);
+                if (key == "loadtraction") bLoadTraction = YNToBool(p01);
+                if (key == "livetraction") bLiveTraction = YNToBool(p01);
+                if (key == "managenodes") bManageNodes = YNToBool(p01);
+                if (key == "friction") fFriction = p01.ToDouble();
+                if (key == "skyenabled") skyen = p01;
+                if (key == "brakestep") fBrakeStep = p01.ToDouble();
+                if (key == "mousescale") {fMouseXScale = p01.ToDouble(); fMouseYScale = p02.ToDouble();}
+                if (key == "defaultext") defaultext = p01;
+                if (key == "maxtexturesize") maxtexsize = p01;
+                if (key == "defaultfiltering") iDefaultFiltering = p01.ToIntDef(-1);
+                if (key == "ballastfiltering") iBallastFiltering = p01.ToIntDef(-1);
+                if (key == "railprofiltering") iRailProFiltering = p01.ToIntDef(-1);
+                if (key == "dynamicfiltering") iDynamicFiltering = YNToBool(p01);
+                if (key == "newaircouplers") bnewAirCouplers = YNToBool(p01);
+                if (key == "usevbo") bUseVBO = YNToBool(p01);
+                if (key == "feedbackmode") iFeedbackMode = p01.ToIntDef(1);
+                if (key == "feedbackport") iFeedbackPort = p01.ToIntDef(0);
+                if (key == "smoothtraction") bSmoothTraction = YNToBool(p01);
+                if (key == "timespeed") fTimeSpeed = p01.ToIntDef(1);
+                if (key == "multisampling") iMultisampling = p01.ToIntDef(2); // domyœlnie 2
+                if (key == "glufont") bGlutFont = YNToBool(p01);
+                if (key == "lang") asLang = p01;
+
+             //   }
+        }
+     }
+     WriteLog("INI FILE OK.");
+     WriteLog("");
+   //  FileINI.close();
+
+}
 
 void Global::ConfigParse(TQueryParserComp *qp, cParser *cp)
 { // Ra: trzeba by przerobiæ na cParser, ¿eby to dzia³a³o w scenerii

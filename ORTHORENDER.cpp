@@ -2921,174 +2921,6 @@ if (!Global::SCNLOADED)
 }
   */
 
-// *****************************************************************************
-// RenderMenu() - GLOWNA FUNKCJA RENDERUJACA MENU GLOWNE ***********************
-// *****************************************************************************
-
-bool __fastcall TWorld::RenderMenu()
-{
-/*
-    AnsiString type;
-    settscontainer mobj;
-    int margin = 1;
-
-    if (Global::bQueuedAdvLog) WriteLog("bool __fastcall TWorld::RenderMenu()");
-
-    glPolygonMode(GL_FRONT, GL_FILL);
-    
-// checkfreq()
-    if (!bnodesmain) nodesinmain = new TStringList;
-    desc = "";
-
-    GWW = Global::iWindowWidth;
-    GWH = Global::iWindowHeight;
-
-    nodesinmain->Clear();
-    bnodesmain = true;
-
-  //if (!startsound1) PlaySound("data\\sounds\\menu.x", NULL, SND_ASYNC); startsound1 = true;
-
-    if (!iniloaded)
-        {
-         Global::LoadIniFile(); iniloaded = true;
-         irailmaxdistance = Global::railmaxdistance;
-         ipodsmaxdistance = Global::podsmaxdistance;
-         isnowflakesnum = Global::iSnowFlakesNum;
-         selscn = Global::szSceneryFile;
-         selvch = Global::asHumanCtrlVehicle;
-        }
-
-    if (!bcheckfreq) checkfreq();
-
-    if (!startpassed) {SetConfigResolution(); startpassed = true;};        // MUSI BYC, BO INACZEJ BEDZIE PUSTY SCREEN
-
-
-    glDisable( GL_LIGHT0 );
-    glDisable( GL_LIGHTING );
-    glDisable( GL_FOG );
-
-
-//-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);   // TO GDY MENU BEDZIE RENDEROWANE PRZED ZALADOWANIEM SCENERII
-//-    glClearColor (0.1, 0.2, 0.2, 1.0);                   // ELO GREEN
-
-
-   // RENDEROWANIE PLASKIE (GUI) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   glOrtho(0, GWW, GWH, 0, -100, 100);
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity( );
-
-
-   // MENU BACKGROUND ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   glColor4f(0.1,0.1,0.1,0.97f);
-   glEnable(GL_BLEND);
-
-
-   if (Global::menuselected == "main" ) glColor4f(0.4, 0.4, 0.4, 0.45f);
-   if (Global::menuselected == "about") glColor4f(0.4, 0.4, 0.4, 0.45f);
-   if (Global::menuselected == "sett" ) glColor4f(0.4, 0.4, 0.4, 0.45f);
-   
-   glBindTexture(GL_TEXTURE_2D, Global::texmenu_backg);
-   glBegin(GL_QUADS);
-   glTexCoord2f(0, 1); glVertex3i(    margin,      margin, 0);  // GORNY LEWY
-   glTexCoord2f(0, 0); glVertex3i(    margin, GWH- margin, 0);  // DOLY LEWY
-   glTexCoord2f(1, 0); glVertex3i(GWW-margin, GWH- margin, 0);  // DOLNY PRAWY
-   glTexCoord2f(1, 1); glVertex3i(GWW-margin,      margin, 0);  // GORNY PRAWY
-   glEnd();
-
-
-
-   // HEADER LINE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   //-glBlendFunc(GL_ONE_MINUS_SRC_COLOR,GL_SRC_COLOR);
-   if (Global::menuselected == "main" ) glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-   //-glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-   //glEnable(GL_BLEND);
-   //glColor4f(0.1,0.1,0.1,0.97f);
-   //glBindTexture(GL_TEXTURE_2D, Global::texmenu_head1);
-   //glBegin(GL_QUADS);
-   //glTexCoord2f(0, 1); glVertex3i(    margin,     margin, 0);  // GORNY LEWY
-   //glTexCoord2f(0, 0); glVertex3i(    margin, GWH-GWH+80, 0);  // DOLY LEWY
-   //glTexCoord2f(1, 0); glVertex3i(GWW-margin, GWH-GWH+80, 0);  // DOLNY PRAWY
-   //glTexCoord2f(1, 1); glVertex3i(GWW-margin,     margin, 0);  // GORNY PRAWY
-   //glEnd();
-   //glDisable(GL_BLEND);
-
-
-   //RenderMenuLineH(10, GWH-10, GWW-10, GWH-10, 1, 0, 0);
-   //RenderMenuLineH(10,     10, GWW-10,     10, 1, 0, 0);  // LINIA HEADER 1
-   //RenderMenuLineH(10,     81, GWW-10,     81, 1, 0, 0);  // LINIA HEADER 2
-
-
-
-//   if (Global::menuselected == "main") RenderInformation(0);
-   if (Global::menuselected == "sett") RenderInformation(11);
-   if (Global::menuselected == "about") RenderInformation(33);
-   if (Global::menuselected == "start") RenderInformation(44);
-
-
-   Global::sceneryloading = false; // WYMUSZONE
-if (!Global::sceneryloading)
-    {
-    
-     for (int LOOP=0; LOOP<Global::menuobjs ; LOOP++)
-          {
-           if (Global::menuselected == Global::menuctrls[LOOP].parent)
-               {
-                mobj = Global::menuctrls[LOOP];
-                type = Global::menuctrls[LOOP].type;
-
-                if (type == "button") RenderMenuButton(mobj.dx, mobj.dy, mobj.px, mobj.py, StrToInt(mobj.code), 0, "none");
-
-                if (type == "editbox") RenderMenuInputBox(mobj.dx, mobj.dy, mobj.px, mobj.py, StrToInt(mobj.code), 0, mobj.label);
-
-                if (type == "checkbox") RenderMenuCheckBox(mobj.dx, mobj.dy, mobj.px, mobj.py, StrToInt(mobj.code), 0, 0, mobj.label);
-
-                if (type == "listbox") RenderMenuListBox(mobj.dx, mobj.dy, mobj.px, mobj.py, StrToInt(mobj.code), 0, 21, mobj.label);
-
-                if (type == "panel1") RenderMenuPanel1(mobj.dx, mobj.dy, mobj.px, mobj.py, StrToInt(mobj.code), 0, "none", mobj.image);
-               }
-          }
-    }
-
-
-
-   // MOUSE CURSOR ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   GetCursorPos(&mouse);
-   Global::MPX = mouse.x;
-   Global::MPY = mouse.y;
-
-   glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-   glEnable(GL_BLEND);
-   glBindTexture(GL_TEXTURE_2D, Global::texmenu_point);
-   glBegin( GL_QUADS );
-   glTexCoord2f(0, 1); glVertex3i(Global::MPX+0,  Global::MPY+0,  0);           // GORNY LEWY
-   glTexCoord2f(0, 0); glVertex3i(Global::MPX+0,  Global::MPY+30, 0);           // DOLY LEWY
-   glTexCoord2f(1, 0); glVertex3i(Global::MPX+30, Global::MPY+30, 0);           // DOLNY PRAWY
-   glTexCoord2f(1, 1); glVertex3i(Global::MPX+30, Global::MPY+0,  0);           // GORNY PRAWY
-   glEnd( );
-   glDisable(GL_BLEND);
-
-
-
-
-   
-   // INFORMACJE O PRZELACZNIKU W MENU USTAWIENIA
-   glEnable( GL_TEXTURE_2D);
-   BFONT->Begin();
-   glColor4f(0.4,0.4,0.4,0.7);
-   BFONT->Print_xy_scale(20, (Global::iWindowHeight)-1015, AnsiString(desc).c_str(), 1, 1.0, 1.0);
-   BFONT->Print_xy_scale(950, (Global::iWindowHeight)-1015, AnsiString(Global::APPDATE + " " + Global::APPSIZE).c_str(), 1, 0.8, 0.8);
-   BFONT->End();
-
-   //WriteLog("MENU:");
-   glEnable(GL_LIGHT0);
-//-   glFlush();
-
-   return true;
-   */
-}
 
 
 bool __fastcall TWorld::RenderFPS(double alpha)
@@ -5201,6 +5033,228 @@ bool __fastcall TWorld::RenderFadeOff(int percent)
 {
 
    return true;
+}
+
+
+bool __fastcall TWorld::RenderSplash(HDC hDC)
+{
+   //
+}
+
+
+// *****************************************************************************
+// RenderMenu() - GLOWNA FUNKCJA RENDERUJACA MENU GLOWNE ***********************
+// *****************************************************************************
+
+bool __fastcall TWorld::RenderMenu(HDC hDC)
+{
+
+   if (Console::Pressed(VK_RETURN)) QGlobal::brendermenu = false;
+
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   glOrtho(0, Global::iWindowWidth, Global::iWindowHeight, 0, -100, 100);
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity( );
+   glClearColor (LDR_COLOR_R, LDR_COLOR_G, LDR_COLOR_B, 0.7);     // 09 07 04 07
+
+   glDisable(GL_DEPTH_TEST);			// Disables depth testing
+   glDisable(GL_LIGHTING);
+   glDisable(GL_FOG);
+   glEnable(GL_TEXTURE_2D);
+
+   glColor4f(LDR_COLOR_R, LDR_COLOR_G, LDR_COLOR_B, 1.0);
+   int margin = QGlobal::LDRBORDER;
+
+   QGlobal::aspectratio = 169;
+
+   if (QGlobal::aspectratio == 43)
+   {
+   glBindTexture(GL_TEXTURE_2D, loaderbackg);
+   glBegin( GL_QUADS );
+   glTexCoord2f(0, 1); glVertex3i(margin-174,   margin,0);   // GORNY LEWY
+   glTexCoord2f(0, 0); glVertex3i(margin-174,   Global::iWindowHeight-margin,0); // DOLY LEWY
+   glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+174, Global::iWindowHeight-margin,0); // DOLNY PRAWY
+   glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+174, margin,0);   // GORNY PRAWY
+   glEnd( );
+   }
+
+   if (QGlobal::aspectratio == 169)
+   {
+   int pm = 0;
+   glBindTexture(GL_TEXTURE_2D, loaderbackg);
+   glBegin( GL_QUADS );
+   glTexCoord2f(0, 1); glVertex3i(margin-pm,   margin,0);   // GORNY LEWY
+   glTexCoord2f(0, 0); glVertex3i(margin-pm,   Global::iWindowHeight-margin,0); // DOLY LEWY
+   glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+pm, Global::iWindowHeight-margin,0); // DOLNY PRAWY
+   glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+pm, margin,0);   // GORNY PRAWY
+   glEnd( );
+   }
+
+   //glFlush();
+   SwapBuffers(hDC);
+/*
+    AnsiString type;
+    settscontainer mobj;
+    int margin = 1;
+
+    if (Global::bQueuedAdvLog) WriteLog("bool __fastcall TWorld::RenderMenu()");
+
+    glPolygonMode(GL_FRONT, GL_FILL);
+    
+// checkfreq()
+    if (!bnodesmain) nodesinmain = new TStringList;
+    desc = "";
+
+    GWW = Global::iWindowWidth;
+    GWH = Global::iWindowHeight;
+
+    nodesinmain->Clear();
+    bnodesmain = true;
+
+  //if (!startsound1) PlaySound("data\\sounds\\menu.x", NULL, SND_ASYNC); startsound1 = true;
+
+    if (!iniloaded)
+        {
+         Global::LoadIniFile(); iniloaded = true;
+         irailmaxdistance = Global::railmaxdistance;
+         ipodsmaxdistance = Global::podsmaxdistance;
+         isnowflakesnum = Global::iSnowFlakesNum;
+         selscn = Global::szSceneryFile;
+         selvch = Global::asHumanCtrlVehicle;
+        }
+
+    if (!bcheckfreq) checkfreq();
+
+    if (!startpassed) {SetConfigResolution(); startpassed = true;};        // MUSI BYC, BO INACZEJ BEDZIE PUSTY SCREEN
+
+
+    glDisable( GL_LIGHT0 );
+    glDisable( GL_LIGHTING );
+    glDisable( GL_FOG );
+
+
+//-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);   // TO GDY MENU BEDZIE RENDEROWANE PRZED ZALADOWANIEM SCENERII
+//-    glClearColor (0.1, 0.2, 0.2, 1.0);                   // ELO GREEN
+
+
+   // RENDEROWANIE PLASKIE (GUI) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   glOrtho(0, GWW, GWH, 0, -100, 100);
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity( );
+
+
+   // MENU BACKGROUND ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   glColor4f(0.1,0.1,0.1,0.97f);
+   glEnable(GL_BLEND);
+
+
+   if (Global::menuselected == "main" ) glColor4f(0.4, 0.4, 0.4, 0.45f);
+   if (Global::menuselected == "about") glColor4f(0.4, 0.4, 0.4, 0.45f);
+   if (Global::menuselected == "sett" ) glColor4f(0.4, 0.4, 0.4, 0.45f);
+   
+   glBindTexture(GL_TEXTURE_2D, Global::texmenu_backg);
+   glBegin(GL_QUADS);
+   glTexCoord2f(0, 1); glVertex3i(    margin,      margin, 0);  // GORNY LEWY
+   glTexCoord2f(0, 0); glVertex3i(    margin, GWH- margin, 0);  // DOLY LEWY
+   glTexCoord2f(1, 0); glVertex3i(GWW-margin, GWH- margin, 0);  // DOLNY PRAWY
+   glTexCoord2f(1, 1); glVertex3i(GWW-margin,      margin, 0);  // GORNY PRAWY
+   glEnd();
+
+
+
+   // HEADER LINE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   //-glBlendFunc(GL_ONE_MINUS_SRC_COLOR,GL_SRC_COLOR);
+   if (Global::menuselected == "main" ) glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+   //-glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+   //glEnable(GL_BLEND);
+   //glColor4f(0.1,0.1,0.1,0.97f);
+   //glBindTexture(GL_TEXTURE_2D, Global::texmenu_head1);
+   //glBegin(GL_QUADS);
+   //glTexCoord2f(0, 1); glVertex3i(    margin,     margin, 0);  // GORNY LEWY
+   //glTexCoord2f(0, 0); glVertex3i(    margin, GWH-GWH+80, 0);  // DOLY LEWY
+   //glTexCoord2f(1, 0); glVertex3i(GWW-margin, GWH-GWH+80, 0);  // DOLNY PRAWY
+   //glTexCoord2f(1, 1); glVertex3i(GWW-margin,     margin, 0);  // GORNY PRAWY
+   //glEnd();
+   //glDisable(GL_BLEND);
+
+
+   //RenderMenuLineH(10, GWH-10, GWW-10, GWH-10, 1, 0, 0);
+   //RenderMenuLineH(10,     10, GWW-10,     10, 1, 0, 0);  // LINIA HEADER 1
+   //RenderMenuLineH(10,     81, GWW-10,     81, 1, 0, 0);  // LINIA HEADER 2
+
+
+
+//   if (Global::menuselected == "main") RenderInformation(0);
+   if (Global::menuselected == "sett") RenderInformation(11);
+   if (Global::menuselected == "about") RenderInformation(33);
+   if (Global::menuselected == "start") RenderInformation(44);
+
+
+   Global::sceneryloading = false; // WYMUSZONE
+if (!Global::sceneryloading)
+    {
+    
+     for (int LOOP=0; LOOP<Global::menuobjs ; LOOP++)
+          {
+           if (Global::menuselected == Global::menuctrls[LOOP].parent)
+               {
+                mobj = Global::menuctrls[LOOP];
+                type = Global::menuctrls[LOOP].type;
+
+                if (type == "button") RenderMenuButton(mobj.dx, mobj.dy, mobj.px, mobj.py, StrToInt(mobj.code), 0, "none");
+
+                if (type == "editbox") RenderMenuInputBox(mobj.dx, mobj.dy, mobj.px, mobj.py, StrToInt(mobj.code), 0, mobj.label);
+
+                if (type == "checkbox") RenderMenuCheckBox(mobj.dx, mobj.dy, mobj.px, mobj.py, StrToInt(mobj.code), 0, 0, mobj.label);
+
+                if (type == "listbox") RenderMenuListBox(mobj.dx, mobj.dy, mobj.px, mobj.py, StrToInt(mobj.code), 0, 21, mobj.label);
+
+                if (type == "panel1") RenderMenuPanel1(mobj.dx, mobj.dy, mobj.px, mobj.py, StrToInt(mobj.code), 0, "none", mobj.image);
+               }
+          }
+    }
+
+
+
+   // MOUSE CURSOR ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   GetCursorPos(&mouse);
+   Global::MPX = mouse.x;
+   Global::MPY = mouse.y;
+
+   glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+   glEnable(GL_BLEND);
+   glBindTexture(GL_TEXTURE_2D, Global::texmenu_point);
+   glBegin( GL_QUADS );
+   glTexCoord2f(0, 1); glVertex3i(Global::MPX+0,  Global::MPY+0,  0);           // GORNY LEWY
+   glTexCoord2f(0, 0); glVertex3i(Global::MPX+0,  Global::MPY+30, 0);           // DOLY LEWY
+   glTexCoord2f(1, 0); glVertex3i(Global::MPX+30, Global::MPY+30, 0);           // DOLNY PRAWY
+   glTexCoord2f(1, 1); glVertex3i(Global::MPX+30, Global::MPY+0,  0);           // GORNY PRAWY
+   glEnd( );
+   glDisable(GL_BLEND);
+
+
+
+
+   
+   // INFORMACJE O PRZELACZNIKU W MENU USTAWIENIA
+   glEnable( GL_TEXTURE_2D);
+   BFONT->Begin();
+   glColor4f(0.4,0.4,0.4,0.7);
+   BFONT->Print_xy_scale(20, (Global::iWindowHeight)-1015, AnsiString(desc).c_str(), 1, 1.0, 1.0);
+   BFONT->Print_xy_scale(950, (Global::iWindowHeight)-1015, AnsiString(Global::APPDATE + " " + Global::APPSIZE).c_str(), 1, 0.8, 0.8);
+   BFONT->End();
+
+   //WriteLog("MENU:");
+   glEnable(GL_LIGHT0);
+//-   glFlush();
+
+   return true;
+   */
 }
 
 

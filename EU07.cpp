@@ -383,8 +383,9 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
     if (fullscreen) // Are We Still In Fullscreen Mode?
     {
         dwExStyle = WS_EX_APPWINDOW; // Window Extended Style
-        dwStyle = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN; // Windows Style
-        ShowCursor(FALSE); // Hide Mouse Pointer
+        dwStyle = WS_POPUP | WS_CLIPSIBLINGS  ; // Windows Style      | WS_CLIPCHILDREN
+
+        //ShowCursor(FALSE); // Hide Mouse Pointer
     }
     else
     {
@@ -1037,7 +1038,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     if(FileCFG)
     {
         while(getline(FileCFG,line))
-		{    
+		{
 		AnsiString test,par1;
                 int pos1 = 0;
 		int pos2 = 0;
@@ -1073,6 +1074,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
               //if (test == "guitutopac") QGlobal::GUITUTOPAC = atof(par1.c_str());
                 if (test == "sshotexif+") QGlobal::bWRITEEXIF = atoi(par1.c_str());
                 if (test == "splashscrn") QGlobal::bSPLASHSCR = atoi(par1.c_str());
+                if (test == "rendermenu") QGlobal::brendermenu = atoi(par1.c_str());
                 if (test == "exifauthor") QGlobal::asEXIFAUTHOR = par1;
                 if (test == "exifcpyrgt") QGlobal::asEXIFCOPYRIGHT = par1;
                 if (test == "rail_model") QGlobal::asRAILTYPE = UpperCase(par1);
@@ -1175,7 +1177,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 
  for (int l = 0; l < ss->Count; l++) WriteLog(ss->Strings[l]);
 
- SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());
+ //SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());
 
  //WriteLog("cmpconf: windows 7 Ultimate 64, AMD FX 4170 4.2GHz 4 core, 8gb ram, GFX GF8600GT CORE 560Mhz 256MB PCIE,  BIOS VIDEO: 60.84.5E.00.00, OpenGL 3.3 driver rev 2009-01-16 6.14.11.8151 ");
  WriteLog("");
@@ -1184,19 +1186,22 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 
     HWND aHWnd;
     aHWnd = FindWindow(NULL, QGlobal::logwinname.c_str()); // Szukanie okna z otwartm logiem znajac etykiete
-    SendMessage(aHWnd, WM_CLOSE, 0, 0);    // ZAMYKAMY OTWARTY LOG
+    //SendMessage(aHWnd, WM_CLOSE, 0, 0);    // ZAMYKAMY OTWARTY LOG
 
+    SetCurrentDirectory(QGlobal::asAPPDIR.c_str());
+    Sleep(500);
+    Application->ProcessMessages();
     WriteLog("Reading eu07.ini...");
     Global::LoadIniFile("eu07.ini"); // teraz dopiero mo¿na przejrzeæ plik z ustawieniami
     Global::InitKeys("keys.ini"); // wczytanie mapowania klawiszy - jest na sta³e
 
     // hunter-271211: ukrywanie konsoli
-    if (Global::iWriteLogEnabled & 2)
-    {
-        WriteLog("Creating Console...");
-        if (!Global::bHideConsole) AllocConsole();
-        if (!Global::bHideConsole) SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_GREEN);
-    }
+  //  if (Global::iWriteLogEnabled & 2)
+  //  {
+  //      WriteLog("Creating Console...");
+  //      if (!Global::bHideConsole) AllocConsole();
+  //      if (!Global::bHideConsole) SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_GREEN);
+  //  }
   //WriteLog(lpCmdLine);
 
     WriteLog("Parsing command line...");
@@ -1292,12 +1297,44 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     SetForegroundWindow(hWnd);
     SetFocus(hWnd);
 
+    if (Console::Pressed(VK_F9)) QGlobal::brendermenu = true;                   // BACK DOOR ;)
 
-    //password = encryptDecrypt(X2985Z457);
-    //DEBUGGER->Left = 0;
-    //DEBUGGER->Width = Screen->Width;
-    //DEBUGGER->Top = Screen->Height - DEBUGGER->Height;
-    //DEBUGGER->Show();
+    if (QGlobal::brendermenu) DEBUGGER->Show();
+    //if (QGlobal::brendermenu) DEBUGGER->BringToFront();
+    SetWindowPos(hWnd, HWND_BOTTOM,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
+    EnableWindow(hWnd, false);                                                  // DEAKTYWUJEMY OKNO OPENGL CONY NA WIERZCH NIE WYLAZILO
+    SetWindowPos(DEBUGGER->Handle, HWND_TOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
+    DEBUGGER->lversion->Caption = QGlobal::asAPPVERS;
+    
+    while (QGlobal::brendermenu) // loop that runs while done=FALSE
+        {
+            if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) // is there a message waiting?
+            {
+                if (msg.message == WM_QUIT) // have we received a quit message?
+                    done = TRUE; // if so
+                else // if not, deal with window messages
+                {
+                    TranslateMessage(&msg); // translate the message
+                    DispatchMessage(&msg); // dispatch the message
+                }
+            }
+            else // if there are no messages
+            {
+                if (DEBUGGER->appdone) exit(0);
+                if (DEBUGGER->launch) QGlobal::brendermenu = false;
+                if (World.RenderMenu(hDC)) // Was There A Quit Received?
+                    SwapBuffers(hDC); // Swap Buffers (Double Buffering)
+                else
+                    done = true; //[F10] or DrawGLScene signalled a quit
+            }
+        }
+
+    EnableWindow(hWnd, true);
+    //SetForegroundWindow(hWnd);
+    SetFocus(hWnd);
+
+    ShowCursor(FALSE);
+    World.Load(hWnd, hDC);
 
     // McZapkie: proba przeplukania klawiatury
     Console *pConsole = new Console(); // Ra: nie wiem, czy ma to sens, ale jakoœ zainicjowac trzeba
@@ -1371,6 +1408,13 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     KillGLWindow(); // kill the window
     return (msg.wParam); // exit the program
 }
+
+
+
+
+
+
+
 
 
 
