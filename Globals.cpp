@@ -121,6 +121,7 @@ TStringList *QGlobal::CONFIG;
 TStringList *QGlobal::LOKTUT;
 TStringList *QGlobal::LOKKBD;
 TStringList *QGlobal::MBRIEF;
+TStringList *QGlobal::MISSIO;
 TStringList *QGlobal::CONSISTF;
 TStringList *QGlobal::CONSISTB;
 TStringList *QGlobal::CONSISTA;
@@ -176,6 +177,8 @@ bool QGlobal::bchangingfogb = false;
 bool QGlobal::bchangingfogsa = false;
 bool QGlobal::bchangingfogsb = false;
 bool QGlobal::brendermenu = false;
+bool QGlobal::bfirstinitok = false;
+bool QGlobal::bCABLOADING = false;
 double QGlobal::fdestfogend = 0;
 double QGlobal::fdestfogstart = 0;
 double QGlobal::fogchangef = 0;
@@ -188,6 +191,8 @@ int QGlobal::iHLBLENDTYPE = 0;
 int QGlobal::iMIRRORSUPDBY = 2;
 int QGlobal::iRANDTABPOS = 0;
 int QGlobal::iNODES = 100000;
+int QGlobal::iNODESPASSED = 100000;
+int QGlobal::iNODESFIRSTINIT = 0;
 int QGlobal::iPARSERBYTESPASSED = 0;
 int QGlobal::iPARSERBYTESTOTAL = 0;
 int QGlobal::postep = 1;
@@ -204,9 +209,9 @@ double QGlobal::fps = 1.0f;
 float QGlobal::gtc1 = 0;
 float QGlobal::gtc2 = 0;
 float QGlobal::lsec = 0;
-float QGlobal::rtim = 0;
+int QGlobal::rtim = 0;
 float QGlobal::ffov = 45.0f;
-float QGlobal::LDRREFRESH = 0.1f;
+int QGlobal::LDRREFRESH = 100;
 int   QGlobal::LDRBORDER = 1;
 float QGlobal::GUITUTOPAC = 0.1f;
 double QGlobal::fscreenfade = 1.0;
@@ -238,11 +243,15 @@ stationscontainer QGlobal::station[MAXSTATIONS];
 pentrypointscontainer QGlobal::PEP[MAXPASSENGERENTYPOINTS];
 semlightcontainer QGlobal::slc[128];
 int QGlobal::currententrypoint = 0;
+backgroundrect QGlobal::BR;
 
 float QGlobal::rekrot3_rot = 0.0;
 float QGlobal::rekrot3_time = 0.0;
 int QGlobal::rekrot_step = 1;
 bool QGlobal::rekrot_timepause = false;
+Color4 QGlobal::lepc;
+Color4 QGlobal::lfipc;
+
 
 // parametry do u¿ytku wewnêtrznego
 // double Global::tSinceStart=0;
@@ -398,6 +407,7 @@ double Global::fTimeSpeed = 1.0; // przyspieszenie czasu, zmienna do testów
 bool Global::bHideConsole = false; // hunter-271211: ukrywanie konsoli
 int Global::iBpp = 32; // chyba ju¿ nie u¿ywa siê kart, na których 16bpp coœ poprawi
 
+ 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -431,135 +441,246 @@ void Global::LoadIniFile(AnsiString asFileName)
         pFreeCameraInit[i] = vector3(0, 0, 0); // wspó³rzêdne w scenerii
         pFreeCameraInitAngle[i] = vector3(0, 0, 0); // k¹ty obrotu w radianach
     }
-  WriteLog("LoadIniFile() - 2");
+
     TFileStream *fs;
 
     fs = new TFileStream(Trim(QGlobal::asAPPDIR + asFileName), fmOpenRead | fmShareCompat);
     if (!fs)
         return;
-  WriteLog("LoadIniFile() - 3");
+
     AnsiString str = "";
     int size = fs->Size;
     str.SetLength(size);
     fs->Read(str.c_str(), size);
     // str+="";
     delete fs;
-  WriteLog("LoadIniFile() - 4");
+
     TQueryParserComp *Parser;
     Parser = new TQueryParserComp(NULL);
     Parser->TextToParse = str;
     // Parser->LoadStringToParse(asFile);
     Parser->First();
-    //---ConfigParse(Parser);
+//--ConfigParse(Parser);
 
     delete Parser; // Ra: tego jak zwykle nie by³o wczeœniej :]
     */
- // WriteLog("LoadIniFile() - 5");
+
 
   ConfigParseQ(asFileName);
 };
 
+
+AnsiString LCT(AnsiString lowercasetrim)
+{
+ return LowerCase(Trim(lowercasetrim));
+}
 
 // ************************************************************************************************
 // Alternatywny parser plikow konfiguracyjnych
 // ************************************************************************************************
 void Global::ConfigParseQ(AnsiString filename)
 {
-TStringList *slINI;
-slINI = new TStringList();
-
-// char szINIFILE[200];
- AnsiString line;
- AnsiString test, key, p01, p02, debuglog, skyen, maxtexsize, defaultext;
+  TStringList *slINI;
+  slINI = new TStringList();
+//char szINIFILE[200];
+  AnsiString line;
+  AnsiString test, key, p01, p02, p03, p04, p05, p06, debuglog, skyen, defaultext;
+  int calprtI, caliP1, caliP2, caliP3, caliP4, maxtexsize;
+  int calprtO, caloP1, caloP2, caloP3, caloP4;
+  int pos1, pos2, pos3;
+  bool calprtOok, calprtIok, i;
 // sprintf(szINIFILE,"%s%s", QGlobal::asAPPDIR , "eu07.ini");
 // WriteLog("READING CONFIG FILE... (" + AnsiString(szINIFILE) + ")");
 
-    char *strings[30];
-    char Policystr[4096] = "the|string|to|split";
-    char delims[] = " ";
+  char *strings[30];
+  char Policystr[4096] = "the|string|to|split";
+  char delims[] = " ";
 
-slINI->LoadFromFile(QGlobal::asAPPDIR + "eu07.ini");
+  slINI->LoadFromFile(QGlobal::asAPPDIR + "eu07.ini");
 // std::ifstream FileINI("eu07.ini");
+  WriteLog("Config parsing...");
 
-//    if(FileINI)
-//    {
-//        while(std::getline(FileINI,line))
-//        {
-for (int l = 0; l<slINI->Count-1; l++)
+//if(FileINI)
+// {
+//  while(std::getline(FileINI,line))
+//   {
+      for (int l = 0; l<slINI->Count-1; l++)
+       {
+        line = slINI->Strings[l];
+
+        pos1 = pos2 = pos3 = 0;
+
+        pos1 = line.Pos("//");
+        pos2 = line.Pos(":");                 
+        pos3 = line.Pos("//");
+        test = line.SubString(1, pos1-1);
+
+        test = StringReplace( test, "   ", " ", TReplaceFlags() << rfReplaceAll );
+        test = StringReplace( test, "  ", " ", TReplaceFlags() << rfReplaceAll );
+
+        strcpy(Policystr, test.c_str());
+
+        i = 0;
+        strings[i] = strtok( Policystr, delims );
+        while( strings[i] != NULL )
+          {
+           printf("%d '%s'\n", i, strings[i]);
+           strings[++i] = strtok( NULL, delims );
+          }
+
+          if (pos1 > 4) // gdy nie ma komentarza przed kluczem, troche prowizorycznie 
+            {
+             WriteLog(test + ": " + strings[0] + "-> [" + Trim(strings[1]) + "][" + Trim(strings[2]) + "]");
+
+             key = LCT(strings[0]);
+             p01 = LCT(strings[1]);
+             p02 = LCT(strings[2]);
+             p03 = LCT(strings[3]);
+             p04 = LCT(strings[4]);
+             p05 = LCT(strings[5]);
+             p06 = LCT(strings[6]);
+
+             if (key == "sceneryfile") strcpy(szSceneryFile, p01.c_str());
+             if (key == "humanctrlvehicle") asHumanCtrlVehicle = p01;
+             if (key == "width") iWindowWidth = p01.ToIntDef(800);
+             if (key == "height") iWindowHeight = p01.ToIntDef(600);
+             if (key == "fullscreen") bFullScreen = YNToBool(p01);
+             if (key == "bpp") iBpp = p01.ToIntDef(32);
+             if (key == "debugmode") DebugModeFlag = YNToBool(p01);
+             if (key == "soundenabled") bSoundEnabled = YNToBool(p01);
+             if (key == "physicslog") WriteLogFlag = YNToBool(p01);
+             if (key == "debuglog") debuglog = p01;
+             if (key == "wireframe") bWireFrame = YNToBool(p01);
+             if (key == "physicsdeactivation") PhysicActivationFlag = YNToBool(p01);
+             if (key == "adjustscreenfreq") bAdjustScreenFreq = YNToBool(p01);
+             if (key == "enabletraction") bEnableTraction = YNToBool(p01);
+             if (key == "loadtraction") bLoadTraction = YNToBool(p01);
+             if (key == "livetraction") bLiveTraction = YNToBool(p01);
+             if (key == "managenodes") bManageNodes = YNToBool(p01);
+             if (key == "friction") fFriction = p01.ToDouble();
+             if (key == "skyenabled") skyen = p01;
+             if (key == "brakestep") fBrakeStep = p01.ToDouble();
+             if (key == "mousescale") {fMouseXScale = p01.ToDouble(); fMouseYScale = p02.ToDouble();}
+             if (key == "defaultext") defaultext = p01;
+             if (key == "maxtexturesize") maxtexsize = p01.ToIntDef(16384);
+             if (key == "defaultfiltering") iDefaultFiltering = p01.ToIntDef(-1);
+             if (key == "ballastfiltering") iBallastFiltering = p01.ToIntDef(-1);
+             if (key == "railprofiltering") iRailProFiltering = p01.ToIntDef(-1);
+             if (key == "dynamicfiltering") iDynamicFiltering = YNToBool(p01);
+             if (key == "newaircouplers") bnewAirCouplers = YNToBool(p01);
+             if (key == "usevbo") bUseVBO = YNToBool(p01);
+             if (key == "feedbackmode") iFeedbackMode = p01.ToIntDef(1);
+             if (key == "feedbackport") iFeedbackPort = p01.ToIntDef(0);
+             if (key == "smoothtraction") bSmoothTraction = YNToBool(p01);
+             if (key == "timespeed") fTimeSpeed = p01.ToIntDef(1);
+             if (key == "multisampling") iMultisampling = p01.ToIntDef(2);   // domyœlnie 2
+             if (key == "glufont") bGlutFont = YNToBool(p01);
+             if (key == "lang") asLang = p01;
+             if (key == "decompressdds") bDecompressDDS = YNToBool(p01);
+             if (key == "freefly") { bFreeFly = YNToBool(p01);pFreeCameraInit[0].x = p02.ToDouble(); pFreeCameraInit[0].y = p03.ToDouble(); pFreeCameraInit[0].z = p04.ToDouble();}
+             if (key == "convertmodels") iConvertModels = p01.ToIntDef(7);
+             if (key == "inactivepause") bInactivePause = YNToBool(p01);
+             if (key == "modifytga") iModifyTGA = p01.ToIntDef(0);
+             if (key == "hideconsole") Global::bHideConsole = YNToBool(p01);
+             if (key == "rollfix") bRollFix = YNToBool(p01);
+             if (key == "fpsaverage") fFpsAverage = p01.ToDouble();
+             if (key == "fpsdeviation") fFpsDeviation = p01.ToDouble();
+             if (key == "fpsradiusmax") fFpsRadiusMax = p01.ToDouble();
+             if (key == "joinduplicatedevents") bJoinEvents = YNToBool(p01);
+             if (key == "hiddenevents") iHiddenEvents = p01.ToIntDef(0);
+             if (key == "opengl") fOpenGL = p01.ToDouble();
+             if (key == "latitude") fLatitudeDeg = p01.ToDouble();
+             if (key == "heightbase") fDistanceFactor = p01.ToInt();
+             if (key == "doubleambient") bDoubleAmbient = YNToBool(p01);
+             if (key == "slowmotion") iSlowMotionMask = p01.ToIntDef(-1);
+             if (key == "calibratein") { calprtI = p01.ToIntDef(-1); caliP1 = p02.ToDouble(); caliP2 = p03.ToDouble(); caliP3 = p04.ToDouble(); caliP4 = p05.ToDouble(); calprtIok = true;}
+             if (key == "calibrateout"){ calprtO = p01.ToIntDef(-1); caloP1 = p02.ToDouble(); caloP2 = p03.ToDouble(); caloP3 = p04.ToDouble(); caloP4 = p05.ToDouble(); calprtOok = true;}
+            }
+       }
+// }
+
+// na koniec trochê zale¿noœci
+
+     if (defaultext == "tga") szDefaultExt = szTexturesTGA; // domyœlnie od TGA
+     if (debuglog == "yes") iWriteLogEnabled = 3;
+      if (debuglog == "no") iWriteLogEnabled = 0;
+       else iWriteLogEnabled = 3;
+
+     if (skyen == "yes") asSky = "1";
+       else asSky = "0";
+       
+     if (maxtexsize <=   64) iMaxTextureSize = 64;
+      else
+     if (maxtexsize <=  128) iMaxTextureSize = 128;
+      else
+     if (maxtexsize <=  256) iMaxTextureSize = 256;
+      else
+     if (maxtexsize <=  512) iMaxTextureSize = 512;
+      else
+     if (maxtexsize <= 1024) iMaxTextureSize = 1024;
+      else
+     if (maxtexsize <= 2048) iMaxTextureSize = 2048;
+      else
+     if (maxtexsize <= 4096) iMaxTextureSize = 4096;
+      else
+     if (maxtexsize <= 8192) iMaxTextureSize = 8192;
+      else
+                             iMaxTextureSize = 16384;
+
+    if (!bLoadTraction) // wczytywanie drutów i s³upów
+    { // tutaj wy³¹czenie, bo mog¹ nie byæ zdefiniowane w INI
+        bEnableTraction = false; // false = pantograf siê nie po³amie
+        bLiveTraction = false; // false = pantografy zawsze zbieraj¹ 95% MaxVoltage
+    }
+    // if (fMoveLight>0) bDoubleAmbient=false; //wtedy tylko jedno œwiat³o ruchome
+    // if (fOpenGL<1.3) iMultisampling=0; //mo¿na by z góry wy³¹czyæ, ale nie mamy jeszcze fOpenGL
+    if (iMultisampling)
+    { // antyaliasing ca³oekranowy wy³¹cza rozmywanie drutów
+        bSmoothTraction = false;
+    }
+    if (iMultiplayer > 0)
+    {
+        bInactivePause = false; // okno "w tle" nie mo¿e pauzowaæ, jeœli w³¹czona komunikacja
+        // pauzowanie jest zablokowane dla (iMultiplayer&2)>0, wiêc iMultiplayer=1 da siê zapauzowaæ
+        // (tryb instruktora)
+    }
+    fFpsMin = fFpsAverage -
+              fFpsDeviation; // dolna granica FPS, przy której promieñ scenerii bêdzie zmniejszany
+    fFpsMax = fFpsAverage +
+              fFpsDeviation; // górna granica FPS, przy której promieñ scenerii bêdzie zwiêkszany
+    if (iPause)
+        iTextMode = VK_F1; // jak pauza, to pokazaæ zegar
+
+    if (calprtIok && calprtOok)
      {
-      line = slINI->Strings[l];
-      
-                int pos1 = 0;
-		int pos2 = 0;
-                int pos3 = 0;
-		pos1 = line.Pos("//");
-		pos2 = line.Pos(":");                     //14
-                pos3 = line.Pos("//");                     //33
-		test = line.SubString(1, pos1-1);
+      if ((calprtI < 0) || (calprtI > 5)) calprtI = 5; // na ostatni, bo i tak trzeba pomin¹æ wartoœci
+      fCalibrateIn[calprtI][0] = caliP1;                                        // wyraz wolny
+      fCalibrateIn[calprtI][1] = caliP2;                                        // mno¿nik
+      fCalibrateIn[calprtI][2] = caliP3;                                        // mno¿nik dla kwadratu
+      fCalibrateIn[calprtI][3] = caliP4;                                        // mno¿nik dla szeœcianu
 
-                strcpy(Policystr, test.c_str());
-
-                int i = 0;
-                strings[i] = strtok( Policystr, delims );
-                while( strings[i] != NULL  )
-                {
-                 printf("%d '%s'\n", i, strings[i]);
-                 strings[++i] = strtok( NULL, delims );
-                }
-
-                if (pos1 > 4)
-                {
-
-                WriteLog(test + ": " + strings[0] + "-> [" + Trim(strings[1]) + "][" + Trim(strings[2]) + "]");
-
-                key = LowerCase(Trim(strings[0]));
-                p01 = LowerCase(Trim(strings[1]));
-                p02 = LowerCase(Trim(strings[2]));
-              //WriteLog(key);
-                if (key == "sceneryfile") strcpy(szSceneryFile, p01.c_str());
-                if (key == "humanctrlvehicle") asHumanCtrlVehicle = p01;
-                if (key == "width") iWindowWidth = p01.ToIntDef(800);
-                if (key == "height") iWindowHeight = p01.ToIntDef(600);
-                if (key == "fullscreen") bFullScreen = YNToBool(p01);
-                if (key == "bpp") iBpp = p01.ToIntDef(32);
-                if (key == "debugmode") DebugModeFlag = YNToBool(p01);
-                if (key == "soundenabled") bSoundEnabled = YNToBool(p01);
-                if (key == "physicslog") WriteLogFlag = YNToBool(p01);
-                if (key == "debuglog") debuglog = p01;
-                if (key == "wireframe") bWireFrame = YNToBool(p01);
-                if (key == "physicsdeactivation") PhysicActivationFlag = YNToBool(p01);
-                if (key == "adjustscreenfreq") bAdjustScreenFreq = YNToBool(p01);
-                if (key == "enabletraction") bEnableTraction = YNToBool(p01);
-                if (key == "loadtraction") bLoadTraction = YNToBool(p01);
-                if (key == "livetraction") bLiveTraction = YNToBool(p01);
-                if (key == "managenodes") bManageNodes = YNToBool(p01);
-                if (key == "friction") fFriction = p01.ToDouble();
-                if (key == "skyenabled") skyen = p01;
-                if (key == "brakestep") fBrakeStep = p01.ToDouble();
-                if (key == "mousescale") {fMouseXScale = p01.ToDouble(); fMouseYScale = p02.ToDouble();}
-                if (key == "defaultext") defaultext = p01;
-                if (key == "maxtexturesize") maxtexsize = p01;
-                if (key == "defaultfiltering") iDefaultFiltering = p01.ToIntDef(-1);
-                if (key == "ballastfiltering") iBallastFiltering = p01.ToIntDef(-1);
-                if (key == "railprofiltering") iRailProFiltering = p01.ToIntDef(-1);
-                if (key == "dynamicfiltering") iDynamicFiltering = YNToBool(p01);
-                if (key == "newaircouplers") bnewAirCouplers = YNToBool(p01);
-                if (key == "usevbo") bUseVBO = YNToBool(p01);
-                if (key == "feedbackmode") iFeedbackMode = p01.ToIntDef(1);
-                if (key == "feedbackport") iFeedbackPort = p01.ToIntDef(0);
-                if (key == "smoothtraction") bSmoothTraction = YNToBool(p01);
-                if (key == "timespeed") fTimeSpeed = p01.ToIntDef(1);
-                if (key == "multisampling") iMultisampling = p01.ToIntDef(2); // domyœlnie 2
-                if (key == "glufont") bGlutFont = YNToBool(p01);
-                if (key == "lang") asLang = p01;
-
-             //   }
-        }
+      if ((calprtO < 0) || (calprtO > 6)) calprtO = 6; // na ostatni, bo i tak trzeba pomin¹æ wartoœci
+      fCalibrateOut[calprtO][0] = caloP1;                                       // wyraz wolny
+      fCalibrateOut[calprtO][1] = caloP2;                                       // mno¿nik liniowy
+      fCalibrateOut[calprtO][2] = caloP3;                                       // mno¿nik dla kwadratu
+      fCalibrateOut[calprtO][3] = caloP4;                                       // mno¿nik dla szeœcianu
      }
+
+    { // to poni¿ej wykonywane tylko raz, jedynie po wczytaniu eu07.ini
+        Console::ModeSet(iFeedbackMode, iFeedbackPort);                         // tryb pracy konsoli sterowniczej
+        iFpsRadiusMax = 0.000025 * fFpsRadiusMax * fFpsRadiusMax;               // maksymalny promieñ renderowania 3000.0 -> 225
+        if (iFpsRadiusMax > 400)
+            iFpsRadiusMax = 400;
+        if (fDistanceFactor > 1.0)
+        { // dla 1.0 specjalny tryb bez przeliczania
+            fDistanceFactor = iWindowHeight / fDistanceFactor;                  // fDistanceFactor>1.0 dla rozdzielczoœci wiêkszych ni¿ bazowa
+            fDistanceFactor *= (iMultisampling + 1.0) * fDistanceFactor;        // do kwadratu, bo wiêkszoœæ odleg³oœci to ich kwadraty
+        }
+    }
+
      WriteLog("INI FILE OK.");
      WriteLog("");
-   //  FileINI.close();
-
+  // FileINI.close();
 }
 
 void Global::ConfigParse(TQueryParserComp *qp, cParser *cp)
@@ -577,232 +698,226 @@ void Global::ConfigParse(TQueryParserComp *qp, cParser *cp)
             str = GetNextSymbol().LowerCase();
             strcpy(szSceneryFile, str.c_str());
         }
-        else if (str == AnsiString("humanctrlvehicle"))
-        {
-            str = GetNextSymbol().LowerCase();
-            asHumanCtrlVehicle = str;
-        }
-        else if (str == AnsiString("width"))
-            iWindowWidth = GetNextSymbol().ToInt();
-        else if (str == AnsiString("height"))
-            iWindowHeight = GetNextSymbol().ToInt();
-        else if (str == AnsiString("heightbase"))
-            fDistanceFactor = GetNextSymbol().ToInt();
-        else if (str == AnsiString("bpp"))
-            iBpp = ((GetNextSymbol().LowerCase() == AnsiString("32")) ? 32 : 16);
-        else if (str == AnsiString("fullscreen"))
-            bFullScreen = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("freefly")) // Mczapkie-130302
-        {
-            bFreeFly = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-            pFreeCameraInit[0].x = GetNextSymbol().ToDouble();
-            pFreeCameraInit[0].y = GetNextSymbol().ToDouble();
-            pFreeCameraInit[0].z = GetNextSymbol().ToDouble();
-        }
-        else if (str == AnsiString("wireframe"))
-            bWireFrame = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("debugmode")) // McZapkie! - DebugModeFlag uzywana w mover.pas,
-            // warto tez blokowac cheaty gdy false
-            DebugModeFlag = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("soundenabled")) // McZapkie-040302 - blokada dzwieku - przyda
-            // sie do debugowania oraz na komp. bez karty
-            // dzw.
-            bSoundEnabled = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        // else if (str==AnsiString("renderalpha")) //McZapkie-1312302 - dwuprzebiegowe renderowanie
-        // bRenderAlpha=(GetNextSymbol().LowerCase()==AnsiString("yes"));
-        else if (str == AnsiString("physicslog")) // McZapkie-030402 - logowanie parametrow
-            // fizycznych dla kazdego pojazdu z maszynista
-            WriteLogFlag = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("physicsdeactivation")) // McZapkie-291103 - usypianie fizyki
-            PhysicActivationFlag = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("debuglog"))
-        { // McZapkie-300402 - wylaczanie log.txt
-            str = GetNextSymbol().LowerCase();
-            if (str == "yes")
-                iWriteLogEnabled = 3;
-            else if (str == "no")
-                iWriteLogEnabled = 0;
-            else
-                iWriteLogEnabled = str.ToIntDef(3);
-        }
-        else if (str == AnsiString("adjustscreenfreq"))
-        { // McZapkie-240403 - czestotliwosc odswiezania ekranu
-            str = GetNextSymbol();
-            bAdjustScreenFreq = (str.LowerCase() == AnsiString("yes"));
-        }
-        else if (str == AnsiString("mousescale"))
-        { // McZapkie-060503 - czulosc ruchu myszy (krecenia glowa)
-            str = GetNextSymbol();
-            fMouseXScale = str.ToDouble();
-            str = GetNextSymbol();
-            fMouseYScale = str.ToDouble();
-        }
-        else if (str == AnsiString("enabletraction"))
-        { // Winger 040204 - 'zywe' patyki dostosowujace sie do trakcji; Ra 2014-03: teraz ³amanie
-            bEnableTraction = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        }
-        else if (str == AnsiString("loadtraction"))
-        { // Winger 140404 - ladowanie sie trakcji
-            bLoadTraction = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        }
-        else if (str == AnsiString("friction")) // mno¿nik tarcia - KURS90
-            fFriction = GetNextSymbol().ToDouble();
-        else if (str == AnsiString("livetraction"))
-        { // Winger 160404 - zaleznosc napiecia loka od trakcji; Ra 2014-03: teraz pr¹d przy braku
-            // sieci
-            bLiveTraction = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        }
-        else if (str == AnsiString("skyenabled"))
-        { // youBy - niebo
-            if (GetNextSymbol().LowerCase() == AnsiString("yes"))
-                asSky = "1";
-            else
-                asSky = "0";
-        }
-        else if (str == AnsiString("managenodes"))
-        {
-            bManageNodes = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        }
-        else if (str == AnsiString("decompressdds"))
-        {
-            bDecompressDDS = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        }
+        //else if (str == AnsiString("humanctrlvehicle"))
+        //{
+        //    str = GetNextSymbol().LowerCase();
+        //    asHumanCtrlVehicle = str;
+        //}
+        //else if (str == AnsiString("width"))
+        //    iWindowWidth = GetNextSymbol().ToInt();
+        //else if (str == AnsiString("height"))
+        //    iWindowHeight = GetNextSymbol().ToInt();
+        //else if (str == AnsiString("heightbase"))
+        //    fDistanceFactor = GetNextSymbol().ToInt();
+        //else if (str == AnsiString("bpp"))
+        //    iBpp = ((GetNextSymbol().LowerCase() == AnsiString("32")) ? 32 : 16);
+        //else if (str == AnsiString("fullscreen"))
+        //    bFullScreen = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("freefly")) // Mczapkie-130302
+        //{
+        //    bFreeFly = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //    pFreeCameraInit[0].x = GetNextSymbol().ToDouble();
+        //    pFreeCameraInit[0].y = GetNextSymbol().ToDouble();
+        //    pFreeCameraInit[0].z = GetNextSymbol().ToDouble();
+        //}
+        //else if (str == AnsiString("wireframe"))
+        //    bWireFrame = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("debugmode")) // McZapkie! - DebugModeFlag uzywana w mover.pas, warto tez blokowac cheaty gdy false
+        //    DebugModeFlag = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("soundenabled")) // McZapkie-040302 - blokada dzwieku - przyda sie do debugowania oraz na komp. bez karty dzw.
+        //    bSoundEnabled = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //
+        //else if (str == AnsiString("physicslog")) // McZapkie-030402 - logowanie parametrow fizycznych dla kazdego pojazdu z maszynista
+        //    WriteLogFlag = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("physicsdeactivation")) // McZapkie-291103 - usypianie fizyki
+        //    PhysicActivationFlag = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("debuglog"))
+        //{ // McZapkie-300402 - wylaczanie log.txt
+        //    str = GetNextSymbol().LowerCase();
+        //    if (str == "yes")
+        //        iWriteLogEnabled = 3;
+        //    else if (str == "no")
+        //        iWriteLogEnabled = 0;
+        //   else
+        //       iWriteLogEnabled = str.ToIntDef(3);
+        //}
+        //else if (str == AnsiString("adjustscreenfreq"))
+        //{ // McZapkie-240403 - czestotliwosc odswiezania ekranu
+        //    str = GetNextSymbol();
+        //    bAdjustScreenFreq = (str.LowerCase() == AnsiString("yes"));
+        //}
+        //else if (str == AnsiString("mousescale"))
+        //{ // McZapkie-060503 - czulosc ruchu myszy (krecenia glowa)
+        //    str = GetNextSymbol();
+        //    fMouseXScale = str.ToDouble();
+        //    str = GetNextSymbol();
+        //    fMouseYScale = str.ToDouble();
+        //}
+        //else if (str == AnsiString("enabletraction"))
+        //{ // Winger 040204 - 'zywe' patyki dostosowujace sie do trakcji; Ra 2014-03: teraz ³amanie
+        //    bEnableTraction = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //}
+        //else if (str == AnsiString("loadtraction"))
+        //{ // Winger 140404 - ladowanie sie trakcji
+        //    bLoadTraction = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //}
+        //else if (str == AnsiString("friction")) // mno¿nik tarcia - KURS90
+        //    fFriction = GetNextSymbol().ToDouble();
+        //else if (str == AnsiString("livetraction"))
+        //{ // Winger 160404 - zaleznosc napiecia loka od trakcji; Ra 2014-03: teraz pr¹d przy braku
+        //    // sieci
+        //    bLiveTraction = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //}
+        //else if (str == AnsiString("skyenabled"))
+        //{ // youBy - niebo
+        //    if (GetNextSymbol().LowerCase() == AnsiString("yes"))
+        //        asSky = "1";
+        //    else
+        //        asSky = "0";
+        //}
+        //else if (str == AnsiString("managenodes"))
+        //{
+        //    bManageNodes = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //}
+        //else if (str == AnsiString("decompressdds"))
+        //{
+        //    bDecompressDDS = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //}
         // ShaXbee - domyslne rozszerzenie tekstur
-        else if (str == AnsiString("defaultext"))
-        {
-            str = GetNextSymbol().LowerCase(); // rozszerzenie
-            if (str == "tga")
-                szDefaultExt = szTexturesTGA; // domyœlnie od TGA
-            // szDefaultExt=std::string(Parser->GetNextSymbol().LowerCase().c_str());
-        }
-        else if (str == AnsiString("newaircouplers"))
-            bnewAirCouplers = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("defaultfiltering"))
-            iDefaultFiltering = GetNextSymbol().ToIntDef(-1);
-        else if (str == AnsiString("ballastfiltering"))
-            iBallastFiltering = GetNextSymbol().ToIntDef(-1);
-        else if (str == AnsiString("railprofiltering"))
-            iRailProFiltering = GetNextSymbol().ToIntDef(-1);
-        else if (str == AnsiString("dynamicfiltering"))
-            iDynamicFiltering = GetNextSymbol().ToIntDef(-1);
-        else if (str == AnsiString("usevbo"))
-            bUseVBO = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("feedbackmode"))
-            iFeedbackMode = GetNextSymbol().ToIntDef(1); // domyœlnie 1
-        else if (str == AnsiString("feedbackport"))
-            iFeedbackPort = GetNextSymbol().ToIntDef(0); // domyœlnie 0
-        else if (str == AnsiString("multiplayer"))
-            iMultiplayer = GetNextSymbol().ToIntDef(0); // domyœlnie 0
-        else if (str == AnsiString("maxtexturesize"))
-        { // wymuszenie przeskalowania tekstur
-            i = GetNextSymbol().ToIntDef(16384); // domyœlnie du¿e
-            if (i <= 64)
-                iMaxTextureSize = 64;
-            else if (i <= 128)
-                iMaxTextureSize = 128;
-            else if (i <= 256)
-                iMaxTextureSize = 256;
-            else if (i <= 512)
-                iMaxTextureSize = 512;
-            else if (i <= 1024)
-                iMaxTextureSize = 1024;
-            else if (i <= 2048)
-                iMaxTextureSize = 2048;
-            else if (i <= 4096)
-                iMaxTextureSize = 4096;
-            else if (i <= 8192)
-                iMaxTextureSize = 8192;
-            else
-                iMaxTextureSize = 16384;
-        }
-        else if (str == AnsiString("doubleambient")) // podwójna jasnoœæ ambient
-            bDoubleAmbient = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("movelight")) // numer dnia w roku albo -1
-        {
-            fMoveLight = GetNextSymbol().ToIntDef(-1); // numer dnia 1..365
-            if (fMoveLight == 0.0)
-            { // pobranie daty z systemu
-                unsigned short y, m, d;
-                TDate date = Now();
-                date.DecodeDate(&y, &m, &d);
-                fMoveLight =
-                    (double)date - (double)TDate(y, 1, 1) + 1; // numer bie¿¹cego dnia w roku
-            }
-            if (fMoveLight > 0.0) // tu jest nadal zwiêkszone o 1
-            { // obliczenie deklinacji wg:
-                // http://naturalfrequency.com/Tregenza_Sharples/Daylight_Algorithms/algorithm_1_11.htm
-                // Spencer J W Fourier series representation of the position of the sun Search 2 (5)
-                // 172 (1971)
-                fMoveLight = M_PI / 182.5 * (Global::fMoveLight - 1.0); // numer dnia w postaci k¹ta
-                fSunDeclination = 0.006918 - 0.3999120 * cos(fMoveLight) +
-                                  0.0702570 * sin(fMoveLight) - 0.0067580 * cos(2 * fMoveLight) +
-                                  0.0009070 * sin(2 * fMoveLight) -
-                                  0.0026970 * cos(3 * fMoveLight) + 0.0014800 * sin(3 * fMoveLight);
-            }
-        }
-        else if (str == AnsiString("smoothtraction")) // podwójna jasnoœæ ambient
-            bSmoothTraction = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("timespeed")) // przyspieszenie czasu, zmienna do testów
-            fTimeSpeed = GetNextSymbol().ToIntDef(1);
-        else if (str == AnsiString("multisampling")) // tryb antyaliasingu: 0=brak,1=2px,2=4px
-            iMultisampling = GetNextSymbol().ToIntDef(2); // domyœlnie 2
-        else if (str == AnsiString("glutfont")) // tekst generowany przez GLUT
-            bGlutFont = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("latitude")) // szerokoœæ geograficzna
-            fLatitudeDeg = GetNextSymbol().ToDouble();
-        else if (str == AnsiString("convertmodels")) // tworzenie plików binarnych
-            iConvertModels = GetNextSymbol().ToIntDef(7); // domyœlnie 7
-        else if (str == AnsiString("inactivepause")) // automatyczna pauza, gdy okno nieaktywne
-            bInactivePause = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("slowmotion")) // tworzenie plików binarnych
-            iSlowMotionMask = GetNextSymbol().ToIntDef(-1); // domyœlnie -1
-        else if (str == AnsiString("modifytga")) // czy korygowaæ pliki TGA dla szybszego
-            // wczytywania
-            iModifyTGA = GetNextSymbol().ToIntDef(0); // domyœlnie 0
-        else if (str == AnsiString("hideconsole")) // hunter-271211: ukrywanie konsoli
-            Global::bHideConsole = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("rollfix")) // Ra: poprawianie przechy³ki, aby wewnêtrzna szyna by³a "pozioma"
-            bRollFix = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("fpsaverage")) // oczekiwana wartosæ FPS
-            fFpsAverage = GetNextSymbol().ToDouble();
-        else if (str == AnsiString("fpsdeviation")) // odchylenie standardowe FPS
-            fFpsDeviation = GetNextSymbol().ToDouble();
-        else if (str == AnsiString("fpsradiusmax")) // maksymalny promieñ renderowania
-            fFpsRadiusMax = GetNextSymbol().ToDouble();
-        else if (str == AnsiString("calibratein")) // parametry kalibracji wejœæ
-        { //
-            i = GetNextSymbol().ToIntDef(-1); // numer wejœcia
-            if ((i < 0) || (i > 5))
-                i = 5; // na ostatni, bo i tak trzeba pomin¹æ wartoœci
-            fCalibrateIn[i][0] = GetNextSymbol().ToDouble(); // wyraz wolny
-            fCalibrateIn[i][1] = GetNextSymbol().ToDouble(); // mno¿nik
-            fCalibrateIn[i][2] = GetNextSymbol().ToDouble(); // mno¿nik dla kwadratu
-            fCalibrateIn[i][3] = GetNextSymbol().ToDouble(); // mno¿nik dla szeœcianu
-        }
-        else if (str == AnsiString("calibrateout")) // parametry kalibracji wyjœæ
-        { //
-            i = GetNextSymbol().ToIntDef(-1); // numer wejœcia
-            if ((i < 0) || (i > 6))
-                i = 6; // na ostatni, bo i tak trzeba pomin¹æ wartoœci
-            fCalibrateOut[i][0] = GetNextSymbol().ToDouble(); // wyraz wolny
-            fCalibrateOut[i][1] = GetNextSymbol().ToDouble(); // mno¿nik liniowy
-            fCalibrateOut[i][2] = GetNextSymbol().ToDouble(); // mno¿nik dla kwadratu
-            fCalibrateOut[i][3] = GetNextSymbol().ToDouble(); // mno¿nik dla szeœcianu
-        }
-        else if (str == AnsiString("brakestep")) // krok zmiany hamulca dla klawiszy [Num3] i [Num9]
-            fBrakeStep = GetNextSymbol().ToDouble();
-        else if (str ==
-                 AnsiString("joinduplicatedevents")) // czy grupowaæ eventy o tych samych nazwach
-            bJoinEvents = (GetNextSymbol().LowerCase() == AnsiString("yes"));
-        else if (str == AnsiString("hiddenevents")) // czy ³¹czyæ eventy z torami poprzez nazwê toru
-            iHiddenEvents = GetNextSymbol().ToIntDef(0);
-        else if (str == AnsiString("pause")) // czy po wczytaniu ma byæ pauza?
-            iPause |= (GetNextSymbol().LowerCase() == AnsiString("yes")) ? 1 : 0;
-        else if (str == AnsiString("lang"))
-            asLang = GetNextSymbol(); // domyœlny jêzyk - http://tools.ietf.org/html/bcp47
-        else if (str == AnsiString("opengl")) // deklarowana wersja OpenGL, ¿eby powstrzymaæ b³êdy
-            fOpenGL = GetNextSymbol().ToDouble(); // wymuszenie wersji OpenGL
+        //else if (str == AnsiString("defaultext"))
+        //{
+        //    str = GetNextSymbol().LowerCase(); // rozszerzenie
+        //    if (str == "tga")
+        //        szDefaultExt = szTexturesTGA; // domyœlnie od TGA
+        //    // szDefaultExt=std::string(Parser->GetNextSymbol().LowerCase().c_str());
+        //}
+        //else if (str == AnsiString("newaircouplers"))
+        //    bnewAirCouplers = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("defaultfiltering"))
+        //    iDefaultFiltering = GetNextSymbol().ToIntDef(-1);
+        //else if (str == AnsiString("ballastfiltering"))
+        //    iBallastFiltering = GetNextSymbol().ToIntDef(-1);
+       // else if (str == AnsiString("railprofiltering"))
+        //    iRailProFiltering = GetNextSymbol().ToIntDef(-1);
+        //else if (str == AnsiString("dynamicfiltering"))
+        //    iDynamicFiltering = GetNextSymbol().ToIntDef(-1);
+        //else if (str == AnsiString("usevbo"))
+        //    bUseVBO = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("feedbackmode"))
+        //    iFeedbackMode = GetNextSymbol().ToIntDef(1); // domyœlnie 1
+        //else if (str == AnsiString("feedbackport"))
+        //    iFeedbackPort = GetNextSymbol().ToIntDef(0); // domyœlnie 0
+        //else if (str == AnsiString("multiplayer"))
+        //    iMultiplayer = GetNextSymbol().ToIntDef(0); // domyœlnie 0
+        //else if (str == AnsiString("maxtexturesize"))
+        //{ // wymuszenie przeskalowania tekstur
+        //    i = GetNextSymbol().ToIntDef(16384); // domyœlnie du¿e
+        //    if (i <= 64)
+        //        iMaxTextureSize = 64;
+        //    else if (i <= 128)
+        //        iMaxTextureSize = 128;
+        //    else if (i <= 256)
+        //        iMaxTextureSize = 256;
+        //    else if (i <= 512)
+        //        iMaxTextureSize = 512;
+        //    else if (i <= 1024)
+        //        iMaxTextureSize = 1024;
+        //    else if (i <= 2048)
+        //        iMaxTextureSize = 2048;
+        //    else if (i <= 4096)
+        //        iMaxTextureSize = 4096;
+        //    else if (i <= 8192)
+        //        iMaxTextureSize = 8192;
+        //    else
+        //        iMaxTextureSize = 16384;
+        //}
+        //else if (str == AnsiString("doubleambient")) // podwójna jasnoœæ ambient
+        //    bDoubleAmbient = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("movelight")) // numer dnia w roku albo -1
+        //{
+        //    fMoveLight = GetNextSymbol().ToIntDef(-1); // numer dnia 1..365
+        //    if (fMoveLight == 0.0)
+        //    { // pobranie daty z systemu
+        //        unsigned short y, m, d;
+        //        TDate date = Now();
+        //        date.DecodeDate(&y, &m, &d);
+        //        fMoveLight =
+        //            (double)date - (double)TDate(y, 1, 1) + 1; // numer bie¿¹cego dnia w roku
+         //   }
+        //    if (fMoveLight > 0.0) // tu jest nadal zwiêkszone o 1
+        //    { // obliczenie deklinacji wg:
+        //        // http://naturalfrequency.com/Tregenza_Sharples/Daylight_Algorithms/algorithm_1_11.htm
+        //        // Spencer J W Fourier series representation of the position of the sun Search 2 (5)
+        //        // 172 (1971)
+        //        fMoveLight = M_PI / 182.5 * (Global::fMoveLight - 1.0); // numer dnia w postaci k¹ta
+        //        fSunDeclination = 0.006918 - 0.3999120 * cos(fMoveLight) +
+        //                          0.0702570 * sin(fMoveLight) - 0.0067580 * cos(2 * fMoveLight) +
+        //                          0.0009070 * sin(2 * fMoveLight) -
+        //                          0.0026970 * cos(3 * fMoveLight) + 0.0014800 * sin(3 * fMoveLight);
+        //    }
+        //}
+        //else if (str == AnsiString("smoothtraction")) // podwójna jasnoœæ ambient
+        //    bSmoothTraction = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("timespeed")) // przyspieszenie czasu, zmienna do testów
+        //    fTimeSpeed = GetNextSymbol().ToIntDef(1);
+        //else if (str == AnsiString("multisampling")) // tryb antyaliasingu: 0=brak,1=2px,2=4px
+        //    iMultisampling = GetNextSymbol().ToIntDef(2); // domyœlnie 2
+        //else if (str == AnsiString("glutfont")) // tekst generowany przez GLUT
+        //    bGlutFont = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("latitude")) // szerokoœæ geograficzna
+        //    fLatitudeDeg = GetNextSymbol().ToDouble();
+        //else if (str == AnsiString("convertmodels")) // tworzenie plików binarnych
+        //    iConvertModels = GetNextSymbol().ToIntDef(7); // domyœlnie 7
+        //else if (str == AnsiString("inactivepause")) // automatyczna pauza, gdy okno nieaktywne
+        //    bInactivePause = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("slowmotion")) // tworzenie plików binarnych
+        //    iSlowMotionMask = GetNextSymbol().ToIntDef(-1); // domyœlnie -1
+        //else if (str == AnsiString("modifytga")) // czy korygowaæ pliki TGA dla szybszego wczytywania
+        //    iModifyTGA = GetNextSymbol().ToIntDef(0); // domyœlnie 0
+        //else if (str == AnsiString("hideconsole")) // hunter-271211: ukrywanie konsoli
+        //    Global::bHideConsole = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("rollfix")) // Ra: poprawianie przechy³ki, aby wewnêtrzna szyna by³a "pozioma"
+        //    bRollFix = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("fpsaverage")) // oczekiwana wartosæ FPS
+        //    fFpsAverage = GetNextSymbol().ToDouble();
+        //else if (str == AnsiString("fpsdeviation")) // odchylenie standardowe FPS
+        //    fFpsDeviation = GetNextSymbol().ToDouble();
+        //else if (str == AnsiString("fpsradiusmax")) // maksymalny promieñ renderowania
+        //    fFpsRadiusMax = GetNextSymbol().ToDouble();
+        //else if (str == AnsiString("calibratein")) // parametry kalibracji wejœæ
+        //{ //
+        //    i = GetNextSymbol().ToIntDef(-1); // numer wejœcia
+        //    if ((i < 0) || (i > 5))
+        //        i = 5; // na ostatni, bo i tak trzeba pomin¹æ wartoœci
+        //    fCalibrateIn[i][0] = GetNextSymbol().ToDouble(); // wyraz wolny
+        //    fCalibrateIn[i][1] = GetNextSymbol().ToDouble(); // mno¿nik
+        //    fCalibrateIn[i][2] = GetNextSymbol().ToDouble(); // mno¿nik dla kwadratu
+        //    fCalibrateIn[i][3] = GetNextSymbol().ToDouble(); // mno¿nik dla szeœcianu
+        //}
+        //else if (str == AnsiString("calibrateout")) // parametry kalibracji wyjœæ
+        //{ //
+        //    i = GetNextSymbol().ToIntDef(-1); // numer wejœcia
+        //    if ((i < 0) || (i > 6))
+        //        i = 6; // na ostatni, bo i tak trzeba pomin¹æ wartoœci
+        //    fCalibrateOut[i][0] = GetNextSymbol().ToDouble(); // wyraz wolny
+        //    fCalibrateOut[i][1] = GetNextSymbol().ToDouble(); // mno¿nik liniowy
+        //    fCalibrateOut[i][2] = GetNextSymbol().ToDouble(); // mno¿nik dla kwadratu
+        //    fCalibrateOut[i][3] = GetNextSymbol().ToDouble(); // mno¿nik dla szeœcianu
+        //}
+        //else if (str == AnsiString("brakestep")) // krok zmiany hamulca dla klawiszy [Num3] i [Num9]
+        //    fBrakeStep = GetNextSymbol().ToDouble();
+        //else if (str == AnsiString("joinduplicatedevents")) // czy grupowaæ eventy o tych samych nazwach
+        //    bJoinEvents = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+        //else if (str == AnsiString("hiddenevents")) // czy ³¹czyæ eventy z torami poprzez nazwê toru
+        //    iHiddenEvents = GetNextSymbol().ToIntDef(0);
+        //else if (str == AnsiString("pause")) // czy po wczytaniu ma byæ pauza?
+        //    iPause |= (GetNextSymbol().LowerCase() == AnsiString("yes")) ? 1 : 0;
+        //else if (str == AnsiString("lang"))
+        //    asLang = GetNextSymbol(); // domyœlny jêzyk - http://tools.ietf.org/html/bcp47
+        //else if (str == AnsiString("opengl")) // deklarowana wersja OpenGL, ¿eby powstrzymaæ b³êdy
+        //    fOpenGL = GetNextSymbol().ToDouble(); // wymuszenie wersji OpenGL
     } while (str != "endconfig"); //(!Parser->EndOfFile)
+
     // na koniec trochê zale¿noœci
     if (!bLoadTraction) // wczytywanie drutów i s³upów
     { // tutaj wy³¹czenie, bo mog¹ nie byæ zdefiniowane w INI
@@ -830,18 +945,13 @@ void Global::ConfigParse(TQueryParserComp *qp, cParser *cp)
     if (qp)
     { // to poni¿ej wykonywane tylko raz, jedynie po wczytaniu eu07.ini
         Console::ModeSet(iFeedbackMode, iFeedbackPort); // tryb pracy konsoli sterowniczej
-        iFpsRadiusMax = 0.000025 * fFpsRadiusMax *
-                        fFpsRadiusMax; // maksymalny promieñ renderowania 3000.0 -> 225
+        iFpsRadiusMax = 0.000025 * fFpsRadiusMax * fFpsRadiusMax; // maksymalny promieñ renderowania 3000.0 -> 225
         if (iFpsRadiusMax > 400)
             iFpsRadiusMax = 400;
         if (fDistanceFactor > 1.0)
         { // dla 1.0 specjalny tryb bez przeliczania
-            fDistanceFactor =
-                iWindowHeight /
-                fDistanceFactor; // fDistanceFactor>1.0 dla rozdzielczoœci wiêkszych ni¿ bazowa
-            fDistanceFactor *=
-                (iMultisampling + 1.0) *
-                fDistanceFactor; // do kwadratu, bo wiêkszoœæ odleg³oœci to ich kwadraty
+            fDistanceFactor = iWindowHeight / fDistanceFactor; // fDistanceFactor>1.0 dla rozdzielczoœci wiêkszych ni¿ bazowa
+            fDistanceFactor *= (iMultisampling + 1.0) * fDistanceFactor; // do kwadratu, bo wiêkszoœæ odleg³oœci to ich kwadraty
         }
     }
    WriteLog("OK.");
@@ -1367,6 +1477,7 @@ int Global::findpassengerdynamic(vector3 PPos, AnsiString asName, AnsiString Pre
 
             if (DO->MoverParameters->Vel < 3.0) GN->fPassengerCDelay += 0.004;  // Gdy sklad hamuje, juz moga zaczyanc myslec o podchodzeniu, niektorym to ciezko idzie ;)
 
+            if (DO->MoverParameters->Vel < 0.2)   
             if (GN->fPassengerCDelay >= GN->fPassengerDDelay)                   // Gdy juz pomyslal (czas myslenia jest randomowy), zaczyna isc do drzwi
             {
              dpnt = QGlobal::array[0].num2;                                     // pierwszy item zawsze jest najmniejsza wartoscia (najblizsze drzwi)

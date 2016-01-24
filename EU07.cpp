@@ -146,7 +146,13 @@ HMENU hMenu;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); // Declaration For WndProc
 
+// Function pointers that will be used for the DLL functions.
+typedef int (*AddFunc)(int,int);
+typedef void (*FunctionFunc)();
 void AddMenus(HWND);
+// Typedef functions to hold what is in the DLL
+AddFunc _AddFunc;
+FunctionFunc _FunctionFunc;
 
 #define IDM_FILE_NEW 1
 #define IDM_FILE_OPEN 2
@@ -270,7 +276,8 @@ GLvoid KillGLWindow(GLvoid) // properly kill the window
     if (fullscreen) // Are We In Fullscreen Mode?
     {
         ChangeDisplaySettings(NULL, 0); // if so switch back to the desktop
-        ShowCursor(TRUE); // show mouse pointer
+     if (!QGlobal::brendermenu) ShowCursor(FALSE); // show mouse pointer
+      else  ShowCursor(TRUE);
     }
     //    KillFont();
 }
@@ -383,7 +390,7 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
     if (fullscreen) // Are We Still In Fullscreen Mode?
     {
         dwExStyle = WS_EX_APPWINDOW; // Window Extended Style
-        dwStyle = WS_POPUP | WS_CLIPSIBLINGS  ; // Windows Style      | WS_CLIPCHILDREN
+        dwStyle = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN ; // Windows Style
 
         //ShowCursor(FALSE); // Hide Mouse Pointer
     }
@@ -495,10 +502,10 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
         return FALSE; // Return FALSE
     }
 
-    QGlobal::glHDC=hDC;
-    QGlobal::glHGLRC=hRC;
-    QGlobal::glHWND=hWnd;
-
+    QGlobal::glHDC = hDC;
+    QGlobal::glHGLRC = hRC;
+    QGlobal::glHWND = hWnd;
+    Global::hWnd = hWnd;
     /*
     Now that our window is created, we want to queary what samples are available
     we call our InitMultiSample window
@@ -587,10 +594,7 @@ void AddMenus(HWND hwnd)
 }
 
 
-LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
-                         UINT uMsg, // message for this window
-                         WPARAM wParam, // additional message information
-                         LPARAM lParam) // additional message information
+LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 //HINSTANCE hINST;
 //hINST = GetModuleHandle(NULL);
@@ -863,6 +867,42 @@ LRESULT CALLBACK WndProc(HWND hWnd, // handle for this window
 // *****************************************************************************
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+
+// The Instance of the DLL.
+// LoadLibrary used to load a DLL
+/*
+	HINSTANCE hInstLibrary = LoadLibrary("DLL_Tutorial.dll");
+
+	if (hInstLibrary)
+	{
+		// Our DLL is loaded and ready to go.
+
+		// Set up our function pointers.
+		_AddFunc = (AddFunc)GetProcAddress(hInstLibrary, "Add");
+		_FunctionFunc = (FunctionFunc)GetProcAddress(hInstLibrary, "Function");
+
+		// Check if _AddFunc is currently holding a function, if not don't run it.
+		if (_AddFunc)
+		{
+			WriteLog(  _AddFunc(23, 43) );
+		}
+		// Check if _FunctionFunc is currently holding a function, if not don't run it.
+		if (_FunctionFunc)
+		{
+			_FunctionFunc();
+		}
+
+		// We're done with the DLL so we need to release it from memory.
+		FreeLibrary(hInstLibrary);
+	}
+	else
+	{
+		// Our DLL failed to load!
+
+               // WriteLog( "DLL Failed To Load!" );
+	}
+*/
+
  // Install the low-level keyboard & mouse hooks
  HHOOK hhkLowLevelKybd  = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC) &LowLevelKeyboardProc, hInstance, 0); //Q 261215: niskopoziomowe przechwytywanie klawiary specjalnie dla klawisza PrntScr :)
 
@@ -900,9 +940,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
  QGlobal::CONFIG = new TStringList;
  QGlobal::LOKTUT = new TStringList;
  QGlobal::MBRIEF = new TStringList;
+ QGlobal::MISSIO = new TStringList;
  DEBUGGER = new TDEBUGGER(NULL);                                                // UTWORZENIE FORMY DEBUGGERA
+ DEBUGGER->Hide();
  MV = new TModelViewer;
  AnsiString FULLEXE = Application->ExeName;
+
+ QGlobal::brendermenu = false;
 
  srand( time( NULL ) );
  
@@ -971,7 +1015,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
  
  FDT = FormatDateTime("ddmmyy-hhmmss", Now());
 
- argc = ParseCommandline1();
+// argc = ParseCommandline1();
 
 
 // READING FILE SYTEM ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -995,7 +1039,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
                 par1 = line.substr(pos2+1, 20);
 
 		if (test == "texpath")  Global::asCurrentTexturePath = par1.c_str();
-		if (test == "mdlpath") QGlobal::asCurrentModelsPath = par1.c_str();
+		if (test == "mdlpath")  QGlobal::asCurrentModelsPath = par1.c_str();
 		if (test == "scnpath")  Global::asCurrentSceneryPath = par1.c_str();
 	        if (test == "sndpath")  Global::asCurrentSoundPath = par1.c_str();
                 if (test == "dynpath")  Global::asCurrentDynamicPath = par1.c_str();
@@ -1068,7 +1112,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
                 if (test == "scrshotdir") QGlobal::asSSHOTDIR = par1;
                 if (test == "scrshotsub") QGlobal::asSSHOTSUB = par1;
                 if (test == "ldrbackext") QGlobal::asLBACKEXT = par1;
-                if (test == "ldrrefresh") QGlobal::LDRREFRESH = StrToFloat(Trim(par1));
+              //if (test == "ldrrefresh") QGlobal::LDRREFRESH = atoi(par1.c_str());
                 if (test == "z-fightfix") QGlobal::bzfightfix = atoi(par1.c_str());
                 if (test == "reg-t3de3d") rege3dt3d = atoi(par1.c_str());
               //if (test == "guitutopac") QGlobal::GUITUTOPAC = atof(par1.c_str());
@@ -1130,7 +1174,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
  WriteLog("");
  WriteLog("environment informations: ");
 
- sprintf(cmdline, "appfile: [%s]", argv[0]);    //argv[0]
+ sprintf(cmdline, "appfile: [%s]", FULLEXE);    //argv[0]
  WriteLog(cmdline);
 
  sprintf(apppath, "apppath: [%s]", appath.c_str());
@@ -1142,7 +1186,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
  sprintf(cmdline, "aparams: [%s]", commandline);
  WriteLog(cmdline);
 
- GetAppVersion(argv[0], &vmajor, &vminor, &vbuild, &vrev);
+ GetAppVersion(FULLEXE.c_str(), &vmajor, &vminor, &vbuild, &vrev);
  sprintf(appvers, "appvers: %i %i %i %i", vmajor, vminor, vbuild, vrev);
  WriteLog(appvers);
 
@@ -1177,20 +1221,19 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 
  for (int l = 0; l < ss->Count; l++) WriteLog(ss->Strings[l]);
 
- //SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());
+ SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());
 
  //WriteLog("cmpconf: windows 7 Ultimate 64, AMD FX 4170 4.2GHz 4 core, 8gb ram, GFX GF8600GT CORE 560Mhz 256MB PCIE,  BIOS VIDEO: 60.84.5E.00.00, OpenGL 3.3 driver rev 2009-01-16 6.14.11.8151 ");
  WriteLog("");
  WriteLog("");
 
 
-    HWND aHWnd;
-    aHWnd = FindWindow(NULL, QGlobal::logwinname.c_str()); // Szukanie okna z otwartm logiem znajac etykiete
-    //SendMessage(aHWnd, WM_CLOSE, 0, 0);    // ZAMYKAMY OTWARTY LOG
+ //HWND aHWnd;
+ //aHWnd = FindWindow(NULL, QGlobal::logwinname.c_str()); // Szukanie okna z otwartm logiem znajac etykiete
+ //SendMessage(aHWnd, WM_CLOSE, 0, 0);    // ZAMYKAMY OTWARTY LOG
 
-    SetCurrentDirectory(QGlobal::asAPPDIR.c_str());
-    Sleep(500);
-    Application->ProcessMessages();
+    //SetCurrentDirectory(QGlobal::asAPPDIR.c_str());
+
     WriteLog("Reading eu07.ini...");
     Global::LoadIniFile("eu07.ini"); // teraz dopiero mo¿na przejrzeæ plik z ustawieniami
     Global::InitKeys("keys.ini"); // wczytanie mapowania klawiszy - jest na sta³e
@@ -1204,7 +1247,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
   //  }
   //WriteLog(lpCmdLine);
 
-    WriteLog("Parsing command line...");
+    WriteLog("Parsing command line (" + AnsiString(lpCmdLine) + ")...");
     AnsiString str = lpCmdLine; // parametry uruchomienia
     if (!str.IsEmpty())
     { // analizowanie parametrów
@@ -1271,10 +1314,9 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     if (getscreenb) // JEZELI OPCJA ROZDZIELCZOSCI IDENTYCZNEJ JAK PULPIT
         {
          GetDesktopResolution(QGlobal::iWW, QGlobal::iWH); // USTAW ROZDZIELCZOSC TAKA JAK PULPIT
-        // WindowWidth = sh;
-       //  WindowHeight = sv;
-         Global::iWindowWidth = QGlobal::iWW;
-         Global::iWindowHeight = QGlobal::iWH;
+
+         //Global::iWindowWidth = QGlobal::iWW;
+         //Global::iWindowHeight = QGlobal::iWH;
         }
 
     if (askforfull)  // OKIENKO DIALOGOWE Z ZAPYTANIEM O TRYB OKNA
@@ -1286,65 +1328,82 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
         }
     if (!getscreenb) // JEZELI OPCJA ROZDZIELCZOSCI IDENTYCZNEJ JAK PULPIT
         {
-         if (QGlobal::iWH > 0) Global::iWindowHeight  = QGlobal::iWH;
+         if (QGlobal::iWH > 0) Global::iWindowHeight = QGlobal::iWH;
          if (QGlobal::iWW > 0) Global::iWindowWidth = QGlobal::iWW;
         }
 
-    // create our OpenGL window
-    if (!CreateGLWindow(Global::asHumanCtrlVehicle.c_str(), Global::iWindowWidth, Global::iWindowHeight, Bpp, fullscreen))
-        return 0; // quit if window was not created
+    if (!CreateGLWindow(Global::asHumanCtrlVehicle.c_str(), Global::iWindowWidth, Global::iWindowHeight, Bpp, fullscreen))// create our OpenGL window
+     return 0; // quit if window was not created
 
-    SetForegroundWindow(hWnd);
-    SetFocus(hWnd);
-
-    if (Console::Pressed(VK_F9)) QGlobal::brendermenu = true;                   // BACK DOOR ;)
-
-    if (QGlobal::brendermenu) DEBUGGER->Show();
-    //if (QGlobal::brendermenu) DEBUGGER->BringToFront();
-    SetWindowPos(hWnd, HWND_BOTTOM,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
-    EnableWindow(hWnd, false);                                                  // DEAKTYWUJEMY OKNO OPENGL CONY NA WIERZCH NIE WYLAZILO
-    SetWindowPos(DEBUGGER->Handle, HWND_TOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
-    DEBUGGER->lversion->Caption = QGlobal::asAPPVERS;
-    
-    while (QGlobal::brendermenu) // loop that runs while done=FALSE
-        {
-            if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) // is there a message waiting?
-            {
-                if (msg.message == WM_QUIT) // have we received a quit message?
-                    done = TRUE; // if so
-                else // if not, deal with window messages
-                {
-                    TranslateMessage(&msg); // translate the message
-                    DispatchMessage(&msg); // dispatch the message
-                }
-            }
-            else // if there are no messages
-            {
-                if (DEBUGGER->appdone) exit(0);
-                if (DEBUGGER->launch) QGlobal::brendermenu = false;
-                if (World.RenderMenu(hDC)) // Was There A Quit Received?
-                    SwapBuffers(hDC); // Swap Buffers (Double Buffering)
-                else
-                    done = true; //[F10] or DrawGLScene signalled a quit
-            }
-        }
-
-    EnableWindow(hWnd, true);
     //SetForegroundWindow(hWnd);
     SetFocus(hWnd);
 
-    ShowCursor(FALSE);
-    World.Load(hWnd, hDC);
+    // CreateGLWindow() -> InitGL() - > World.Init() -> World.RenderMenu() -> (World.Load()
 
+    //if (Console::Pressed(VK_F9)) QGlobal::brendermenu = true;                   // BACK DOOR ;)
+
+    if (!QGlobal::brendermenu) { World.Load(hWnd, hDC); ShowCursor(FALSE);}
+
+    if (QGlobal::brendermenu)
+    {
+     DEBUGGER->Left =Global::iWindowWidth / 2 - (DEBUGGER->Width / 2);
+     DEBUGGER->Top =Global::iWindowHeight / 2 - (DEBUGGER->Height / 2);
+     DEBUGGER->SCENERYDIR = QGlobal::asAPPDIR + "scenery\\";
+     DEBUGGER->Show();
+     DEBUGGER->DoubleBuffered = true;
+     DEBUGGER->BringToFront();
+     SetWindowPos(hWnd, HWND_BOTTOM,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);             // OKNO OpenGL NA SPOD
+     EnableWindow(hWnd, false);                                                 // DEAKTYWUJEMY OKNO OPENGL CONY NA WIERZCH NIE WYLAZILO
+     SetWindowPos(DEBUGGER->Handle, HWND_TOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);// OKNO STARTERA NA WIERZCH
+     DEBUGGER->lversion->Caption = QGlobal::asAPPVERS;
+
+     while (QGlobal::brendermenu) // loop that runs while done=FALSE
+        {
+          DEBUGGER->BringToFront();
+            if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))                       // is there a message waiting?
+            {
+              //if ( DEBUGGER->launch) SetFocus(hWnd);
+                if (msg.message == WM_QUIT)                                     // have we received a quit message?
+                    done = TRUE;
+                else
+                {
+                    TranslateMessage(&msg);                                     // translate the message
+                    DispatchMessage(&msg);                                      // dispatch the message
+                }
+              SwapBuffers(hDC);
+            }
+            else // if there are no messages
+            {
+                if ( DEBUGGER->appdone) QGlobal::brendermenu = false;
+                if ( DEBUGGER->launch) QGlobal::brendermenu = false;
+                if ( DEBUGGER->launch) SetForegroundWindow(hWnd);
+                if ( DEBUGGER->launch) SetFocus(hWnd);
+                if ( DEBUGGER->launch) EnableWindow(hWnd, true);
+                if (DEBUGGER->appdone) QGlobal::bAPPDONE = true;
+
+                if (World.RenderMenu(hDC)) SwapBuffers(hDC); // Swap Buffers (Double Buffering)
+                if (!QGlobal::bAPPDONE && !QGlobal::brendermenu) ShowCursor(FALSE);
+                if (!QGlobal::bAPPDONE && !QGlobal::brendermenu) World.Load(hWnd, hDC);  // !! WLASCIWE WCZYTYWANIE SCENERII JUZ PO WYBORZE W MENU
+                if ( QGlobal::bAPPDONE && hRC) KillGLWindow();
+            }
+        }
+    }  // if (QGlobal::brendermenu)
+
+    //delete DEBUGGER;
+    DEBUGGER->Release();
+    SetForegroundWindow(hWnd);
+    SetFocus(hWnd);
+    
     // McZapkie: proba przeplukania klawiatury
     Console *pConsole = new Console(); // Ra: nie wiem, czy ma to sens, ale jakoœ zainicjowac trzeba
     while (Console::Pressed(VK_F10)) Error("Keyboard buffer problem - press F10"); // na Windows 98 lubi siê to pojawiaæ
-    
+
     int iOldSpeed, iOldDelay;
     SystemParametersInfo(SPI_GETKEYBOARDSPEED, 0, &iOldSpeed, 0);
     SystemParametersInfo(SPI_GETKEYBOARDDELAY, 0, &iOldDelay, 0);
     SystemParametersInfo(SPI_SETKEYBOARDSPEED, 20, NULL, 0);
-    // SystemParametersInfo(SPI_SETKEYBOARDDELAY,10,NULL,0);
+
+
     if (!joyGetNumDevs())
         WriteLog("No joystick");
     if (Global::iModifyTGA < 0)
@@ -1360,8 +1419,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
             World.CreateE3D("models\\"); // rekurencyjne przegl¹danie katalogów
             World.CreateE3D("dynamic\\", true);
         } // po zrobieniu E3D odpalamy normalnie sceneriê, by j¹ zobaczyæ
-        // else
-        //{//g³ówna pêtla programu
+
         Console::On(); // w³¹czenie konsoli
 
        if (QGlobal::bAPPDONE ) done = true;
@@ -1404,10 +1462,22 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     DeleteFile(AnsiString(QGlobal::asAPPDIR + "models\\temp\\temp.e3d").c_str());
 
     delete pConsole; // deaktywania sterownika
-    // shutdown
-    KillGLWindow(); // kill the window
+
+    if (hRC) KillGLWindow(); // kill the window
     return (msg.wParam); // exit the program
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

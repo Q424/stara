@@ -25,6 +25,8 @@ http://mozilla.org/MPL/2.0/.
 #include "mtable.hpp"
 #include "qutils.h"
 #include "submodelsops.h"
+#include "world.h"
+#include "ground.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
@@ -2094,7 +2096,7 @@ bool TModel3d::LoadFromFile(char *FileName, bool dynamic)
     {
         LoadFromBinFile(asBinary.c_str(), dynamic);
         asBinary = ""; // wy³¹czenie zapisu
-        Init();
+        Init(0);
     }
     else
     {
@@ -2102,7 +2104,7 @@ bool TModel3d::LoadFromFile(char *FileName, bool dynamic)
         {
             LoadFromTextFile(FileName, dynamic); // wczytanie tekstowego
             if (!dynamic) // pojazdy dopiero po ustawieniu animacji
-                Init(); // generowanie siatek i zapis E3D
+                Init(0); // generowanie siatek i zapis E3D
         }
     }
     return Root ? (iSubModelsCount > 0) : false; // brak pliku albo problem z wczytaniem
@@ -2194,6 +2196,9 @@ void TModel3d::LoadFromBinFile(char *FileName, bool dynamic)
     }
     for (i = 0; i < iSubModelsCount; ++i)
     { // aktualizacja wskaŸników w submodelach
+     if (QGlobal::bfirstinitok) QGlobal::iNODESPASSED+=10;
+     if (QGlobal::bCABLOADING)  Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Cab loading...");
+
         Root[i].BinInit(Root, m, (float8 *)m_pVNT, &Textures, &Names, dynamic);
         if (Root[i].ChildGet())
             Root[i].ChildGet()->Parent = Root + i; // wpisanie wskaŸnika nadrzêdnego do potmnego
@@ -2269,7 +2274,7 @@ void TModel3d::LoadFromTextFile(char *FileName, bool dynamic)
     }
 }
 
-void TModel3d::Init()
+void TModel3d::Init(int t)
 { // obrócenie pocz¹tkowe uk³adu wspó³rzêdnych, dla pojazdów wykonywane po analizie animacji
     if (iFlags & 0x8000)
         return; // operacje zosta³y ju¿ wykonane

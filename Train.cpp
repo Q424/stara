@@ -22,6 +22,7 @@ http://mozilla.org/MPL/2.0/.
 #include "Timer.h"
 #include "Driver.h"
 #include "Console.h"
+#include "world.h"
 //---------------------------------------------------------------------------
 
 #pragma package(smart_init)
@@ -4657,6 +4658,8 @@ bool TTrain::LoadMMediaFile(AnsiString asFileName)
     {
         while (!Parser->EndOfFile)
         {
+            Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Player train initialization...");
+
             str = Parser->GetNextSymbol().LowerCase();
             // SEKCJA DZWIEKOW
             if (str == AnsiString("ctrl:")) // nastawnik:
@@ -4991,6 +4994,7 @@ bool TTrain::InitializeCab(int NewCabNo, AnsiString asFileName)
                 str = Parser->GetNextSymbol().LowerCase();
                 if (str != AnsiString("none"))
                 {
+                    QGlobal::bCABLOADING = true;
                     str = DynamicObject->asBaseDir + str;
                     Global::asCurrentTexturePath =
                         DynamicObject->asBaseDir; // bie¿¹ca sciezka do tekstur to dynamic/...
@@ -5525,7 +5529,7 @@ bool TTrain::InitializeCab(int NewCabNo, AnsiString asFileName)
     if (DynamicObject->mdKabina)
     {
         DynamicObject->mdKabina
-            ->Init(); // obrócenie modelu oraz optymalizacja, równie¿ zapisanie binarnego
+            ->Init(1); // obrócenie modelu oraz optymalizacja, równie¿ zapisanie binarnego
         return true;
     }
     return AnsiCompareStr(str, AnsiString("none"));

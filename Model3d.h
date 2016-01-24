@@ -472,7 +472,7 @@ class TModel3d : public CMesh
     {
         return iFlags;
     };
-    void Init();
+    void Init(int t);
     char *__fastcall NameGet()
     {
         return Root ? Root->pName : NULL;

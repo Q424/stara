@@ -18,6 +18,7 @@
 
 const std::string X2985Z457 =":rdP{s";
 
+
 void drawcube(float size, float r, float g, float b);
 int ParseCommandline2();
 std::string encryptDecrypt(std::string toEncrypt);

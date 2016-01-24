@@ -77,6 +77,15 @@ struct semlightcontainer
   bool blink;
 };
 
+struct backgroundrect
+{
+  int x;
+  int y;
+  int w;
+  int h;
+};
+
+
 struct a
 {
     static int sort_by;// determines which member to sort by
@@ -434,6 +443,7 @@ class QGlobal
  static TStringList *LOKTUT;
  static TStringList *LOKKBD;
  static TStringList *MBRIEF;
+ static TStringList *MISSIO;
  static TStringList *CONSISTF;
  static TStringList *CONSISTB;
  static TStringList *CONSISTA;
@@ -537,6 +547,8 @@ class QGlobal
  static bool bchangingfogsa;
  static bool bchangingfogsb;
  static bool brendermenu;
+ static bool bfirstinitok;
+ static bool bCABLOADING;
  static double fdestfogend;
  static double fdestfogstart;
  static double fogchangef;
@@ -548,6 +560,8 @@ class QGlobal
  static int iHLBLENDTYPE;
  static int iMIRRORSUPDBY;
  static int iRANDTABPOS;
+ static int iNODESPASSED;
+ static int iNODESFIRSTINIT;
  static int iNODES;
  static int iPARSERBYTESPASSED;
  static int iPARSERBYTESTOTAL;
@@ -567,9 +581,9 @@ class QGlobal
  static float gtc1;
  static float gtc2;
  static float lsec;
- static float rtim;
+ static int rtim;
  static float ffov;
- static float LDRREFRESH;
+ static int LDRREFRESH;
  static int   LDRBORDER;
  static float GUITUTOPAC;
  static float ffovblocktime;
@@ -596,11 +610,15 @@ class QGlobal
  static pentrypointscontainer PEP[MAXPASSENGERENTYPOINTS];
  static semlightcontainer slc[128];
  static int currententrypoint;
+ static backgroundrect BR;
 
  static float rekrot3_rot;
  static float rekrot3_time;
  static int rekrot_step;
  static bool rekrot_timepause;
+ static Color4 lepc;
+ static Color4 lfipc;
+
 };
 
 class Global

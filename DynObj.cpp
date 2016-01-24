@@ -5278,19 +5278,19 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
     // ABu 050205 - tego wczesniej nie bylo i uciekala pamiec:
     delete Parser;
     if (mdModel)
-        mdModel->Init(); // obrócenie modelu oraz optymalizacja, równie¿ zapisanie binarnego
+        mdModel->Init(0); // obrócenie modelu oraz optymalizacja, równie¿ zapisanie binarnego
     if (mdLoad)
-        mdLoad->Init();
+        mdLoad->Init(0);
     if (mdPrzedsionek)
-        mdPrzedsionek->Init();
+        mdPrzedsionek->Init(0);
     if (mdLowPolyInt)
-        mdLowPolyInt->Init();
+        mdLowPolyInt->Init(0);
     if (mdBogieA)
-        mdBogieA->Init();
+        mdBogieA->Init(0);
     if (mdBogieB)
-        mdBogieB->Init();
+        mdBogieB->Init(0);
     if (mdBogieC)
-        mdBogieC->Init();
+        mdBogieC->Init(0);
         
     // sHorn2.CopyIfEmpty(sHorn1); //¿eby jednak tr¹bi³ te¿ drugim
     Global::asCurrentTexturePath =

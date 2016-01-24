@@ -69,7 +69,8 @@ class cParser : public std::stringstream
     int getProgress() const; // percentage of file processed.
     // load traction?
     bool LoadTraction;
-
+    int bytespassed;
+    int bytestotal;
   protected:
     // methods:
     std::string readToken(bool ToLower = true, const char *Break = "\n\t ;");

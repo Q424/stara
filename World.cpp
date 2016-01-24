@@ -143,6 +143,101 @@ SENDLOGTOFTP(AnsiString DATE)
 };
 
 
+void divideline(AnsiString line, TStringList *sl, int ll)
+{
+ AnsiString tmp;
+ int linelen, linesout;
+
+ linelen = line.Length();
+
+ linesout = linelen % ll;
+
+ for (int i = 1; i < linesout+1; i++)
+  {
+    tmp = line.SubString(1,ll);
+     line.Delete(1, ll);
+
+     sl->Add(tmp);
+  }
+}
+
+
+int getprogressfile()
+    {
+     QGlobal::iNODES = 1000000;
+     AnsiString asfile;
+     AnsiString cscn = Global::szSceneryFile;
+     asfile = QGlobal::asAPPDIR + "DATA\\pbars\\" + cscn + ".TXT";
+
+     if (FileExists(asfile))
+        {
+         QGlobal::bfirstloadingscn = false;
+         QGlobal::SLTEMP->LoadFromFile(asfile);
+         QGlobal::iNODES = StrToInt(QGlobal::SLTEMP->Strings[0]);
+         QGlobal::iNODESFIRSTINIT = StrToInt(QGlobal::SLTEMP->Strings[1]);
+        // if (QGlobal::SLTEMP->Strings[0] != "")
+          return QGlobal::iNODES;     // NA TYM SIE POTRAFI WYWALIC, CZEMU?
+
+        }
+       else return 1000000;
+    }
+
+    
+int setprogressfile()
+    {
+     //Global::iNODES = 1000000;
+     AnsiString asfile;
+     AnsiString cscn = Global::szSceneryFile;
+     asfile = QGlobal::asAPPDIR + "DATA\\pbars\\" + cscn + ".txt";
+     WriteLog("PROGRESS FILE: " + asfile);
+     QGlobal::SLTEMP->Clear();
+     QGlobal::SLTEMP->Add(IntToStr(QGlobal::iNODESPASSED));            //QGlobal::iPARSERBYTESPASSED
+     QGlobal::SLTEMP->Add(IntToStr(QGlobal::iNODESFIRSTINIT)); 
+     QGlobal::SLTEMP->SaveToFile(asfile);
+     WriteLog("PROGRESS FILE UPDATED ");
+    }
+
+
+void LOADMISSIONDESCRIPTION()
+{
+
+    AnsiString asfile, line, xtest, isd;
+    AnsiString cscn = Global::szSceneryFile;
+
+    asfile = QGlobal::asAPPDIR + "scenery\\" + cscn;
+
+    QGlobal::SLTEMP->LoadFromFile(asfile);
+
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "³", "l", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "ê", "e", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "¹", "a", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "³", "l", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "æ", "c", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "œ", "s", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "ó", "o", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "¿", "z", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "ñ", "n", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "Ÿ", "z", TReplaceFlags() << rfReplaceAll );
+    
+    bool descr = false;
+    for (int i= 0; i < QGlobal::SLTEMP->Count-1; i++)
+     {
+      descr = false;
+      xtest = QGlobal::SLTEMP->Strings[i];
+
+      isd = xtest.SubString(1,5);
+
+      if (isd.SubString(1,4) == "//$d") descr = true; //WriteLog("^isdescript");;
+      if (isd.Pos("d") && isd.Pos("/") && descr)
+       {
+       xtest = QGlobal::SLTEMP->Strings[i];
+        line = xtest.SubString(5,1024);
+
+        if (line.Length() >= 110) divideline(line, QGlobal::MISSIO, 110);
+         else  QGlobal::MISSIO->Add(line);
+       }
+     }
+}
 
 bool __fastcall TWorld::STARTSIMULATION()
 {
@@ -206,6 +301,8 @@ TWorld::TWorld()
     QGlobal::CONSISTA = new TStringList;
     QGlobal::LOKKBD = new TStringList;
     QGlobal::LOKTUT = new TStringList;
+
+    BRx = BRy = BRw = BRh = 0;
 }
 
 
@@ -639,7 +736,9 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     glEnable(GL_FOG); // Enables GL_FOG
 
     // Ra: ustawienia testowe
+    WriteLog("glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);");
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    WriteLog("glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);");
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
     WriteLog("");
 
@@ -689,98 +788,60 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     }
     WriteLog("Font init OK"); //+AnsiString(glGetError())
     WriteLog("");
-    */
-    hWnd = NhWnd;
-    SetForegroundWindow(hWnd);
+     */
 
-    Timer::ResetTimers();
+    //SetForegroundWindow(hWnd);
 
+    //Timer::ResetTimers();
 
     glColor4f(1.0f, 3.0f, 3.0f, 0.0f);
-    //    SwapBuffers(hDC);					                // Swap Buffers (Double Buffering)
-    //    glClear(GL_COLOR_BUFFER_BIT);
-    //    glFlush();
 
-
-
-    glDisable(GL_DEPTH_TEST); // Disables depth testing
+    //glDisable(GL_DEPTH_TEST); // Disables depth testing
     //glColor3f(3.0f, 3.0f, 3.0f);
 
-    SetCurrentDirectory(ExtractFileDir(ParamStr(0)).c_str());
-    RenderMenu(hDC);
-    //Load(NhWnd, hDC);
+   //Load(NhWnd, hDC);
+
+  return true;
 }
 
+
+// *****************************************************************************
+// Wykonywane juz po wybraniu scenerii we wbudowanym starterze 
+// *****************************************************************************
 bool TWorld::Load(HWND NhWnd, HDC hDC)
 {
+    QGlobal::rtim = 0;
+    getprogressfile();                                         // LOADING PROGRESSBAR BYTES
+    WriteLog(AnsiString(QGlobal::iNODES));
+    hWnd = NhWnd;
+    //SetFocus(NhWnd);
+
+    SetCurrentDirectory(QGlobal::asAPPDIR.c_str());
     RenderLoader(hDC, 77, "SOUND INITIALIZATION...");
     WriteLog("Sound Init");
-
-
-    /*-----------------------Sound Initialization-----------------------*/
     TSoundsManager::Init(hWnd);
-    // TSoundsManager::LoadSounds( "" );
-    /*---------------------Sound Initialization End---------------------*/
     WriteLog("Sound Init OK");
     WriteLog("");
-    //if (Global::detonatoryOK)
-    //{
-    //    glRasterPos2f(-0.25f, -0.11f);
-    //    glPrint("OK.");
-    //}
-   // SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
-    //int i;
     glColor3f(0.0f, 0.0f, 100.0f);
     glEnable(GL_LIGHTING);
     RenderLoader(hDC, 77, "TEXTUREMANAGER INITIALIZATION...");
     Paused = true;
     WriteLog("Textures init");
-    //if (Global::detonatoryOK)
-    //{
-    //    glRasterPos2f(-0.25f, -0.12f);
-    //    glPrint("Tekstury / Textures...");
-    //}
-    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
-
     TTexturesManager::Init();
     WriteLog("Textures init OK");
     WriteLog("");
-    //if (Global::detonatoryOK)
-    //{
-    //    glRasterPos2f(-0.25f, -0.13f);
-    //    glPrint("OK.");
-    //}
-    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
     RenderLoader(hDC, 77, "MODELMANAGER INITIALIZATION...");
     WriteLog("Models init");
-    //if (Global::detonatoryOK)
-    //{
-    //    glRasterPos2f(-0.25f, -0.14f);
-    //    glPrint("Modele / Models...");
-    //}
-    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
     // McZapkie: dodalem sciezke zeby mozna bylo definiowac skad brac modele ale to malo eleganckie
     //    TModelsManager::LoadModels(asModelsPatch);
     TModelsManager::Init();
     WriteLog("Models init OK");
     WriteLog("");
-    //if (Global::detonatoryOK)
-    //{
-    //    glRasterPos2f(-0.25f, -0.15f);
-    //    glPrint("OK.");
-    //}
-    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
-    
+
     RenderLoader(hDC, 77, "GROUND INITIALIZATION...");
     WriteLog("Ground init");
-    //if (Global::detonatoryOK)
-    //{
-    //    glRasterPos2f(-0.25f, -0.16f);
-    //    glPrint("Sceneria / Scenery (please wait)...");
-    //}
-    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
     Ground.Init(Global::szSceneryFile, hDC);
     //    Global::tSinceStart= 0;
@@ -792,13 +853,6 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     Clouds.Init();
     WriteLog("Sky init OK");
     WriteLog("");
-    
-    //if (Global::detonatoryOK)
-    //{
-    //    glRasterPos2f(-0.25f, -0.17f);
-    //    glPrint("OK.");
-    //}
-    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
     //    TTrack *Track=Ground.FindGroundNode("train_start",TP_TRACK)->pTrack;
 
@@ -811,12 +865,6 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
 
     RenderLoader(hDC, 77, "Player Train initialization...");
     char buff[255] = "Player train init: ";
-    //if (Global::detonatoryOK)
-    //{
-    //    glRasterPos2f(-0.25f, -0.18f);
-    //    glPrint("Przygotowanie kabiny do sterowania...");
-    //}
-    //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
 
     strcat(buff, Global::asHumanCtrlVehicle.c_str());
     WriteLog(buff);
@@ -831,14 +879,15 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
             Controlled = Train->Dynamic();
             mvControlled = Controlled->ControlledFind()->MoverParameters;
             Global::pUserDynamic = Controlled; // renerowanie pojazdu wzglêdem kabiny
+            QGlobal::lepc.r = 0.0f;
+            QGlobal::lepc.g = 0.9f;
+            QGlobal::lepc.b = 0.0f;
+            QGlobal::lepc.o = 0.9f;
+            
             WriteLog("Player train init OK");
             RenderLoader(hDC, 77, "Player Train initialization OK.");
             Sleep(200);
-            //if (Global::detonatoryOK)
-            //{
-            //    glRasterPos2f(-0.25f, -0.19f);
-            //    glPrint("OK.");
-            //}
+
             FollowView();
             QGlobal::asLOKKBDFILE = "tutorials\\" + mvControlled->TypeName + ".txt";
             if (FEX(QGlobal::asLOKKBDFILE)) QGlobal::LOKKBD->LoadFromFile(QGlobal::asLOKKBDFILE);
@@ -851,12 +900,6 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
             Error("Player train init failed!", false);
             FreeFlyModeFlag = true; // Ra: automatycznie w³¹czone latanie
             QGlobal::bSIMSTARTED = true;
-            //if (Global::detonatoryOK)
-            //{
-            //    glRasterPos2f(-0.25f, -0.20f);
-            //    glPrint("Blad inicjalizacji sterowanego pojazdu!");
-            //}
-            //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
             Controlled = NULL;
             mvControlled = NULL;
             Camera.Type = tp_Free;
@@ -869,11 +912,6 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
           RenderLoader(hDC, 77, "Player Train NOT EXIST!");
           Sleep(200);
           Error("Player train not exist!", false);
-            //if (Global::detonatoryOK)
-            //{
-            //    glRasterPos2f(-0.25f, -0.20f);
-            //    glPrint("Wybrany pojazd nie istnieje w scenerii!");
-            //}
         }
         FreeFlyModeFlag = true; // Ra: automatycznie w³¹czone latanie
         QGlobal::bSIMSTARTED = true;
@@ -927,9 +965,9 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     if (QGlobal::bSENDLOGFTP > 0) SENDLOGTOFTP(ftpdate);
 
     QGlobal::bSCNLOADED = true;
-    QGlobal::SLTEMP->Clear();
-    QGlobal::SLTEMP->Add(IntToStr(QGlobal::iNODES));
-    QGlobal::SLTEMP->SaveToFile("data\\pbars\\" + AnsiString(Global::szSceneryFile));
+    //QGlobal::SLTEMP->Clear();
+    //QGlobal::SLTEMP->Add(IntToStr(QGlobal::iNODES));
+    //QGlobal::SLTEMP->SaveToFile("data\\pbars\\" + AnsiString(Global::szSceneryFile));
     Global::iPause = true;
 
     if (!QGlobal::bmodelpreview) generatenoisetex(); // W efects2d.cpp
@@ -937,6 +975,12 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     if (mvControlled) Controlled->GetConsist_f(1, Controlled);
 
     //if (!FOVSET) {SCR->FOVADD(0); FOVSET=true;}
+    setprogressfile();
+
+    LOADMISSIONDESCRIPTION();
+
+    SetForegroundWindow(NhWnd);
+    SetFocus(NhWnd);
     return true;
 };
 
@@ -1034,9 +1078,6 @@ void TWorld::OnKeyDown(int cKey)
     }
 
 
-
-    if ((cKey <= '9') ? (cKey >= '0') : false) // klawisze cyfrowe
-    {
       if (Console::Pressed(VK_LBUTTON) && cKey == '0') QGlobal::infotype = 0;
       if (Console::Pressed(VK_LBUTTON) && cKey == '1') QGlobal::infotype = 1;
       if (Console::Pressed(VK_LBUTTON) && cKey == '2') QGlobal::infotype = 2;
@@ -1047,7 +1088,16 @@ void TWorld::OnKeyDown(int cKey)
       if (Console::Pressed(VK_LBUTTON) && cKey == '7') QGlobal::infotype = 7;
       if (Console::Pressed(VK_LBUTTON) && cKey == '8') QGlobal::infotype = 8;
       if (Console::Pressed(VK_LBUTTON) && cKey == '9') QGlobal::infotype = 9;
-      if (Console::Pressed(VK_LBUTTON) && cKey  > '0') Global::iTextMode = -999;
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'A') QGlobal::infotype = 10;
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'B') QGlobal::infotype = 11;
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'C') QGlobal::infotype = 12;
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'D') QGlobal::infotype = 13;
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'E') QGlobal::infotype = 14;
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'F') QGlobal::infotype = 15;
+  //    if (Console::Pressed(VK_LBUTTON) && cKey  > '0') Global::iTextMode = -999;
+
+    if ((cKey <= '9') ? (cKey >= '0') : false) // klawisze cyfrowe
+    {
 
         int i = cKey - '0'; // numer klawisza
         if (Console::Pressed(VK_SHIFT))
@@ -1382,8 +1432,8 @@ void TWorld::OnMouseMpush(double x, double y)
 
 void TWorld::OnMouseWheel(int zDelta)
 {
- //if (zDelta > 0) SCR->FOVADD(5.00f);
- //if (zDelta < 0) SCR->FOVREM(5.00f);
+ if (zDelta > 0 && QGlobal::GUITUTOPAC < 0.9) QGlobal::GUITUTOPAC += 0.05;
+ if (zDelta < 0 && QGlobal::GUITUTOPAC > 0.2) QGlobal::GUITUTOPAC -= 0.05;
 }
 
 
@@ -2272,7 +2322,7 @@ bool TWorld::Render()
     if (!FreeFlyModeFlag) RenderCab(false);  // RENDEROWANIE KABINY GDY W KABINIE, RENDEROWANIE W TRYBIE FREEFLY REALIZOWANE JEST W DYNOBJ.CPP
 
     if (!FreeFlyModeFlag)
-    if (QGlobal::bSHOWBRIEFING) RenderLoader(QGlobal::glHDC, 77, "Zakonczono wczytywanie, wcisnij spacjê");
+    if (QGlobal::bSHOWBRIEFING) RenderLoader(QGlobal::glHDC, 77, "Zakonczono wczytywanie, nacisnij spacje");
 
     if (QGlobal::bscrnoise ||
         QGlobal::bTUTORIAL ||
@@ -2286,7 +2336,7 @@ bool TWorld::Render()
         switch2dRender();
 
         if (QGlobal::bEXITQUERY) RenderEXITQUERY(0.30f);
-        if (QGlobal::infotype >= 0) RenderINFOPANEL(QGlobal::infotype, 0.25f);
+        if (QGlobal::infotype >= 0) RenderINFOPANEL(QGlobal::infotype, QGlobal::GUITUTOPAC);
 
         if (QGlobal::bscrfilter) RenderFILTER(0.15f);
         if (QGlobal::bscrnoise) drawNoise(1, QGlobal::fnoisealpha);             // W efects2d.cpp

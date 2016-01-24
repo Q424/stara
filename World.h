@@ -109,6 +109,7 @@ class TWorld
     bool __fastcall RenderRain(float rf, float s, int d, int m);
     bool __fastcall RenderSnow();
     bool __fastcall SnowInit();
+    bool __fastcall setBR(int x, int y, int w, int h);
   private:
     AnsiString OutText01; // teksty na ekranie
     AnsiString OutText02;
@@ -122,6 +123,45 @@ class TWorld
     AnsiString OutText10;
     AnsiString OutText11;
     AnsiString OutText12;
+
+int BRx;
+int BRy;
+int BRw;
+int BRh;
+
+
+
+float LDR_COLOR_R;
+float LDR_COLOR_G;
+float LDR_COLOR_B;
+float LDR_STR_1_R;
+float LDR_STR_1_G;
+float LDR_STR_1_B;
+float LDR_STR_1_A;
+float LDR_TBACK_R;
+float LDR_TBACK_G;
+float LDR_TBACK_B;
+float LDR_TBACK_A;
+float LDR_PBARLEN;
+float LDR_PBAR__R;
+float LDR_PBAR__G;
+float LDR_PBAR__B;
+float LDR_PBAR__A;
+float LDR_FINIT_R;
+float LDR_FINIT_G;
+float LDR_FINIT_B;
+float LDR_FINIT_A;
+float LDR_LOGOVIS;
+float LDR_MLOGO_X;
+float LDR_MLOGO_Y;
+float LDR_MLOGO_A;
+float LDR_DESCVIS;
+float LDR_BRIEF_X;
+float LDR_BRIEF_Y;
+AnsiString LDR_STR_LOAD;
+AnsiString LDR_STR_FRST;
+
+ 
     void ShowHints();
     bool Render();
     bool RenderCab(bool colormode);

@@ -235,26 +235,26 @@ bool TDynamicObject::LoadAdditionals(AnsiString ADDFILENAME, TDynamicObject *D, 
       if (mdstatic9 != "") D->mdSTATIC09   = TModelsManager::GetModel(AnsiString(D->asBaseDir  + mdstatic9).c_str(),true);
       if (mdstatic0 != "") D->mdSTATIC10   = TModelsManager::GetModel(AnsiString(D->asBaseDir  + mdstatic0).c_str(),true);
 
-      if (mdclock_1 != "") D->mdClock1->Init();
-      if (mdclock_2 != "") D->mdClock2->Init();
-      if (mdventil1 != "") D->mdVentilator1->Init();
-      if (mdventil2 != "") D->mdVentilator2->Init();
-      if (mdfotel1A != "") D->mdFotel1->Init();
-      if (mdfotel2A != "") D->mdFotel2->Init();
-      if (mddirtab1 != "") D->mdDIRTABLE1->Init();
-      if (mddirtab2 != "") D->mdDIRTABLE2->Init();
-      if (mdmirrorAR != "") D->mdMirrorAR->Init();
-      if (mdmirrorAL != "") D->mdMirrorAL->Init();
-      if (mdstatic1 != "") D->mdSTATIC01->Init();
-      if (mdstatic2 != "") D->mdSTATIC02->Init();
-      if (mdstatic3 != "") D->mdSTATIC03->Init();
-      if (mdstatic4 != "") D->mdSTATIC04->Init();
-      if (mdstatic5 != "") D->mdSTATIC05->Init();
-      if (mdstatic6 != "") D->mdSTATIC06->Init();
-      if (mdstatic7 != "") D->mdSTATIC07->Init();
-      if (mdstatic8 != "") D->mdSTATIC08->Init();
-      if (mdstatic9 != "") D->mdSTATIC09->Init();
-      if (mdstatic0 != "") D->mdSTATIC10->Init();
+      if (mdclock_1 != "") D->mdClock1->Init(0);
+      if (mdclock_2 != "") D->mdClock2->Init(0);
+      if (mdventil1 != "") D->mdVentilator1->Init(0);
+      if (mdventil2 != "") D->mdVentilator2->Init(0);
+      if (mdfotel1A != "") D->mdFotel1->Init(0);
+      if (mdfotel2A != "") D->mdFotel2->Init(0);
+      if (mddirtab1 != "") D->mdDIRTABLE1->Init(0);
+      if (mddirtab2 != "") D->mdDIRTABLE2->Init(0);
+      if (mdmirrorAR != "") D->mdMirrorAR->Init(0);
+      if (mdmirrorAL != "") D->mdMirrorAL->Init(0);
+      if (mdstatic1 != "") D->mdSTATIC01->Init(0);
+      if (mdstatic2 != "") D->mdSTATIC02->Init(0);
+      if (mdstatic3 != "") D->mdSTATIC03->Init(0);
+      if (mdstatic4 != "") D->mdSTATIC04->Init(0);
+      if (mdstatic5 != "") D->mdSTATIC05->Init(0);
+      if (mdstatic6 != "") D->mdSTATIC06->Init(0);
+      if (mdstatic7 != "") D->mdSTATIC07->Init(0);
+      if (mdstatic8 != "") D->mdSTATIC08->Init(0);
+      if (mdstatic9 != "") D->mdSTATIC09->Init(0);
+      if (mdstatic0 != "") D->mdSTATIC10->Init(0);
       
       delete ADDFILE;
       }

@@ -42,7 +42,7 @@ http://mozilla.org/MPL/2.0/.
 #include "Names.h"
 #include "World.h"
 #include "qutils.h"
-
+#include "screen.h"
 #define _PROBLEND 1
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
@@ -1712,16 +1712,17 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
     tmp->asName = (asNodeName == AnsiString("none") ? AnsiString("") : asNodeName);
     if (r >= 0) tmp->fSquareRadius = r * r;
     tmp->fSquareMinRadius = rmin * rmin;
-    
-    QGlobal::iNODES++;
-    QGlobal::postep++;
+
+  //QGlobal::iNODESPASSED++;
+  //QGlobal::iNODES++;
+  //QGlobal::postep++;
     QGlobal::asNODENAME = tmp->asName;
 
     gtc2 =  GetTickCount();
 
-    rtim = gtc2 - gtc1;
+    //rtim = gtc2 - gtc1;
 
-    QGlobal::rtim = (rtim) / 1000 ;
+    QGlobal::rtim += 1; //(rtim) / 1000 ;
 
     QGlobal::gtc2 = GetTickCount();
     QGlobal::lsec = QGlobal::gtc2 - QGlobal::gtc1;
@@ -1735,11 +1736,10 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
     QGlobal::rtim = 0;
     AnsiString element;
     element = str + " >> " + asNodeName;
-    if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, element);    // Q: Wywolywanie stad powoduje krzaczenie sie znakow w opisie scenerii, czemu?
+    Global::pWorld->RenderLoader(QGlobal::glHDC, 77, element);    // Q: Wywolywanie stad powoduje krzaczenie sie znakow w opisie scenerii, czemu?
+   }
 
-    }
-
-    if (GetAsyncKeyState(VK_ESCAPE) < 0) { exit(0); }                           //Q 27.12.15: WYMUSZENIE PRZERWANIA WCZYTYWANIA I WYJSCIE
+    if (GetAsyncKeyState(VK_ESCAPE) < 0) { exit(0); }             //Q 27.12.15: WYMUSZENIE PRZERWANIA WCZYTYWANIA I WYJSCIE
 
     if (str == "triangles")
         tmp->iType = GL_TRIANGLES;
@@ -2434,6 +2434,18 @@ void TGround::FirstInit()
     if (bInitDone)
         return; // Ra: ¿eby nie robi³o siê dwa razy
     bInitDone = true;
+    QGlobal::iNODESFIRSTINIT = QGlobal::iNODESPASSED;
+
+    QGlobal::lepc.r = 0.9f;
+    QGlobal::lepc.g = 0.2f;
+    QGlobal::lepc.b = 0.0f;
+    QGlobal::lepc.o = 0.9f;
+    QGlobal::lfipc.r = 0.9f;
+    QGlobal::lfipc.g = 0.1f;
+    QGlobal::lfipc.b = 0.0f;
+    QGlobal::lfipc.o = 0.9f;
+
+    
     if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "FIRSTINIT");
     WriteLog("");
     WriteLog("InitNormals");
@@ -2556,16 +2568,30 @@ void TGround::FirstInit()
     WriteLog("");
     WriteLog("");
     WriteLog("");
+
+    QGlobal::bfirstinitok = true;
+
 };
+
 
 bool TGround::Init(AnsiString asFile, HDC hDC)
 { // g³ówne wczytywanie scenerii
     if (asFile.LowerCase().SubString(1, 7) == "scenery")
         asFile.Delete(1, 8); // Ra: usuniêcie niepotrzebnych znaków - zgodnoœæ wstecz z 2003
+    QGlobal::lepc.r = 0.9f;
+    QGlobal::lepc.g = 0.2f;
+    QGlobal::lepc.b = 0.0f;
+    QGlobal::lepc.o = 0.9f;
+    QGlobal::lfipc.r = 0.9f;
+    QGlobal::lfipc.g = 0.5f;
+    QGlobal::lfipc.b = 0.1f;
+    QGlobal::lfipc.o = 0.9f;
+
     WriteLog("");
     WriteLog("Loading scenery from " + asFile + "  #############################################################################################################################");
     WriteLog("");
     Global::pGround = this;
+    //W->RenderLoader(77, AnsiString("Init ground..." ).c_str());
     // pTrain=NULL;
     pOrigin = aRotate = vector3(0, 0, 0); // zerowanie przesuniêcia i obrotu
     AnsiString str = "";
@@ -2591,6 +2617,7 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
         Parser->First();
         AnsiString Token,asFileName;
     */
+
     const int OriginStackMaxDepth = 100; // rozmiar stosu dla zagnie¿d¿enia origin
     int OriginStackTop = 0;
     vector3 OriginStack[OriginStackMaxDepth]; // stos zagnie¿d¿enia origin
@@ -2608,12 +2635,16 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
     TGroundNode *LastNode = NULL; // do u¿ycia w trainset
     iNumNodes = 0;
     token = "";
+    int by = 0;
+    int maxby = 200;
+    parser.bytespassed = 0;
     parser.getTokens();
     parser >> token;
     int refresh = 0;
 
     while (token != "") //(!Parser->EndOfFile)
     {
+     QGlobal::iPARSERBYTESPASSED = parser.bytespassed;
         if (refresh == 50)
         { // SwapBuffers(hDC); //Ra: bez ogranicznika za bardzo spowalnia :( a u niektórych miga
             refresh = 0;
@@ -2624,6 +2655,8 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
         str = AnsiString(token.c_str());
         if (str == AnsiString("node"))
         {
+            // if (!Console::Pressed(VK_SHIFT) && Console::Pressed(VK_F11)) SCRX->SaveScreen_xxx();
+
             LastNode = AddGroundNode(&parser); // rozpoznanie wêz³a
 
             if (QGlobal::asINCLUDETYPE == "posers") LastNode->iSubType = 101; //Q 070116: wedlug typu obiektu ustalamy jego kod cyfrowy
@@ -2636,6 +2669,8 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
             { // je¿eli przetworzony poprawnie
              // WriteLog(IntToStr(LastNode->iType) + " [" + LastNode->asTrainNumber + "]:[" + LastNode->asDest + "]");
              //WriteLog("---------------------------------------------------------");
+              QGlobal::iNODESPASSED++;
+
                 if (LastNode->iType == GL_TRIANGLES)
                 {
                     if (!LastNode->Vertices)

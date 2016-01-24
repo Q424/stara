@@ -22,7 +22,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-
+#include <math>
 #include "opengl/glew.h"   // ZAWSZE JAKO PIERWSZY MODUL OPENGLOWY
 #include "glfont.c"
 #include "system.hpp"
@@ -120,6 +120,7 @@ bool startpassed = false;
 
 float bkgalpha = 0.2;
 float ltrans = 0.99;
+float endpointblink = 0.0;
 
 float emm1[]= { 1,1,1,0 };
 float emm2[]= { 0,0,0,0 };
@@ -131,34 +132,6 @@ bool showpointer = true;
 AnsiString state = "";
 
 
-
-float LDR_COLOR_R;
-float LDR_COLOR_G;
-float LDR_COLOR_B;
-float LDR_STR_1_R;
-float LDR_STR_1_G;
-float LDR_STR_1_B;
-float LDR_STR_1_A;
-float LDR_TBACK_R;
-float LDR_TBACK_G;
-float LDR_TBACK_B;
-float LDR_TBACK_A;
-float LDR_PBARLEN;
-float LDR_PBAR__R;
-float LDR_PBAR__G;
-float LDR_PBAR__B;
-float LDR_PBAR__A;
-float LDR_LOGOVIS;
-float LDR_MLOGO_X;
-float LDR_MLOGO_Y;
-float LDR_MLOGO_A;
-float LDR_DESCVIS;
-float LDR_BRIEF_X;
-float LDR_BRIEF_Y;
-AnsiString LDR_STR_LOAD;
-AnsiString LDR_STR_FRST;
-
- 
 
 // *****************************************************************************
 // LOADING Q FEATURES CONFIG ***************************************************
@@ -1060,6 +1033,21 @@ glLineWidth(0.001);
    glEnable( GL_LIGHTING );
 }
 
+void DrawCircle(float cx, float cy, float r, int num_segments)
+{
+    glBegin(GL_LINE_LOOP);
+    for(int ii = 0; ii < num_segments; ii++)
+    {
+        float theta = 2.0f * 3.1415926f * float(ii) / float(num_segments);//get the current angle
+
+        float x = r * cos(theta);//calculate the x component
+        float y = r * sin(theta);//calculate the y component
+
+        glVertex2f(x + cx, y + cy);//output vertex
+
+    }
+    glEnd();
+}
 
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // RenderInformation() - WYSWIETLANIE ROZNYCH INFORMACJI ^^^^^^^^^^^^^^^^^^^^^^^
@@ -1257,7 +1245,6 @@ lineplus(15);
 
          PBY = Global::iWindowHeight - (200-8);
 
-
          AnsiString x, scn;
          if (g==0) x= AnsiString(Global::szSceneryFile);
          if (g==0) l = x.Length();
@@ -1269,15 +1256,16 @@ lineplus(15);
 
          glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_COLOR);
          glEnable(GL_TEXTURE_2D);
-         glColor4f(LDR_STR_1_R, LDR_STR_1_G, LDR_STR_1_B, LDR_STR_1_A);
+         glColor4f(LDR_STR_1_R, LDR_STR_1_G, LDR_STR_1_B, LDR_STR_1_A-0.3);
          if (!QGlobal::bSCNLOADED) BFONT->Print_scale( 2,53,AnsiString(LDR_STR_LOAD).c_str(), 1, 1.3, 1.3);
          if (!QGlobal::bSCNLOADED) BFONT->Print_scale( 1,0,AnsiString("Wcisnij ESC aby przerwac").c_str(), 1, 0.6, 0.6);
          if ( QGlobal::bSCNLOADED) BFONT->Print_scale( 2,54,AnsiString("Wcisnij spacje aby rozpoczac...").c_str(), 1, 1.7, 1.7);
 
-         BFONT->Print_scale( 2,55, AnsiString(IntToStr(QGlobal::iNODES) + ", " + currloading_b).c_str(), 1, 0.7, 0.7);     // current element
-         if (!QGlobal::bfirstloadingscn) BFONT->Print_scale( 2,56,AnsiString(currloading).c_str(), 1, 0.7, 0.7);
-         if (!QGlobal::bSCNLOADED) BFONT->Print_scale(40,59,AnsiString(AnsiString(scn)).c_str(), 1, 2.0, 2.0);      // NAZWA SCENERII
-if (tmp) if (!QGlobal::bSCNLOADED) BFONT->Print_scale(40,60,AnsiString("$.scn - plik roboczy generowany przez Rainsted").c_str(), 1, 0.8, 0.8);
+         glColor4f(LDR_STR_1_R, LDR_STR_1_G, LDR_STR_1_B, LDR_STR_1_A);
+         BFONT->Print_scale( 2,55, AnsiString(IntToStr(QGlobal::iNODESPASSED) + ", " + currloading_b).c_str(), 1, 0.7, 0.7);     // current element
+         if (!QGlobal::bfirstloadingscn) BFONT->Print_scale(2,59, AnsiString(currloading).c_str(), 1, 0.7, 0.7);
+         if (!QGlobal::bSCNLOADED) BFONT->Print_scale(40,59, AnsiString(AnsiString(scn)).c_str(), 1, 2.0, 2.0);      // NAZWA SCENERII
+if (tmp) if (!QGlobal::bSCNLOADED) BFONT->Print_scale(40,60, AnsiString("$.scn - plik roboczy generowany przez Rainsted").c_str(), 1, 0.8, 0.8);
 
          glColor4f(0.5, 0.5, 0.5, 0.7);  // 09 07 02
          BFONT->Print_scale(75,63,AnsiString(AnsiString(QGlobal::asAPPVERS)).c_str(), 1, 0.7, 0.7);       // WERSJA APLIKACJI, DATA KOMPILACJI
@@ -1294,7 +1282,7 @@ if (tmp) if (!QGlobal::bSCNLOADED) BFONT->Print_scale(40,60,AnsiString("$.scn - 
         // glEnable(GL_BLEND);
          //BFONT->End();
 
-         if (QGlobal::bfirstloadingscn) BFONT->Print_scale( 2, 56, AnsiString(LDR_STR_FRST).c_str(), 1, 0.7, 0.7);
+         if (QGlobal::bfirstloadingscn) BFONT->Print_scale( 2, 57, AnsiString(LDR_STR_FRST).c_str(), 1, 0.7, 0.7);
          BFONT->End();
 
 
@@ -3046,6 +3034,14 @@ bool __fastcall TWorld::RenderEXITQUERY(double alpha)
     glEnable( GL_LIGHTING );
 }
 
+bool __fastcall TWorld::setBR(int x, int y, int w, int h)
+{
+  BRx = x;
+  BRy = y;
+  BRw = w;
+  BRh = h;
+  return true;
+}
 
 // *****************************************************************************
 // NOWE PANELE INFORMACYJNE
@@ -3077,28 +3073,49 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   glEnd( );
    }
  */
+
+//  QGlobal::BR.x = 0;
+//  QGlobal::BR.y = 40;
+//  QGlobal::BR.w = 300;
+//  QGlobal::BR.h = 1024;
+
+
+  if (num ==  0)  setBR(0, 40, 300, Global::iWindowHeight);
+  if (num ==  1)  setBR(0, 40, 300, Global::iWindowHeight);
+  if (num ==  2)  setBR(0, 40, 300, Global::iWindowHeight);
+  if (num ==  3)  setBR(0, 40, 300, Global::iWindowHeight);
+  if (num ==  4)  setBR(0, 40, 300, Global::iWindowHeight);
+  if (num ==  5)  setBR(0, 40, 300, Global::iWindowHeight);
+  if (num ==  6)  setBR(0, 40, 300, Global::iWindowHeight);
+  if (num ==  7)  setBR(0, 40, 300, Global::iWindowHeight);
+  if (num ==  8)  setBR(0, 40, 300, Global::iWindowHeight);
+  if (num ==  9)  setBR(0, 40, 300, Global::iWindowHeight);
+  if (num == 10)  setBR(0, 40, Global::iWindowWidth, 450);
+
   if (num > 0 && !QGlobal::bEXITQUERY && QGlobal::bSIMSTARTED && !QGlobal::bmodelpreview)  // PANEL 0 - INFORMACJE W DEBUGMODE ^^
    {
+
   // TLO BOCZNE
-   glColor4f(0.0,0.0,0.0, alpha);
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-   glBindTexture(GL_TEXTURE_2D, QGlobal::splashscreen);
-   glBegin( GL_QUADS );
-   glTexCoord2f(0, 1); glVertex3i(margin-0,   40+margin, 0);   // GORNY LEWY
-   glTexCoord2f(0, 0); glVertex3i(margin-0,   iWH-margin, 0); // DOLY LEWY
-   glTexCoord2f(1, 0); glVertex3i(300-margin+0, iWH-margin, 0); // DOLNY PRAWY
-   glTexCoord2f(1, 1); glVertex3i(300-margin+0, 40+margin, 0);   // GORNY PRAWY
-   glEnd( );
+    glColor4f(0.0,0.0,0.0, alpha);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBindTexture(GL_TEXTURE_2D, QGlobal::splashscreen);
+    glBegin( GL_QUADS );
+    glTexCoord2f(0, 1); glVertex3i(BRx-0,        BRy+margin, 0);   // GORNY LEWY
+    glTexCoord2f(0, 0); glVertex3i(BRx-0,        BRh-margin, 0);   // DOLY LEWY
+    glTexCoord2f(1, 0); glVertex3i(BRw-margin+0, BRh-margin, 0);   // DOLNY PRAWY
+    glTexCoord2f(1, 1); glVertex3i(BRw-margin+0, BRy+margin, 0);   // GORNY PRAWY
+    glEnd( );
 
   // ETYKIETA PANELU
-   glColor4f(0.0,0.0,0.0, alpha+0.05);
-   glBegin( GL_QUADS );
-   glTexCoord2f(0, 1); glVertex3i(margin-0,   margin, 0);   // GORNY LEWY
-   glTexCoord2f(0, 0); glVertex3i(margin-0,   40, 0); // DOLY LEWY
-   glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+0, 40-margin, 0); // DOLNY PRAWY
-   glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+0, margin, 0);   // GORNY PRAWY
-   glEnd( );
+    glColor4f(0.0,0.0,0.0, alpha+0.05);
+    glBegin( GL_QUADS );
+    glTexCoord2f(0, 1); glVertex3i(margin-0,   margin, 0);   // GORNY LEWY
+    glTexCoord2f(0, 0); glVertex3i(margin-0,   40, 0); // DOLY LEWY
+    glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+0, 40-margin, 0); // DOLNY PRAWY
+    glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+0, margin, 0);   // GORNY PRAWY
+    glEnd( );
   }
+
 
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   if (num == 0 && Controlled && DebugModeFlag && !QGlobal::bEXITQUERY && QGlobal::bSIMSTARTED && !QGlobal::bmodelpreview)  // PANEL 0 - INFORMACJE W DEBUGMODE ^^
@@ -3296,6 +3313,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
 
   if (num == 1)  // PANEL 1 - INFORMACJE O SKLADZIE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
+
     int posy = 60;
     for (int l = 0; l<lc; l++)
     {
@@ -3774,7 +3792,6 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
 
   if (num == 7)  // PANEL 7 - ISRJ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
-
     glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
     freetype::print(font16, 10, Global::iWindowHeight-20, "SLUZBOWY ROSKLAD JAZDY (SRJ)");
 
@@ -3866,7 +3883,6 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
 
   if (num == 9)  // PANEL 5 - INFORMACJE O NAJBLIZSZYM POJEZDZIE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
-
     glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
     freetype::print(font16, 10, Global::iWindowHeight-20, "INFORMACJE O WERSJI I OpenGL");
 
@@ -3889,9 +3905,29 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
 
         freetype::print(font10, 310, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText02)).c_str());
         freetype::print(font10, 310, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText03)).c_str());
-
      }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+  if (num == 10)  // PANEL 8 - OPIS MISJI ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   {
+    int posy = 60;
+    glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+    freetype::print(font16, 10, Global::iWindowHeight-20, "OPIS MISJI");
+    bool odst;
+    glColor4f(0.8f, 0.8f, 0.8f, 0.7f);
+    for (int j = 0; j < QGlobal::MISSIO->Count-0; j++)
+         {
+          AnsiString LINE = QGlobal::MISSIO->Strings[j];
+          //WriteLog("[" + LINE + "]");
+
+          if (LINE != "") freetype::print(font12, 10, iWH-posy, AnsiString( LINE ).c_str());
+          if (LINE != "") posy+=20;
+          if (LINE == "" && !odst) {posy+=20; }
+          if (LINE == "") odst = true;
+          if (LINE != "") odst = false; 
+
+         }
+   }
  // } // if !modelprev
   
   glEnable( GL_TEXTURE_2D );
@@ -4357,13 +4393,11 @@ bool __fastcall TWorld::RenderELEMENTDESC(int elementid)
 
 bool __fastcall TWorld::LOADLOADERCONFIG()
 {
-
  WriteLog("LOADING LOADER CONFIG...");
  AnsiString LINE, TEST, PAR;
  TStringList *LOADERCFG;
  LOADERCFG = new TStringList;
  LOADERCFG->LoadFromFile(QGlobal::asAPPDIR + "data\\loaderconf.txt");
-
 
  for (int l= 0; l < LOADERCFG->Count; l++)
       {
@@ -4394,6 +4428,11 @@ bool __fastcall TWorld::LOADLOADERCONFIG()
        if (TEST == "PBAR__B:") LDR_PBAR__B = StrToFloat(PAR);
        if (TEST == "PBAR__A:") LDR_PBAR__A = StrToFloat(PAR);
 
+       if (TEST == "FINIT_R:") LDR_FINIT_R = StrToFloat(PAR);
+       if (TEST == "FINIT_G:") LDR_FINIT_G = StrToFloat(PAR);
+       if (TEST == "FINIT_B:") LDR_FINIT_B = StrToFloat(PAR);
+       if (TEST == "FINIT_A:") LDR_FINIT_A = StrToFloat(PAR);
+
        if (TEST == "MLOGOON:") LDR_LOGOVIS = StrToFloat(PAR);
        if (TEST == "MLOGO_X:") LDR_MLOGO_X = StrToFloat(PAR);
        if (TEST == "MLOGO_Y:") LDR_MLOGO_Y = StrToFloat(PAR);
@@ -4402,7 +4441,7 @@ bool __fastcall TWorld::LOADLOADERCONFIG()
        if (TEST == "BRIEFON:") LDR_DESCVIS = StrToFloat(PAR);
        if (TEST == "BRIEF_X:") LDR_BRIEF_X = StrToFloat(PAR);
        if (TEST == "BRIEF_Y:") LDR_BRIEF_Y = StrToFloat(PAR);
-       if (TEST == "REFRESH:") QGlobal::LDRREFRESH = StrToFloat(PAR);
+       if (TEST == "REFRESH:") QGlobal::LDRREFRESH = StrToInt(PAR);
        if (TEST == "BORDERS:") QGlobal::LDRBORDER = StrToInt(PAR);
 
 
@@ -4429,7 +4468,7 @@ bool __fastcall TWorld::LOADLOADERFONTS()
  font12.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\" + QGlobal::font12file).c_str(), 12);
  font14.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\" + QGlobal::font14file).c_str(), 14);
  font16.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\" + QGlobal::font16file).c_str(), 16);
- font18.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\" + QGlobal::font18file).c_str(), 18);			        //Build the freetype font
+ font18.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\" + QGlobal::font18file).c_str(), 18);	      //Build the freetype font
 
  if (!floaded) BFONT = new Font();
  if (!floaded) BFONT->init("none");
@@ -4448,31 +4487,28 @@ bool __fastcall TWorld::LOADLOADERTEXTURES()
 
     AnsiString cscn = Global::szSceneryFile;
     AnsiString clok = Global::asHumanCtrlVehicle;
-    AnsiString asBRIEFFILE = "data\\briefs\\briefbackg.tga";                        // Kartka z opisem
-    AnsiString asSCNBACKG =  "data\\lbacks\\" + cscn + QGlobal::asLBACKEXT;         // tlo wczytywania
-    AnsiString asBRIEFTEXT = "data\\briefs\\" + cscn + "-" + clok + ".txt";         // opis misji
+    AnsiString asBRIEFFILE =  "data\\briefs\\briefbackg.tga";                        // Kartka z opisem
+    AnsiString asSCNBACKG =   "data\\lbacks\\" + cscn + QGlobal::asLBACKEXT;         // tlo wczytywania
+    AnsiString asBRIEFTEXT =  "data\\briefs\\" + cscn + "-" + clok + ".txt";         // opis misji
 
     int randn =( std::rand() % 3 ) + 1;
-
+    int promodelviewer = QGlobal::bmodelpreview;
     AnsiString modelviewerbackg = "modelviewer-" + IntToStr(randn) + QGlobal::asLBACKEXT;
 
-    //WriteLog(asBRIEFTEXT);
-    if (FEX(asBRIEFTEXT)) QGlobal::MBRIEF->LoadFromFile( asBRIEFTEXT);
-
+    if ( FEX(asBRIEFTEXT)) QGlobal::MBRIEF->LoadFromFile( asBRIEFTEXT);
     if (!FEX(asBRIEFTEXT)) QGlobal::bloaderbriefing = false;
     if ( FEX(asBRIEFTEXT)) QGlobal::bloaderbriefing = true;
 
     WriteLog("Loading -briefing: " + asBRIEFTEXT);
 
-    Global::asCurrentTexturePath = QGlobal::asAPPDIR;
+    //Global::asCurrentTexturePath = QGlobal::asAPPDIR;
 
-    loaderbrief = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString(asBRIEFFILE).c_str());
-    QGlobal::bfonttex = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString("data\\menu\\menu_xfont.bmp").c_str());
+    loaderbrief = TTexturesManager::GetTextureID(NULL, NULL, AnsiString(asBRIEFFILE).c_str());
+    QGlobal::bfonttex = TTexturesManager::GetTextureID(NULL, NULL, AnsiString("data\\menu\\menu_xfont.bmp").c_str());
 
-    if (!FEX(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString("data\\lbacks\\lbackgdef" + QGlobal::asLBACKEXT).c_str());
-    if ( FEX(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString(asSCNBACKG).c_str());
-
-    if (QGlobal::bmodelpreview) loaderbackg = TTexturesManager::GetTextureID(szTexturePath, Global::asCurrentTexturePath.c_str(), AnsiString("data\\lbacks\\" + modelviewerbackg).c_str());
+    if (!FEX(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(NULL, Global::asCurrentTexturePath.c_str(), AnsiString("data\\lbacks\\lbackgdef" + QGlobal::asLBACKEXT).c_str());
+    if ( FEX(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(NULL, Global::asCurrentTexturePath.c_str(), AnsiString(asSCNBACKG).c_str());
+    if ( promodelviewer ) loaderbackg = TTexturesManager::GetTextureID(NULL, Global::asCurrentTexturePath.c_str(), AnsiString("data\\lbacks\\" + modelviewerbackg).c_str());
 
     Global::asCurrentTexturePath = AnsiString(szTexturePath);
  return true;
@@ -4814,7 +4850,16 @@ bool __fastcall TWorld::RenderLoaderU(HDC hDC, int node, AnsiString text)
  return true;
 }
 
-
+void Disk( float x, float y, float r )
+{
+    glBegin( GL_TRIANGLE_FAN );
+        glVertex2f( x, y );
+        for( float i = 0; i <= 2 * PI + 0.1; i += 0.1 )
+        {
+            glVertex2f( x + sin( i ) * r, y + cos( i ) * r );
+        }
+    glEnd();
+}
 
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // RenderLoader() - SCREEN WCZYTYWANIA SCENERII ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -4858,7 +4903,7 @@ bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
    //glColor4f(0.5,0.45,0.4, 0.5);
 
 
-    QGlobal::aspectratio = 169;
+   QGlobal::aspectratio = 169;
    // OBRAZEK LOADERA ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    if (QGlobal::aspectratio == 43)
    {
@@ -4905,7 +4950,7 @@ bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
    if (LDR_DESCVIS != 0 && QGlobal::bloaderbriefing)
    {
    glEnable(GL_BLEND);
- glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+   glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 
 // glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_COLOR);  // PRAWIE OK
 
@@ -4925,21 +4970,23 @@ bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
 
    //PROGRESSBAR ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    int PBARY = PBY+68;
-   float PBARLEN = Global::iWindowWidth / 100; //LDR_PBARLEN;
-
+   int ONEPROCLEN = Global::iWindowWidth / 100; //LDR_PBARLEN;
+   int PBC = PBARY+5;
    glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+   glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+   glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A-0.6);
    glEnable(GL_BLEND);
    glBegin(GL_QUADS);
-   glColor4f(1,1,1,1); glVertex2f(20, PBARY-2);                                   // gorny lewy
-   glColor4f(1,1,1,1); glVertex2f(20, PBARY-1);                                   // dolny lewy
-   glColor4f(1,1,1,1); glVertex2f(100*PBARLEN, PBARY-1);                          // dolny prawy
-   glColor4f(1,1,1,1); glVertex2f(100*PBARLEN, PBARY-2);                          // gorny prawy
+   glColor4f(1,1,1,1); glVertex2f(20, PBC+0);                                   // gorny lewy    -2
+   glColor4f(1,1,1,1); glVertex2f(20, PBC+1);                                   // dolny lewy    +1
+   glColor4f(1,1,1,1); glVertex2f(100*ONEPROCLEN, PBC+1);                       // dolny prawy   +1
+   glColor4f(1,1,1,1); glVertex2f(100*ONEPROCLEN, PBC+0);                       // gorny prawy   -2
    glEnd();
 
-//  if (Global::bfirstloadingscn) Global::postep = 0;
-//  if (Global::bfirstloadingscn) PBARLEN = 3;
-
-  if (!QGlobal::bfirstloadingscn) QGlobal::postep = (QGlobal::iNODES * 100 / QGlobal::iPARSERBYTESPASSED );
+  if (QGlobal::bfirstloadingscn) QGlobal::postep = 0;
+  if (QGlobal::bfirstloadingscn) ONEPROCLEN = 1;
+                                                    //QGlobal::iPARSERBYTESPASSED
+  if (!QGlobal::bfirstloadingscn) QGlobal::postep = (QGlobal::iNODESPASSED * 100 / QGlobal::iNODES ); //QGlobal::postep = (QGlobal::iNODES * 100 / QGlobal::iPARSERBYTESPASSED );
 
    if (QGlobal::bfirstloadingscn)   // PRZY PIERWSZYM WCZYTYWANIU PASEK POSTEPU JEST USTAWIONY NA 100%
        {
@@ -4947,31 +4994,51 @@ bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
         //glEnable(GL_BLEND);
         glColor4f(LDR_PBAR__R, LDR_PBAR__G, LDR_PBAR__B, LDR_PBAR__A);
         glBegin(GL_QUADS);
-        glVertex2f(20, PBARY+2);    // gorny lewy
-        glVertex2f(20, PBARY+10);   // dolny lewy
-        glVertex2f(100*PBARLEN, PBARY+10);   // dolny prawy
-        glVertex2f(100*PBARLEN, PBARY+2);   // gorny prawy
+        glVertex2f(20, PBARY-2);    // gorny lewy
+        glVertex2f(20, PBARY+2);   // dolny lewy
+        glVertex2f(1*ONEPROCLEN, PBARY+2);   // dolny prawy
+        glVertex2f(1*ONEPROCLEN, PBARY-2);   // gorny prawy
         glEnd();
        }
-
     else
        {
         glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-        //glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-        //glEnable(GL_BLEND);
+      //glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+      //glEnable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
         glColor4f(LDR_PBAR__R, LDR_PBAR__G, LDR_PBAR__B, LDR_PBAR__A);
         glBegin(GL_QUADS);
-        glVertex2f(20, PBARY+2);    // gorny lewy
-        glVertex2f(20, PBARY+10);   // dolny lewy
-        glVertex2f(QGlobal::postep*PBARLEN, PBARY+10);   // dolny prawy
-        glVertex2f(QGlobal::postep*PBARLEN, PBARY+2);   // gorny prawy
+        glVertex2f(20, PBC-2);    // gorny lewy
+        glVertex2f(20, PBC+3);   // dolny lewy
+        glVertex2f(QGlobal::postep*ONEPROCLEN, PBC+3);   // dolny prawy
+        glVertex2f(QGlobal::postep*ONEPROCLEN, PBC-2);   // gorny prawy
         glEnd();
        }
+int fip;
+int endpointx = (ONEPROCLEN * 100) + 12;
 
-    
-   //glEnable(GL_BLEND);
-   //glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+//if (QGlobal::postep*ONEPROCLEN > QGlobal::iNODES-100) endpointblink+= 0.01;
+
+glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+// FIRST INIT POINT
+glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A);
+glColor4f(QGlobal::lfipc.r, QGlobal::lfipc.g, QGlobal::lfipc.b, LDR_FINIT_A-0.2);
+fip = endpointx;
+if (!QGlobal::bfirstloadingscn) fip = (QGlobal::iNODESFIRSTINIT * 100 / QGlobal::iNODES );
+if (!QGlobal::bfirstloadingscn) Disk(fip*ONEPROCLEN, 906, 4.0);
+if ( QGlobal::bfirstloadingscn) ONEPROCLEN = Global::iWindowWidth / 100;
+if ( QGlobal::bfirstloadingscn) endpointx = (ONEPROCLEN * 100) + 12;
+glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A-0.4);
+DrawCircle(fip*ONEPROCLEN, PBC+1, 6, 64);
+
+// END POINT
+glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A-0.4);
+glColor4f(QGlobal::lepc.r, QGlobal::lepc.g, QGlobal::lepc.b, LDR_FINIT_A-0.5);
+Disk(endpointx, PBC, 10.0);
+
+glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A);
+DrawCircle(endpointx, PBC, 12, 64);
 
    RenderInformation(99);
 
@@ -5045,7 +5112,6 @@ bool __fastcall TWorld::RenderSplash(HDC hDC)
 // *****************************************************************************
 // RenderMenu() - GLOWNA FUNKCJA RENDERUJACA MENU GLOWNE ***********************
 // *****************************************************************************
-
 bool __fastcall TWorld::RenderMenu(HDC hDC)
 {
 
