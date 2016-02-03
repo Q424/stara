@@ -161,6 +161,7 @@ class TAnimModel
     bool Init(TModel3d *pNewModel);
     bool Init(AnsiString asName, AnsiString asReplacableTexture);
     bool Load(cParser *parser, bool ter = false);
+    bool Load(AnsiString model, AnsiString texture, AnsiString asNodeName);
     TAnimContainer *__fastcall AddContainer(char *pName);
     TAnimContainer *__fastcall GetContainer(char *pName);
     void RenderDL(vector3 pPosition = vector3(0, 0, 0), double fAngle = 0);

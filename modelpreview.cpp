@@ -34,6 +34,63 @@ TModelViewer::~TModelViewer()
  //
 }
 
+
+bool TModelViewer::CreateREGfile(AnsiString ext, AnsiString key, AnsiString desc, AnsiString iconfile, AnsiString icon)
+{
+/*
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\maszynamodelbin]
+@="Binarny plik modelu MaSZyna"
+
+[HKEY_CLASSES_ROOT\maszynamodelbin\DefaultIcon]
+@="F:\\MaSzyna_15_04\\data\\icons\\e3d.ico,0"
+
+[HKEY_CLASSES_ROOT\maszynamodelbin\shell]
+@="open"
+
+[HKEY_CLASSES_ROOT\maszynamodelbin\shell\open]
+@="&Open"
+
+[HKEY_CLASSES_ROOT\maszynamodelbin\shell\open\command]
+@="F:\\MaSzyna_15_04\\EU07-271215-2.exe %1"
+
+*/
+ AnsiString pathx;
+
+ QGlobal::SLTEMP->Clear();
+ QGlobal::SLTEMP->Add("Windows Registry Editor Version 5.00");
+ QGlobal::SLTEMP->Add("");
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\" + key + "]");
+ QGlobal::SLTEMP->Add("@=\""+desc+"\"");
+ QGlobal::SLTEMP->Add("");
+
+ pathx = AnsiString(StringReplace( QGlobal::asAPPDIR, "\\", "\\\\", TReplaceFlags() << rfReplaceAll )).c_str();
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\" + key + "\\DefaultIcon]");
+ QGlobal::SLTEMP->Add("@=\"" + pathx + "\data\\\\icons\\\\" + icon + ".ico,0\"");
+ QGlobal::SLTEMP->Add("");
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\" + key + "\\shell\\open]");
+ QGlobal::SLTEMP->Add("@=\"&Open\"");
+ QGlobal::SLTEMP->Add("");
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\" + key + "\\shell\\open]");
+ QGlobal::SLTEMP->Add("@=\"&Open\"");
+ QGlobal::SLTEMP->Add("");
+
+ pathx = AnsiString(StringReplace( ParamStr(0), "\\", "\\\\", TReplaceFlags() << rfReplaceAll )).c_str();
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\" + key + "\\shell\\open\\command]");
+ QGlobal::SLTEMP->Add("@=\"" + pathx + " %1\"");
+ QGlobal::SLTEMP->Add("");
+
+ QGlobal::SLTEMP->Add("[HKEY_CLASSES_ROOT\\." + UpperCase(icon) + "]");
+ QGlobal::SLTEMP->Add("@=\"" + key + "\"");
+ QGlobal::SLTEMP->Add("");
+
+ QGlobal::SLTEMP->SaveToFile(key + ".reg");
+
+ return FileExists(key + ".reg");
+}
+
+
 // *****************************************************************************
 // Oblicza ile znakow do obciecia coby usunac sciezke bezwzgledna
 // *****************************************************************************

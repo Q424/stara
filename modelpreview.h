@@ -21,6 +21,7 @@ class TModelViewer
  TModelViewer();
 ~TModelViewer();
 
+ bool CreateREGfile(AnsiString ext, AnsiString key, AnsiString desc, AnsiString iconfile, AnsiString icon);
  bool Update(AnsiString appdir);
  AnsiString UnifyCmdLine(AnsiString &cmd);
  AnsiString PrepareCompare(AnsiString cmd);

@@ -122,10 +122,10 @@ bool TDynamicObject::LoadAdditionals(AnsiString ADDFILENAME, TDynamicObject *D, 
   AnsiString RELATION = "nowhere";
 
   DYNOBJBDIR = QGlobal::asAPPDIR + D->asBaseDir;
-  WriteLog("Loading - dynsets " +  ADDFILENAME);
+
   if (FileExists( ADDFILENAME ))
     {
-
+     WriteLog("Loading - dynsets " +  ADDFILENAME);
      int ADDFILELC;
      ADDFILE = new TStringList;
      ADDFILE->Clear();

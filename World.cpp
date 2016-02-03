@@ -200,11 +200,13 @@ int setprogressfile()
 
 void LOADMISSIONDESCRIPTION()
 {
-
+    WriteLog("Loading mission description...");
     AnsiString asfile, line, xtest, isd;
     AnsiString cscn = Global::szSceneryFile;
 
     asfile = QGlobal::asAPPDIR + "scenery\\" + cscn;
+
+    if (!FileExists(asfile)) return;
 
     QGlobal::SLTEMP->LoadFromFile(asfile);
 
@@ -237,11 +239,12 @@ void LOADMISSIONDESCRIPTION()
          else  QGlobal::MISSIO->Add(line);
        }
      }
+ WriteLog("OK.");
 }
 
 bool __fastcall TWorld::STARTSIMULATION()
 {
-   QGlobal::bSHOWBRIEFING = FALSE;
+   QGlobal::bSHOWBRIEFING = false;
    glEnable(GL_LIGHTING);
    glEnable(GL_DEPTH_TEST);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -256,6 +259,7 @@ bool __fastcall TWorld::STARTSIMULATION()
    loaderbackg = NULL;
  //QGlobal::splashscreen = NULL;
    QGlobal::bSIMSTARTED = true;
+   QGlobal::bSCNLOADED = true;
 }
 
 
@@ -418,14 +422,14 @@ BOOL GetDisplayMonitorInfo(int nDeviceIndex, LPSTR lpszMonitorInfo)
 */
 
 double timex;
-// **********************************************************************************************************
+// ***********************************************************************************************************
 // INICJALIZACJA USTAWIEN OpenGL, WCZYTYWANIE SCENERII - FUNKCJA WYWOLYWANA W EU07.CPP W int InitGL(GLvoid)
-// **********************************************************************************************************
+// ***********************************************************************************************************
 bool TWorld::Init(HWND NhWnd, HDC hDC)
 {
  //WriteLog("USTAWIANIE KATALOGU DLA ZRZUTOW EKRANU...");
     CreateDir(QGlobal::asAPPDIR + QGlobal::asSSHOTDIR);
-    CreateDir(QGlobal::asAPPDIR + QGlobal::asSSHOTDIR + QGlobal::asSSHOTSUB);         // SCREENSHOTS DIRECTORY CONTAINER
+    CreateDir(QGlobal::asAPPDIR + QGlobal::asSSHOTDIR + QGlobal::asSSHOTSUB); // SCREENSHOTS DIRECTORY CONTAINER
     CreateDir(QGlobal::asAPPDIR + "data\\");
     CreateDir(QGlobal::asAPPDIR + "data\\logs\\");
 
@@ -436,6 +440,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     QGlobal::bSCNLOADED = false;
     QGlobal::bfirstloadingscn = true;
     QGlobal::bKBDREVERSED = false;
+    QGlobal::iRENDEREDTIES = 0;
     ShowWindow(NhWnd,SW_SHOW);
     SetForegroundWindow(NhWnd);                                                    // slightly higher priority
     SetFocus(NhWnd);
@@ -451,7 +456,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     QGlobal::semlight = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlight.bmp").c_str());
     QGlobal::semlense = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlense.bmp").c_str());
 
-    Global::LoadStationsBase(); // Q 030116: Wczytywanie informacji o stacjach
+    Global::LoadStationsBase(); // Q 030116: Wczytywanie informacji o stacjach ( POWINNO BYC ZALEZNE OD SCENERII )
 
     WriteLog("");
     WriteLog("");
@@ -805,13 +810,14 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 }
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // Wykonywane juz po wybraniu scenerii we wbudowanym starterze 
-// *****************************************************************************
+// ***********************************************************************************************************
 bool TWorld::Load(HWND NhWnd, HDC hDC)
 {
+
     QGlobal::rtim = 0;
-    getprogressfile();                                         // LOADING PROGRESSBAR BYTES
+    getprogressfile();                                                             // LOADING PROGRESSBAR DATA
     WriteLog(AnsiString(QGlobal::iNODES));
     hWnd = NhWnd;
     //SetFocus(NhWnd);
@@ -835,7 +841,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     RenderLoader(hDC, 77, "MODELMANAGER INITIALIZATION...");
     WriteLog("Models init");
     // McZapkie: dodalem sciezke zeby mozna bylo definiowac skad brac modele ale to malo eleganckie
-    //    TModelsManager::LoadModels(asModelsPatch);
+ // TModelsManager::LoadModels(asModelsPatch);
     TModelsManager::Init();
     WriteLog("Models init OK");
     WriteLog("");
@@ -853,6 +859,14 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     Clouds.Init();
     WriteLog("Sky init OK");
     WriteLog("");
+
+    AnsiString asRAILJOINT;
+    asRAILJOINT = "lacznikszyn-1.t3d";
+ 
+//    QGlobal::mdTIEh = TModelsManager::GetModel(asTIEMODEL.c_str());
+//    asTIEMODEL = "podklad-hd-1l.t3d";
+//    asTIEMODEL = "podklad-ps93-1h.t3d";
+//    QGlobal::mdTIEl = TModelsManager::GetModel(asTIEMODEL.c_str());
 
     //    TTrack *Track=Ground.FindGroundNode("train_start",TP_TRACK)->pTrack;
 
@@ -921,6 +935,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
         Camera.Type = tp_Free;
         Camera.Pos.y += 4.0f;
     }
+    RenderLoader(hDC, 77, "User events...");
     glEnable(GL_DEPTH_TEST);
     // Ground.pTrain=Train;
     // if (!Global::bMultiplayer) //na razie w³¹czone
@@ -964,12 +979,6 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
 
     if (QGlobal::bSENDLOGFTP > 0) SENDLOGTOFTP(ftpdate);
 
-    QGlobal::bSCNLOADED = true;
-    //QGlobal::SLTEMP->Clear();
-    //QGlobal::SLTEMP->Add(IntToStr(QGlobal::iNODES));
-    //QGlobal::SLTEMP->SaveToFile("data\\pbars\\" + AnsiString(Global::szSceneryFile));
-    Global::iPause = true;
-
     if (!QGlobal::bmodelpreview) generatenoisetex(); // W efects2d.cpp
 
     if (mvControlled) Controlled->GetConsist_f(1, Controlled);
@@ -978,6 +987,17 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     setprogressfile();
 
     LOADMISSIONDESCRIPTION();
+
+  //Ground.AddGroundNodeQ("TSTOBJ1", "TIE", "-", "ip/wloclawek/wwek_rewidenci_derel.t3d", "none", 200, 0, 15.0, -0.2, 20.0, 90, 0.0);
+  //Ground.AddGroundNodeQ("TSTOBJ2", "TIE", "-", "ip/wloclawek/wwek_rewidenci_derel.t3d", "none", 200, 0, 15.0, -0.2, 50.0, 90, 0.0);
+    Ground.AddGroundNodeQ("podklad", "SLP", "-", "1435mm/sleepers/podklad-hd-1l.t3d", "none", 140, 0, 10.0, -0.2, 90.0, 90, 0.0);
+    Ground.AddGroundNodeQ("lacznik", "JNT", "-", "1435mm/elements/lacznikszyn-1.t3d", "none", 100, 0, 10.0, -0.2, 90.0, 90, 0.0);
+  //Ground.AddGroundNodeQ("lacznik", "lacznik", "-", "lacznikszyn-1.t3d", "none", 200, 0, 10.0, -0.2, 90.0, 90, 0.0);
+
+    RenderLoader(hDC, 77, "GENEROWANIE PODKLADOW :-D...");
+
+    QGlobal::bSCNLOADED = true;
+    Global::iPause = true;
 
     SetForegroundWindow(NhWnd);
     SetFocus(NhWnd);
@@ -1020,7 +1040,9 @@ void TWorld::OnKeyDown(int cKey)
  if (Console::Pressed(VK_RMENU)) WriteLog("R ALT");                             // PRAWY ALT
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('f'))) QGlobal::bscrfilter = !QGlobal::bscrfilter;
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('n'))) QGlobal::bscrnoise = !QGlobal::bscrnoise;
- 
+ if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('w'))) QGlobal::bWATERMARK = !QGlobal::bWATERMARK;
+ if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('t'))) QGlobal::bRTIES = !QGlobal::bRTIES;
+
  if (QGlobal::bSCNLOADED && Global::iPause && cKey == Global::Keys[k_Czuwak]) STARTSIMULATION();       // Q 291215: Bo po zaladowaniu symulacji jest pauza i pozostaje obraz wczytywania jako tlo pauzy
 
  if (!Console::Pressed(VK_SHIFT) && cKey == VK_F11) SCR->SaveScreen_xxx();      // Q 261215: zrut ekranu do jpg, tga lub bmp w zaleznosci od opcji w config.txt
@@ -2264,6 +2286,7 @@ if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
 // *****************************************************************************
 bool TWorld::Render()
 {
+  //QGlobal::iRENDEREDTIES = 0;
     glColor3b(255, 255, 255);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();                                                                                    //19961
@@ -2295,7 +2318,7 @@ bool TWorld::Render()
       
     if (!Global::bWireFrame)
     { // bez nieba w trybie rysowania linii
-      //  glDisable(GL_FOG);
+        glDisable(GL_FOG);
         Clouds.Render();
         glEnable(GL_FOG);
     }
@@ -2303,6 +2326,7 @@ bool TWorld::Render()
     if (QGlobal::bmodelpreview) DRAW_XYGRID();
     if (QGlobal::bmodelpreview) Draw_SCENE000(0, 0, 0);
 
+    //bool TGround::RenderDl() -> void TSubRect::RenderDL() -> void TGroundNode::RenderDL()
     if (Global::bUseVBO)                                                        // renderowanie przez VBO
     {
         if (!Ground.RenderVBO(Camera.Pos)) return false;
@@ -2322,26 +2346,27 @@ bool TWorld::Render()
     if (!FreeFlyModeFlag) RenderCab(false);  // RENDEROWANIE KABINY GDY W KABINIE, RENDEROWANIE W TRYBIE FREEFLY REALIZOWANE JEST W DYNOBJ.CPP
 
     if (!FreeFlyModeFlag)
-    if (QGlobal::bSHOWBRIEFING) RenderLoader(QGlobal::glHDC, 77, "Zakonczono wczytywanie, nacisnij spacje");
+    if (!QGlobal::bSIMSTARTED) RenderLoader(QGlobal::glHDC, 77, "Zakonczono wczytywanie, nacisnij spacje");
 
     if (QGlobal::bscrnoise ||
         QGlobal::bTUTORIAL ||
         QGlobal::bKEYBOARD ||
-        QGlobal::bSHOWBRIEFING ||
+     // QGlobal::bSHOWBRIEFING ||
         QGlobal::bscrfilter ||
         QGlobal::bEXITQUERY ||
+        QGlobal::bWATERMARK ||
         QGlobal::infotype >= 0 ||
         QGlobal::mousemode){
 
         switch2dRender();
 
-        if (QGlobal::bEXITQUERY) RenderEXITQUERY(0.30f);
+        if (QGlobal::bEXITQUERY) RenderEXITQUERY(0.50f);
+        if (QGlobal::bWATERMARK) RenderWATERMARK(0.30f);
         if (QGlobal::infotype >= 0) RenderINFOPANEL(QGlobal::infotype, QGlobal::GUITUTOPAC);
 
         if (QGlobal::bscrfilter) RenderFILTER(0.15f);
         if (QGlobal::bscrnoise) drawNoise(1, QGlobal::fnoisealpha);             // W efects2d.cpp
      }
-
 
     if ((Console::Pressed(VK_DELETE)) || (Console::Pressed(VK_INSERT)))
      if (mvControlled) Controlled->GetConsist_f(1, Controlled);                 // Q 040116: Tworzenie listy pojazdow w skladzie, liczenie masy brutto i dlugosci

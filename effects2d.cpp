@@ -9,21 +9,341 @@ http://mozilla.org/MPL/2.0/.
 
 #include "system.hpp"
 #include "classes.hpp"
-#pragma hdrstop
-
-#include "effects2d.h"
-#include "Globals.h"
-
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+#include <math.h>
+#include <cmath.h>
 
+#pragma hdrstop
+
+#include "Segment.h"
+#include "Usefull.h"
+#include "effects2d.h"
+#include "Globals.h"
 
 bool bNoise=true;
 GLuint noise[30];
 int actNoise=0;
 int NOISERES = 1024;
 
+
+void DrawCircle(float cx, float cy, float r, Color4 color)
+{
+     glDisable(GL_LIGHTING);
+     glBegin(GL_LINE_LOOP);
+     glColor4f(1.0f, 0.8f, 0.1f, 0.7f);
+            
+            for (int i = 0; i <= 360; i++)
+            {
+                float degInRad = DegToRad(i);
+                glVertex2f(cx + ((float)cos(degInRad) * r), cy + ((float)sin(degInRad) * r));
+            }
+
+     glEnd();
+     glEnable(GL_LIGHTING);
+}
+
+
+void DrawCircle(float cx, float cy, float r, int segments)
+{
+    glDisable(GL_LIGHTING);
+    glBegin(GL_LINE_LOOP);
+    for(int ii = 0; ii < segments; ii++)
+    {
+        float theta = 2.0f * 3.1415926f * float(ii) / float(segments);//get the current angle
+
+        float x = r * cos(theta);//calculate the x component
+        float y = r * sin(theta);//calculate the y component
+
+        glVertex2f(x + cx, y + cy);//output vertex
+
+    }
+    glEnd();
+    glEnable(GL_LIGHTING);
+}
+
+void DrawFilledCircle(float cx, float cy, float r, Color4 color)
+{
+    glDisable(GL_LIGHTING);
+    glShadeModel(GL_SMOOTH);
+    glBegin(GL_TRIANGLE_FAN);
+  //glColor4fv(fillcolor.ToFloatArray());
+    glColor4f(1.0f, 0.8f, 0.1f, 0.7f);
+    float y1 = cy;
+    float x1 = cx;
+
+    for (int i = 0; i <= 360; i++)
+      {
+       float degInRad = DegToRad(i);
+       float x2 = cx + ((float)cos(degInRad) * r);
+       float y2 = cy + ((float)sin(degInRad) * r);
+       glVertex2f(cx,cy);
+       glVertex2f(x1,y1);
+       glVertex2f(x2,y2);
+       y1=y2;
+       x1=x2;
+      }
+    glEnd();
+    glEnable(GL_LIGHTING);
+}
+
+void Disk( float x, float y, float r )
+{
+    glDisable(GL_LIGHTING);
+    glBegin( GL_TRIANGLE_FAN );
+        glVertex2f( x, y );
+        for( float i = 0; i <= 2 * PI + 0.1; i += 0.1 )
+        {
+            glVertex2f( x + sin( i ) * r, y + cos( i ) * r );
+        }
+    glEnd();
+    glEnable(GL_LIGHTING);
+}
+
+
+float roundf(float val)
+{
+ return ceil(val);
+}
+
+typedef struct
+{
+    float x;
+    float y;
+
+} Vector2f;
+
+void RoundRectW( int x, int y, int width, int height, int radius, int resolution, Color4 color)
+{
+
+y = height + y;
+
+float step = ( 2.0f * M_PI ) / resolution,
+      angle = 0.0f,
+      x_offset,
+      y_offset;
+
+int i = 0;
+
+unsigned int index = 0,
+segment_count = ( int )( resolution / 4 );
+
+Vector2f *top_left             = ( Vector2f * ) malloc( segment_count * sizeof( Vector2f ) ),
+         *bottom_left         = ( Vector2f * ) malloc( segment_count * sizeof( Vector2f ) ),
+         *top_right             = ( Vector2f * ) malloc( segment_count * sizeof( Vector2f ) ),
+         *bottom_right         = ( Vector2f * ) malloc( segment_count * sizeof( Vector2f ) ),
+          bottom_left_corner = { x + radius,
+                                 y - height + radius }; 
+
+while( i != segment_count )
+{
+    x_offset = cos( angle );
+    y_offset = sin( angle );
+
+
+    top_left[ index ].x = bottom_left_corner.x - 
+                          ( x_offset * radius );
+    top_left[ index ].y = ( height - ( radius * 2.0f ) ) + 
+                            bottom_left_corner.y - 
+                          ( y_offset * radius );
+
+
+    top_right[ index ].x = ( width - ( radius * 2.0f ) ) + 
+                             bottom_left_corner.x + 
+                           ( x_offset * radius );
+    top_right[ index ].y = ( height - ( radius * 2.0f ) ) + 
+                             bottom_left_corner.y -
+                           ( y_offset * radius );
+
+
+    bottom_right[ index ].x = ( width - ( radius * 2.0f ) ) +
+                                bottom_left_corner.x + 
+                              ( x_offset * radius );
+    bottom_right[ index ].y = bottom_left_corner.y + 
+                              ( y_offset * radius );
+
+
+    bottom_left[ index ].x = bottom_left_corner.x - 
+                             ( x_offset * radius );
+    bottom_left[ index ].y = bottom_left_corner.y +
+                             ( y_offset * radius );
+
+
+    top_left[ index ].x = roundf( top_left[ index ].x );
+    top_left[ index ].y = roundf( top_left[ index ].y );
+
+
+    top_right[ index ].x = roundf( top_right[ index ].x );
+    top_right[ index ].y = roundf( top_right[ index ].y );
+
+
+    bottom_right[ index ].x = roundf( bottom_right[ index ].x );
+    bottom_right[ index ].y = roundf( bottom_right[ index ].y );
+
+
+    bottom_left[ index ].x = roundf( bottom_left[ index ].x );
+    bottom_left[ index ].y = roundf( bottom_left[ index ].y );
+
+    angle -= step;
+
+    ++index;
+
+    ++i;
+}
+/*
+glDisable(GL_LIGHTING);
+glDisable( GL_FOG );
+glDisable( GL_TEXTURE_2D );
+glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
+
+glBegin( GL_TRIANGLE_STRIP );
+{
+    // Top
+    {
+        i = 0;
+        while( i != segment_count )
+        {
+            glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
+            glVertex2i( top_left[ i ].x, top_left[ i ].y );
+
+            glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
+            glVertex2i( top_right[ i ].x, top_right[ i ].y );
+
+            ++i;
+        }
+    }
+
+
+    // In order to stop and restart the strip.
+    glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
+    glVertex2i( top_right[ 0 ].x, top_right[ 0 ].y );
+
+    glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
+    glVertex2i( top_right[ 0 ].x, top_right[ 0 ].y );
+
+
+    // Center
+    {
+        glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
+        glVertex2i( top_right[ 0 ].x, top_right[ 0 ].y );
+        glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
+        glVertex2i( top_left[ 0 ].x, top_left[ 0 ].y );
+
+
+        glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
+        glVertex2i( bottom_right[ 0 ].x, bottom_right[ 0 ].y );
+         glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
+        glVertex2i( bottom_left[ 0 ].x, bottom_left[ 0 ].y );
+    }
+
+
+    // Bottom
+    i = 0;
+    while( i != segment_count )
+    {
+        glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
+        glVertex2i( bottom_right[ i ].x, bottom_right[ i ].y );
+        glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
+        glVertex2i( bottom_left[ i ].x, bottom_left[ i ].y );
+
+        ++i;
+    }    
+}
+glEnd();
+ */
+
+glDisable(GL_LIGHTING);
+glDisable( GL_FOG );
+glDisable( GL_TEXTURE_2D );
+//glColor4f(color.r, color.g, color.b, color.o);
+glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
+glBegin( GL_LINE_STRIP );
+// Border
+{
+    i = ( segment_count - 1 );
+    while( i > -1 )
+    {    
+        glVertex2i( top_left[ i ].x,
+                    top_left[ i ].y );
+
+        --i;
+    }
+
+
+    i = 0;
+    while( i != segment_count )
+    {    
+        glVertex2i( bottom_left[ i ].x,
+                    bottom_left[ i ].y );
+
+        ++i;
+    }
+
+
+    i = ( segment_count - 1 );
+    while( i > -1 )
+    {    
+        glVertex2i( bottom_right[ i ].x,
+                    bottom_right[ i ].y );
+
+        --i;
+    }
+
+
+    i = 0;
+    while( i != segment_count )
+    {    
+        glVertex2i( top_right[ i ].x,
+                    top_right[ i ].y );
+
+        ++i;
+    }
+
+
+    // Close the border.
+    glVertex2i( top_left[ ( segment_count - 1 ) ].x,
+                top_left[ ( segment_count - 1 ) ].y );
+}
+glEnd();
+
+
+
+//glColor4f(color.r, color.g, color.b, color.o);
+
+glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
+glBegin( GL_LINES );
+
+//glColor4f( 0.0f, 1.0f, 1.0f, 1.0f );
+//glColor4f( 0.0f, 0.5f, 1.0f, 1.0f );
+
+// Separator
+{
+    // Top bar
+    glVertex2i( top_right[ 0 ].x,
+                top_right[ 0 ].y );
+
+    glVertex2i( top_left[ 0 ].x,
+                top_left[ 0 ].y );    
+
+
+    // Bottom bar
+    glVertex2i( bottom_left[ 0 ].x,
+                bottom_left[ 0 ].y );    
+
+    glVertex2i( bottom_right[ 0 ].x,
+                bottom_right[ 0 ].y );    
+}
+glEnd();
+
+glEnable( GL_TEXTURE_2D );
+glEnable( GL_LIGHTING );
+
+free( top_left );
+free( bottom_left );
+free( top_right );
+free( bottom_right );
+}
 
 // *****************************************************************************
 //

@@ -16,6 +16,8 @@ http://mozilla.org/MPL/2.0/.
 #include "Usefull.h"
 #include "Globals.h"
 #include "Track.h"
+#include "qutils.h"
+#include "mdlmngr.h"
 
 //#define Precision 10000
 
@@ -24,6 +26,16 @@ http://mozilla.org/MPL/2.0/.
 
 // 101206 Ra: trapezoidalne drogi
 // 110806 Ra: odwrócone mapowanie wzd³u¿ - Point1 == 1.0
+
+
+
+struct podklad
+{
+
+  TModel3d *model;
+};
+
+podklad *tie;
 
 AnsiString Where(vector3 p)
 { // zamiana wspó³rzêdnych na tekst, u¿ywana w b³êdach
@@ -39,6 +51,8 @@ TSegment::TSegment(TTrack *owner)
     fTsBuffer = NULL;
     fStep = 0;
     pOwner = owner;
+    tie = NULL;
+    bTieAdded = false;
 };
 
 TSegment::~TSegment()
@@ -46,33 +60,41 @@ TSegment::~TSegment()
     SafeDeleteArray(fTsBuffer);
 };
 
-bool TSegment::Init(vector3 NewPoint1, vector3 NewPoint2, double fNewStep, double fNewRoll1,
-                    double fNewRoll2)
+bool TSegment::Init(vector3 NewPoint1, vector3 NewPoint2, double fNewStep, double fNewRoll1, double fNewRoll2)
 { // wersja dla prostego - wyliczanie punktów kontrolnych
     vector3 dir;
+
+    //AnsiString asTIEMODEL = "podklad-hd-1l.t3d";
+
+    if (QGlobal::bRTIES && fNewRoll1 == fNewRoll2) // 260116 Q: Wymuszenie segmentacji dla prostych gdy renderowanie podkladow
+    {
+     fNewRoll1 = 0.01;
+     fNewRoll2 = 0.02;
+    }
+
     if (fNewRoll1 == fNewRoll2)
     { // faktyczny prosty
+
         dir = Normalize(NewPoint2 - NewPoint1); // wektor kierunku o d³ugoœci 1
-        return TSegment::Init(NewPoint1, dir, -dir, NewPoint2, fNewStep, fNewRoll1, fNewRoll2,
-                              false);
+        return TSegment::Init(NewPoint1, dir, -dir, NewPoint2, fNewStep, fNewRoll1, fNewRoll2, false);
     }
     else
     { // prosty ze zmienn¹ przechy³k¹ musi byæ segmentowany jak krzywe
         dir = (NewPoint2 - NewPoint1) / 3.0; // punkty kontrolne prostego s¹ w 1/3 d³ugoœci
-        return TSegment::Init(NewPoint1, NewPoint1 + dir, NewPoint2 - dir, NewPoint2, fNewStep,
-                              fNewRoll1, fNewRoll2, true);
+        return TSegment::Init(NewPoint1, NewPoint1 + dir, NewPoint2 - dir, NewPoint2, fNewStep, fNewRoll1, fNewRoll2, true);
     }
 };
 
 bool TSegment::Init(vector3 &NewPoint1, vector3 NewCPointOut, vector3 NewCPointIn,
-                    vector3 &NewPoint2, double fNewStep, double fNewRoll1, double fNewRoll2,
-                    bool bIsCurve)
+                    vector3 &NewPoint2, double fNewStep, double fNewRoll1, double fNewRoll2,  bool bIsCurve)
 { // wersja uniwersalna (dla krzywej i prostego)
     Point1 = NewPoint1;
     CPointOut = NewCPointOut;
     CPointIn = NewCPointIn;
     Point2 = NewPoint2;
     // poprawienie przechy³ki
+
+
     fRoll1 = DegToRad(fNewRoll1); // Ra: przeliczone jest bardziej przydatne do obliczeñ
     fRoll2 = DegToRad(fNewRoll2);
     if (Global::bRollFix)
@@ -121,10 +143,9 @@ bool TSegment::Init(vector3 &NewPoint1, vector3 NewCPointOut, vector3 NewCPointI
         // MessageBox(0,"Length<=0","TSegment::Init",MB_OK);
         return false; // zerowe nie mog¹ byæ
     }
-    fStoop = atan2((Point2.y - Point1.y),
-                   fLength); // pochylenie toru prostego, ¿eby nie liczyæ wielokrotnie
+    fStoop = atan2((Point2.y - Point1.y), fLength); // pochylenie toru prostego, ¿eby nie liczyæ wielokrotnie
     SafeDeleteArray(fTsBuffer);
-    if ((bCurve) && (fStep > 0))
+    if ((bCurve) &&(fStep > 0))   //
     { // Ra: prosty dostanie podzia³, jak ma ró¿n¹ przechy³kê na koñcach
         double s = 0;
         int i = 0;
@@ -262,6 +283,7 @@ double TSegment::ComputeLength() // McZapkie-150503: dlugosc miedzy punktami krz
         l += t; // zwiêkszenie wyliczanej d³ugoœci
         last = tmp;
     }
+
     return (l);
 }
 
@@ -336,6 +358,29 @@ float rand_fr(float a, float b)
 {
 return ((b-a)*((float)rand()/RAND_MAX))+a;
 }
+/*
+float get_angle(vector3 A, vector3 B) {
+vector3 AB;
+float length;
+   AB.x = B.x - A.x;
+   AB.y = B.y - A.y;
+   length = sqrt(AB.x * AB.x + AB.y * AB.y);
+
+   AB_norm.y /= AB.y / length;
+   angle = asin(AB_norm.y);
+   // or
+   // AB_norm.x /= AB.x / length;
+   // angle = acos(AB_norm.x);
+   return angle;
+ }
+  */
+
+float GetAngleOfLineBetweenTwoPoints(vector3 p1, vector3 p2)
+{
+float xDiff = p2.x - p1.x;
+float zDiff = p2.z - p1.z;
+return atan2(zDiff, xDiff) * (180 / PI);
+}
 
 void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, double fTextureLength,
                           int iSkip, int iQualityFactor, vector3 **p, bool bRender)
@@ -366,6 +411,7 @@ void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, doubl
         fOffset = 0.1 / fLength; // pierwsze 10cm
         pos1 = FastGetPoint(t); // wektor pocz¹tku segmentu
         dir = FastGetDirection(t, fOffset); // wektor kierunku
+
         // parallel1=Normalize(CrossProduct(dir,vector3(0,1,0))); //wektor poprzeczny
         parallel1 = Normalize(vector3(-dir.z, 0.0, dir.x)); // wektor poprzeczny
         m2 = s / fLength;
@@ -436,6 +482,7 @@ void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, doubl
                         glTexCoord2f(
                             jmm2 * ShapePoints[j].z + m2 * ShapePoints[j + iNumShapePoints].z, tv2);
                         glVertex3f(pt.x, pt.y, pt.z);
+
                     }
                     if (p) // jeœli jest wskaŸnik do tablicy
                         if (*p)
@@ -463,8 +510,18 @@ void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, doubl
                     glNormal3f(norm.x, norm.y, norm.z);
                     glTexCoord2f(ShapePoints[j].z, tv2);
                     glVertex3f(pt.x, pt.y, pt.z); // punkt na koñcu odcinka
+
                 }
             glEnd();
+
+            // Tutaj renderowanie podkladow?
+            //draw_sphere_nt(pos1.x, pos1.y, pos1.z, 0.1, Color4(1.0, 0.1, 0.1, 1.0));   // qqq
+
+            //--float angle = GetAngleOfLineBetweenTwoPoints(pos1, pos2);
+            
+            //--draw_cube(pos1.x, pos1.y, pos1.z, angle, 0.1, Color4(1.0, 0.1, 0.1, 1.0));
+
+
             pos1 = pos2;
             parallel1 = parallel2;
             tv1 = tv2;
@@ -499,6 +556,7 @@ void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, doubl
                 glNormal3f(norm.x, norm.y, norm.z);
                 glTexCoord2f(ShapePoints[j + iNumShapePoints].z, fLength / fTextureLength);
                 glVertex3f(pt.x, pt.y, pt.z);
+
             }
         else
             for (j = 0; j < iNumShapePoints; j++)
@@ -517,9 +575,251 @@ void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, doubl
                 glNormal3f(norm.x, norm.y, norm.z);
                 glTexCoord2f(ShapePoints[j].z, fLength / fTextureLength);
                 glVertex3f(pt.x, pt.y, pt.z);
+
             }
         glEnd();
     }
+};
+
+
+
+// ***********************************************************************************************************
+// PIERWSZA WERSJA PROTOTYPOWA RENDEROWANIA PODKLADOW 'NA SZTYWNO' BEZ OPTYMALIZACJI
+// ***********************************************************************************************************
+bool draw_railtiex(double x, double y, double z, double a, double roll, bool hd)
+{
+    glDisable(GL_BLEND);
+    glColor4f(1.0, 1.0, 1.0, 1.0);
+    glPushMatrix();
+    glTranslatef(x, y, z);
+    glRotatef(-a,0,1,0);
+    glRotatef(roll,1,0,0);  // przechylka
+
+//--    if ( hd && QGlobal::mdTIEh) QGlobal::mdTIEh->Render(100, 0);
+//    if ( hd && QGlobal::mdTIEh) QGlobal::mdTIEh->RenderAlpha(100, 0);
+//--    if (!hd && QGlobal::mdTIEl) QGlobal::mdTIEl->Render(100, 0);
+//    if (!hd && QGlobal::mdTIEl) QGlobal::mdTIEl->RenderAlpha(100, 0);
+
+    glPopMatrix();
+}
+
+// ***********************************************************************************************************
+// Renderowanie rozjazdow modelowanych 250116 Q
+// ***********************************************************************************************************
+void TSegment::RenderSwitch(const vector6 *ShapePoints, int iNumShapePoints, double fTextureLength, int iSkip, int iQualityFactor, TTrack *TRK)
+{
+    if (iQualityFactor < 1) iQualityFactor = 1; // co który segment ma byæ uwzglêdniony
+    vector3 pos1, pos2, dir, parallel1, parallel2, pt, norm;
+    double s, step, fOffset, tv1, tv2, t;
+    int i, j;
+    bool trapez = iNumShapePoints < 0; // sygnalizacja trapezowatoœci
+    AnsiString asSwitchBallastmodel;
+    AnsiString NN;
+    iNumShapePoints = abs(iNumShapePoints);
+
+
+    if (bCurve)
+    {
+        double m1, jmm1, m2, jmm2; // pozycje wzglêdne na odcinku 0...1 (ale nie parametr Beziera)
+        tv1 = 1.0; // Ra: to by mo¿na by³o wyliczaæ dla odcinka, wygl¹da³o by lepiej
+        step = fStep * iQualityFactor;
+        s = fStep * iSkip; // iSkip - ile odcinków z pocz¹tku pomin¹æ
+        i = iSkip; // domyœlnie 0
+        if (!fTsBuffer)
+            return; // prowizoryczne zabezpieczenie przed wysypem - ustaliæ faktyczn¹ przyczynê
+        if (i > iSegCount)
+            return; // prowizoryczne zabezpieczenie przed wysypem - ustaliæ faktyczn¹ przyczynê
+        t = fTsBuffer[i]; // tabela watoœci t dla segmentów
+        fOffset = 0.1 / fLength; // pierwsze 10cm
+        pos1 = FastGetPoint(t); // wektor pocz¹tku segmentu
+        dir = FastGetDirection(t, fOffset); // wektor kierunku
+
+        // parallel1=Normalize(CrossProduct(dir,vector3(0,1,0))); //wektor poprzeczny
+        parallel1 = Normalize(vector3(-dir.z, 0.0, dir.x)); // wektor poprzeczny
+        m2 = s / fLength;
+        jmm2 = 1.0 - m2;
+        while (s < fLength)
+        {
+         float lastS;
+            // step=SquareMagnitude(Global::GetCameraPosition()+pos);
+            i += iQualityFactor; // kolejny punkt ³amanej
+            s += step; // koñcowa pozycja segmentu [m]
+            m1 = m2;
+            jmm1 = jmm2; // stara pozycja
+            m2 = s / fLength;
+            jmm2 = 1.0 - m2; // nowa pozycja
+            lastS = s;
+            if (s > fLength - 0.5) // Ra: -0.5 ¿eby nie robi³o cieniasa na koñcu
+            { // gdy przekroczyliœmy koniec - st¹d dziury w torach...
+                step -= (s - fLength); // jeszcze do wyliczenia mapowania potrzebny
+                s = fLength;
+                i = iSegCount; // 20/5 ma dawaæ 4
+                m2 = 1.0;
+                jmm2 = 0.0;
+            }
+            while (tv1 < 0.0) tv1 += 1.0; // przestawienie mapowania
+            tv2 = tv1 - step / fTextureLength; // mapowanie na koñcu segmentu
+            t = fTsBuffer[i];
+            pos2 = FastGetPoint(t);
+            dir = FastGetDirection(t, fOffset); // nowy wektor kierunku
+            parallel2 = Normalize(vector3(-dir.z, 0.0, dir.x)); // wektor poprzeczny
+
+            if (!bTieAdded && lastS < 5.2)  // 5.2 bo rozjazdy sa segmentowane co 5m
+             {
+              float r1 = RadToDeg(fRoll1);
+              float r2 = RadToDeg(fRoll2);
+              float angle = GetAngleOfLineBetweenTwoPoints(pos1, pos2);
+              float troll = r2;
+
+              if (pos1.z > 0) troll = -troll;
+              if ( r2 < 0.1)  troll = 0.0f;
+
+              NN = IntToStr(QGlobal::iRENDEREDTIES)+ "-" + IntToStr(i) + "-" + FloatToStr(pos1.z);
+
+              //MODEL ROZJAZDU R300 (PRAWY)
+              //asSwitchBallastmodel = "podrozjezdnica-r300r.t3d";
+              if ( QGlobal::iSWITCHDIRECT == 1)
+              Global::pGround->AddGroundNodeQ("SBR-" + NN, "sbr", "none", TRK->asSwitchModel, TRK->asSwitchTexture, 260, 0, pos1.x, pos1.y-0.46, pos1.z, 90-angle, 0);
+
+             //MODEL ROZJAZDU R300 (LEWY)
+             // asSwitchBallastmodel = "podrozjezdnica-r300l.t3d";
+              if ( QGlobal::iSWITCHDIRECT == -1)
+              Global::pGround->AddGroundNodeQ("SBL-" + NN, "sbl", "none", TRK->asSwitchModel, TRK->asSwitchTexture, 260, 0, pos1.x, pos1.y-0.46, pos1.z, 90-angle, 0);
+
+              if (QGlobal::iSWITCHDIRECT != 0) QGlobal::iRENDEREDTIES++;
+             }
+
+            pos1 = pos2;
+            parallel1 = parallel2;
+            tv1 = tv2;
+        }
+    }
+   bTieAdded = true;
+}
+
+// ***********************************************************************************************************
+// Renderowanie podkladow 250116 Q
+// ***********************************************************************************************************
+void TSegment::RenderRTie(const vector6 *ShapePoints, int iNumShapePoints, double fTextureLength, int iSkip, int iQualityFactor, TTrack *TRK)
+{
+
+    if (iQualityFactor < 1) iQualityFactor = 1; // co który segment ma byæ uwzglêdniony
+    vector3 pos1, pos2, dir, parallel1, parallel2, pt, norm;
+    double s, step, fOffset, tv1, tv2, t;
+    int i, j;
+    bool trapez = iNumShapePoints < 0; // sygnalizacja trapezowatoœci
+    AnsiString tiefile = "";
+    AnsiString asSwitchBallastmodel;
+    AnsiString asRailJointModel;
+    AnsiString NN;
+    iNumShapePoints = abs(iNumShapePoints);
+
+
+    if (bCurve)
+    {
+        double m1, jmm1, m2, jmm2; // pozycje wzglêdne na odcinku 0...1 (ale nie parametr Beziera)
+        tv1 = 1.0; // Ra: to by mo¿na by³o wyliczaæ dla odcinka, wygl¹da³o by lepiej
+        step = fStep * iQualityFactor;
+        s = fStep * iSkip; // iSkip - ile odcinków z pocz¹tku pomin¹æ
+        i = iSkip; // domyœlnie 0
+        if (!fTsBuffer)
+            return; // prowizoryczne zabezpieczenie przed wysypem - ustaliæ faktyczn¹ przyczynê
+        if (i > iSegCount)
+            return; // prowizoryczne zabezpieczenie przed wysypem - ustaliæ faktyczn¹ przyczynê
+        t = fTsBuffer[i]; // tabela watoœci t dla segmentów
+        fOffset = 0.1 / fLength; // pierwsze 10cm
+        pos1 = FastGetPoint(t); // wektor pocz¹tku segmentu
+        dir = FastGetDirection(t, fOffset); // wektor kierunku
+
+        // parallel1=Normalize(CrossProduct(dir,vector3(0,1,0))); //wektor poprzeczny
+        parallel1 = Normalize(vector3(-dir.z, 0.0, dir.x)); // wektor poprzeczny
+        m2 = s / fLength;
+        jmm2 = 1.0 - m2;
+        while (s < fLength)
+        {
+         float lastS;
+            // step=SquareMagnitude(Global::GetCameraPosition()+pos);
+            i += iQualityFactor; // kolejny punkt ³amanej
+            s += step; // koñcowa pozycja segmentu [m]
+            m1 = m2;
+            jmm1 = jmm2; // stara pozycja
+            m2 = s / fLength;
+            jmm2 = 1.0 - m2; // nowa pozycja
+            lastS = s;
+            if (s > fLength - 0.5) // Ra: -0.5 ¿eby nie robi³o cieniasa na koñcu
+            { // gdy przekroczyliœmy koniec - st¹d dziury w torach...
+                step -= (s - fLength); // jeszcze do wyliczenia mapowania potrzebny
+                s = fLength;
+                i = iSegCount; // 20/5 ma dawaæ 4
+                m2 = 1.0;
+                jmm2 = 0.0;
+            }
+            while (tv1 < 0.0)
+                tv1 += 1.0; // przestawienie mapowania
+            tv2 = tv1 - step / fTextureLength; // mapowanie na koñcu segmentu
+            t = fTsBuffer[i]; // szybsze od GetTFromS(s);
+            pos2 = FastGetPoint(t);
+            dir = FastGetDirection(t, fOffset); // nowy wektor kierunku
+            parallel2 = Normalize(vector3(-dir.z, 0.0, dir.x)); // wektor poprzeczny
+
+            // Tutaj renderowanie podkladow?
+
+            if (!bTieAdded)
+              {
+              float r1 = RadToDeg(fRoll1);
+              float r2 = RadToDeg(fRoll2);
+              float angle = GetAngleOfLineBetweenTwoPoints(pos1, pos2);
+              float troll = r2;
+
+              if (pos1.z > 0) troll = -troll;
+              if ( r2 < 0.1)  troll = 0.0f;
+
+              // CZY TUTAJ POWINNO BYC ZROBIONE TWORZENIE PODKLADOW JAKO TGroundNode, POZWOLILOBY TO NA USTAWIENIE MAXDISTANCE
+
+               NN = "tie-" + IntToStr(QGlobal::iRENDEREDTIES)+ "-" + IntToStr(i) + "-" + FloatToStr(pos1.z);
+
+               //tiefile = "1435mm/sleepers/podklad-hd-1l.t3d";     // DEFAULTOWY MODEL PODKLADU JEZELI NIE MA WE WPISIE
+
+               if (TRK->asTieModelL == "none") tiefile = "1435mm/sleepers/podklad-hd-1l.t3d";
+               if (TRK->asTieTexture1 == "1435mm/sleepers/" + QGlobal::asDEFAULTSLEEPER)  TRK->asTieTexture1 = "1435mm/sleepers/" + QGlobal::asDEFAULTSLEEPER;
+
+               // LUBEK LACZACY SZYNY
+               asRailJointModel = "1435mm/elements/lacznikszyn-1.t3d";
+               if ((lastS >= fLength-0.5)) Global::pGround->AddGroundNodeQ("J" + NN, "jnt", "none", asRailJointModel, "none", 80, 0, pos2.x, pos2.y-0.14, pos2.z, -angle, troll);
+
+               if (TRK->asTieModelL != "none") tiefile = TRK->asTieModelL;
+
+               // RESZTA PODKLADOW
+               if ((lastS < fLength-0.1) && (lastS > 0.4))
+               if (tiefile != "none") Global::pGround->AddGroundNodeQ(NN, "tie", "none", tiefile, TRK->asTieTexture1, QGlobal::fTIEMAXDIST, 0, pos1.x, pos1.y-0.38, pos1.z, -angle, troll);
+
+               // PIERWSZY PODKLAD ODCINKA STYKA SIE Z PODKLADEM POPRZEDNIEGO ODCINKA
+               if ((lastS <= 0.75))
+               if (tiefile != "none") Global::pGround->AddGroundNodeQ("f" + NN, "tie", "none", tiefile, TRK->asTieTexture1, QGlobal::fTIEMAXDIST, 0, pos1.x+0.06, pos1.y-0.38, pos1.z+0.23, -angle, troll);
+
+               if (tiefile != "none") QGlobal::iRENDEREDTIES++;
+              }
+
+            pos1 = pos2;
+            parallel1 = parallel2;
+            tv1 = tv2;
+        }
+    }
+    else
+    { // gdy prosty, nie modyfikujemy wektora kierunkowego i poprzecznego
+        //float angle = GetAngleOfLineBetweenTwoPoints(pos1, pos2);
+        //draw_railtie(pos1.x, pos1.y-0.37, pos1.z, angle, 0.0, false);
+
+        pos1 = FastGetPoint((fStep * iSkip) / fLength);
+        pos2 = FastGetPoint_1();
+        dir = GetDirection();
+
+        // parallel1=Normalize(CrossProduct(dir,vector3(0,1,0)));
+        parallel1 = Normalize(vector3(-dir.z, 0.0, dir.x)); // wektor poprzeczny
+
+    }
+   bTieAdded = true;
+
 };
 
 void TSegment::RenderSwitchRail(const vector6 *ShapePoints1, const vector6 *ShapePoints2,
@@ -712,6 +1012,8 @@ void TSegment::Render()
         glVertex3f(Point2.x + CPointIn.x, Point2.y + CPointIn.y, Point2.z + CPointIn.z);
         glEnd();
 
+       // draw_sphere(pt.x, pt.y, pt.z, 0.1, Color4(1.0, 0.1, 0.1, 1.0));
+
     }
     glLineWidth(lw);
      glEnable(GL_LIGHTING);
@@ -776,6 +1078,7 @@ void TSegment::RaRenderLoft(CVertNormTex *&Vert, const vector6 *ShapePoints, int
             dir = FastGetDirection(t, fOffset); // nowy wektor kierunku
             // parallel2=Normalize(CrossProduct(dir,vector3(0,1,0)));
             parallel2 = Normalize(vector3(-dir.z, 0.0, dir.x)); // wektor poprzeczny
+
             if (trapez)
                 for (j = 0; j < iNumShapePoints; j++)
                 { // wspó³rzêdne pocz¹tku

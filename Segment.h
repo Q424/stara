@@ -9,7 +9,6 @@ http://mozilla.org/MPL/2.0/.
 
 #ifndef SegmentH
 #define SegmentH
-
 #include "VBO.h"
 #include "dumb3d.h"
 #include "Classes.h"
@@ -69,10 +68,12 @@ class TSegment
     double GetTFromS(double s);
     vector3 RaInterpolate(double t);
     vector3 RaInterpolate0(double t);
+
     // TSegment *segNeightbour[2]; //s¹siednie odcinki - musi byæ przeniesione z Track
     // int iNeightbour[2]; //do którego koñca doczepiony
   public:
     bool bCurve;
+    bool bTieAdded;
     // int iShape; //Ra: flagi kszta³tu dadz¹ wiêcej mo¿liwoœci optymalizacji
     // (0-Bezier,1-prosty,2/3-³uk w lewo/prawo,6/7-przejœciowa w lewo/prawo)
     TSegment(TTrack *owner);
@@ -117,10 +118,10 @@ class TSegment
         r1 = fRoll1;
         r2 = fRoll2;
     }
-    void RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, double fTextureLength,
-                    int iSkip = 0, int iQualityFactor = 1, vector3 **p = NULL, bool bRender = true);
-    void RenderSwitchRail(const vector6 *ShapePoints1, const vector6 *ShapePoints2,
-                          int iNumShapePoints, double fTextureLength, int iSkip = 0,
+    void RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, double fTextureLength, int iSkip = 0, int iQualityFactor = 1, vector3 **p = NULL, bool bRender = true);
+    void RenderRTie(const vector6 *ShapePoints, int iNumShapePoints, double fTextureLength, int iSkip, int iQualityFactor, TTrack *TRK);
+    void RenderSwitch(const vector6 *ShapePoints, int iNumShapePoints, double fTextureLength, int iSkip, int iQualityFactor, TTrack *TRK);
+    void RenderSwitchRail(const vector6 *ShapePoints1, const vector6 *ShapePoints2, int iNumShapePoints, double fTextureLength, int iSkip = 0,
                           double fOffsetX = 0.0f);
     void Render();
     inline double GetLength()

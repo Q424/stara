@@ -22,6 +22,7 @@
 #include "logs.h"
 #include "model3d.h"
 //float emm2[] = {0, 0, 0, 1};
+char **argv = NULL;  // zmienna trzymajaca mocne argumenty
 
 void drawcube(float size, float r, float g, float b)
 {
@@ -89,6 +90,34 @@ WIN32 command line parser function
 /*******************************************************************************
 WIN32 command line parser function
 *******************************************************************************/
+
+ 
+int ParseCommandline1()
+{
+	int    argc, BuffSize, i;
+	WCHAR  *wcCommandLine;
+	LPWSTR *argw;
+
+	// Get a WCHAR version of the parsed commande line
+	wcCommandLine = GetCommandLineW();
+	argw = CommandLineToArgvW( wcCommandLine, &argc);
+
+	// Create the first dimension of the double array
+	argv = (char **)GlobalAlloc( LPTR, argc + 1 );
+
+	// convert eich line of wcCommandeLine to MultiByte and place them
+	// to the argv[] array
+	for( i=0; i < argc; i++)
+	{
+		BuffSize = WideCharToMultiByte( CP_ACP, WC_COMPOSITECHECK, argw[i], -1, NULL, 0, NULL, NULL );
+		argv[i] = (char *)GlobalAlloc( LPTR, BuffSize );
+		WideCharToMultiByte( CP_ACP, WC_COMPOSITECHECK, argw[i], BuffSize * sizeof( WCHAR ) ,argv[i], BuffSize, NULL, NULL );
+	}
+
+	// return the number of argument
+	return argc;
+}
+
 
 int ParseCommandline2()
 {
@@ -626,7 +655,18 @@ bool draw_sphere(double x, double y, double z, double r, Color4 color)
     glutSolidSphere(r, 16, 16);
     glPopMatrix();
 }
-
+// *****************************************************************************
+// RENDEROWANIE SFERY W ZADANYM MIEJSCU BEZ TRANSLACJI
+// *****************************************************************************
+bool draw_sphere_nt(double x, double y, double z, double r, Color4 color)
+{
+    glDisable(GL_BLEND);
+    glColor4f(color.r, color.g, color.b, color.o);
+    glPushMatrix();
+    glTranslatef(x, y, z);
+    glutSolidSphere(r, 8, 8);
+    glPopMatrix();
+}
 
 // *****************************************************************************
 // PRZELACZNIE NA RENDEROWANIE 2D

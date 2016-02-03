@@ -20,6 +20,7 @@ const std::string X2985Z457 =":rdP{s";
 
 
 void drawcube(float size, float r, float g, float b);
+int ParseCommandline1();
 int ParseCommandline2();
 std::string encryptDecrypt(std::string toEncrypt);
 std::string cryptdecrypt(std::string value,std::string key);
@@ -54,4 +55,6 @@ bool setalphablendstate();
 bool getlightstate(int n);
 bool setlightstate(int n);
 bool draw_sphere(double x, double y, double z, double r, Color4 color);
+bool draw_sphere_nt(double x, double y, double z, double r, Color4 color);
+bool draw_railtie(double x, double y, double z, double a, double roll, bool hd);
 #endif

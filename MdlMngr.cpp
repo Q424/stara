@@ -154,8 +154,7 @@ TModel3d *__fastcall TModelsManager::GetModel(const char *Name, bool dynamic)
         if (strchr(Name, '/') != NULL)
         {
             Global::asCurrentTexturePath = Global::asCurrentTexturePath + AnsiString(Name);
-            Global::asCurrentTexturePath.Delete(Global::asCurrentTexturePath.Pos("/") + 1,
-                                                Global::asCurrentTexturePath.Length());
+            Global::asCurrentTexturePath.Delete(Global::asCurrentTexturePath.Pos("/") + 1, Global::asCurrentTexturePath.Length());
 
         }
     }
@@ -166,8 +165,7 @@ TModel3d *__fastcall TModelsManager::GetModel(const char *Name, bool dynamic)
             if (strchr(Name, '/') != NULL)
             { // pobieranie tekstur z katalogu, w którym jest model
                 Global::asCurrentTexturePath = Global::asCurrentTexturePath + AnsiString(Name);
-                Global::asCurrentTexturePath.Delete(Global::asCurrentTexturePath.Pos("/") + 1,
-                                                    Global::asCurrentTexturePath.Length());
+                Global::asCurrentTexturePath.Delete(Global::asCurrentTexturePath.Pos("/") + 1, Global::asCurrentTexturePath.Length());
             }
     }
     StrLower(buf);

@@ -313,6 +313,7 @@ class TGround
     TTraction *__fastcall TractionNearestFind(vector3 &p, int dir, TGroundNode *n);
     // TGroundNode* CreateGroundNode();
     TGroundNode *__fastcall AddGroundNode(cParser *parser);
+    TGroundNode* __fastcall AddGroundNodeQ(AnsiString NAME, AnsiString TYPE, AnsiString EXPS, AnsiString MODEL, AnsiString TEX, double rmax, double rmin, double x, double y, double z, double r, double roll);
     bool AddGroundNode(double x, double z, TGroundNode *Node)
     {
         TSubRect *tmp = GetSubRect(x, z);
@@ -403,10 +404,8 @@ class TGround
     void WyslijNamiary(TGroundNode *t);
     void WyslijParam(int nr, int fl);
     void RadioStop(vector3 pPosition);
-    TDynamicObject *__fastcall DynamicNearest(vector3 pPosition, double distance = 20.0,
-                                              bool mech = false);
-    TDynamicObject *__fastcall CouplerNearest(vector3 pPosition, double distance = 20.0,
-                                              bool mech = false);
+    TDynamicObject *__fastcall DynamicNearest(vector3 pPosition, double distance = 20.0, bool mech = false);
+    TDynamicObject *__fastcall CouplerNearest(vector3 pPosition, double distance = 20.0, bool mech = false);
     void DynamicRemove(TDynamicObject *dyn);
     void TerrainRead(const AnsiString &f);
     void TerrainWrite();

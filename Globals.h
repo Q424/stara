@@ -495,6 +495,7 @@ class QGlobal
  static AnsiString font14file;
  static AnsiString font16file;
  static AnsiString font18file;
+ static AnsiString asDEFAULTSLEEPER;
  
  static GLblendstate GLBLENDSTATE;
  static GLlightstate GLLIGHTSTATE;
@@ -540,6 +541,7 @@ class QGlobal
  static bool bRAINSTED;
  static bool bOPENLOGONX;
  static bool bEXITQUERY;
+ static bool bWATERMARK;
  static bool bKBDREVERSED;
  static bool bSIMSTARTED;
  static bool bchangingfoga;
@@ -549,6 +551,9 @@ class QGlobal
  static bool brendermenu;
  static bool bfirstinitok;
  static bool bCABLOADING;
+ static bool bRTIES;
+ static bool bFIRSTFRAME;
+ static bool bAUTOSWITCHBALLAST;
  static double fdestfogend;
  static double fdestfogstart;
  static double fogchangef;
@@ -573,6 +578,10 @@ class QGlobal
  static int iSTATIONPOSINTAB;
  static int iWH;
  static int iWW;
+ static int iRENDEREDTIES;
+ static int iRENDEREDTRIS;
+ static int iRENDEREDSUBS;
+ static int iSWITCHDIRECT;
 
  static double fscreenfade;
  static double fscreenfade2;
@@ -590,7 +599,8 @@ class QGlobal
  static float ftrwiresize;
  static float consistlen;
  static float fnoisealpha;
- 
+ static float fTIEMAXDIST;
+
  static GLuint reflecttex;
  static GLuint mousesymbol;
  static GLuint mousepoint;
@@ -618,7 +628,8 @@ class QGlobal
  static bool rekrot_timepause;
  static Color4 lepc;
  static Color4 lfipc;
-
+ static TModel3d *mdTIEh;
+ static TModel3d *mdTIEl;
 };
 
 class Global

@@ -34,6 +34,7 @@
 #include "train.h"
 #include "bitmap_Font.h"
 #include "screen.h"
+#include "effects2d.h"
 //#include <gl/gl.h>
 //#include <gl/glu.h>
 //#include <GL/glaux.h>
@@ -1033,21 +1034,6 @@ glLineWidth(0.001);
    glEnable( GL_LIGHTING );
 }
 
-void DrawCircle(float cx, float cy, float r, int num_segments)
-{
-    glBegin(GL_LINE_LOOP);
-    for(int ii = 0; ii < num_segments; ii++)
-    {
-        float theta = 2.0f * 3.1415926f * float(ii) / float(num_segments);//get the current angle
-
-        float x = r * cos(theta);//calculate the x component
-        float y = r * sin(theta);//calculate the y component
-
-        glVertex2f(x + cx, y + cy);//output vertex
-
-    }
-    glEnd();
-}
 
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // RenderInformation() - WYSWIETLANIE ROZNYCH INFORMACJI ^^^^^^^^^^^^^^^^^^^^^^^
@@ -1055,14 +1041,14 @@ void DrawCircle(float cx, float cy, float r, int num_segments)
 
 bool __fastcall TWorld::RenderInformation(int type)
 {
-/*
+
     float Ambient[] = { 1,1,1,1 };
     float Diffuse[] = { 1,1,1,1 };
     float Specular[] = { 0,0,0,1 };
 
     glDisable( GL_FOG );
     glDisable( GL_LIGHTING );
-
+/*
 //if (TWorld::cph < 10)
 //    {
      //if (Global::objectid == 0) Global::objectidinfo = "";       // CO TO BYLO???
@@ -3008,6 +2994,7 @@ bool __fastcall TWorld::RenderEXITQUERY(double alpha)
 {
     QGlobal::bTUTORIAL = false;
     QGlobal::bKEYBOARD = false;
+    QGlobal::bWATERMARK = false;
     QGlobal::infotype = 0;
     float margin = 1;
 
@@ -3015,7 +3002,7 @@ bool __fastcall TWorld::RenderEXITQUERY(double alpha)
     glDisable( GL_FOG );
     glEnable( GL_TEXTURE_2D );
 
-    glColor4f(0.1,0.1,0.1, 0.6);
+    glColor4f(0.1,0.1,0.1, alpha);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_2D, QGlobal::splashscreen);
     glBegin( GL_QUADS );
@@ -3033,6 +3020,42 @@ bool __fastcall TWorld::RenderEXITQUERY(double alpha)
     glEnable( GL_FOG );
     glEnable( GL_LIGHTING );
 }
+
+
+bool __fastcall TWorld::RenderWATERMARK(double alpha)
+{
+    QGlobal::bTUTORIAL = false;
+    QGlobal::bKEYBOARD = false;
+    QGlobal::infotype = 0;
+    float margin = 1;
+
+    glDisable( GL_LIGHTING );
+    glDisable( GL_FOG );
+    glEnable( GL_TEXTURE_2D );
+
+    glColor4f(0.3, 0.3, 0.3, alpha-0.1);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBindTexture(GL_TEXTURE_2D, QGlobal::splashscreen);
+    glBegin( GL_QUADS );
+    glTexCoord2f(0, 1); glVertex3i(margin-0,   margin,0);   // GORNY LEWY
+    glTexCoord2f(0, 0); glVertex3i(margin-0,   Global::iWindowHeight-margin,0); // DOLY LEWY
+    glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+0, Global::iWindowHeight-margin,0); // DOLNY PRAWY
+    glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+0, margin,0);   // GORNY PRAWY
+    glEnd( );
+
+
+    glColor4f(0.5, 0.5, 0.5, 0.35);
+    freetype::print(font12, 20, Global::iWindowHeight-980, "FPS: %7.2f", QGlobal::fps);
+    freetype::print(font12, 20, Global::iWindowHeight-1000, "TIES: %i", QGlobal::iRENDEREDTIES);
+    glEnable( GL_TEXTURE_2D );
+    glEnable( GL_FOG );
+    glEnable( GL_LIGHTING );
+
+    //Color4 color = Color4(0.9f, 0.4f, 0.4f, 0.7f);
+    //DrawCircle(100.0f,100.0f,20.2f, Color4(1.0, 0.8, 0.0, 1.0));
+    //RoundRectW( 10, 20, 200, 1000, 15, 64, color);
+}
+
 
 bool __fastcall TWorld::setBR(int x, int y, int w, int h)
 {
@@ -4597,9 +4620,6 @@ bool __fastcall TWorld::RenderSPLASHSCR(HDC hDC, int node, AnsiString text, doub
 QGlobal::fscreenfade = 0;
 while( QGlobal::fscreenfade < 1.0 ) // Proces plynnego zaciemniania splasha (tzw. fadeoff) ...
     {
-    //if (!floaded) BFONT = new Font();
-    //if (!floaded) BFONT->init("none");
-    //floaded = true;
 
     GWW = Global::iWindowWidth;
     GWH = Global::iWindowHeight;
@@ -4645,6 +4665,8 @@ while( QGlobal::fscreenfade < 1.0 ) // Proces plynnego zaciemniania splasha (tzw
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 bool __fastcall TWorld::RenderLoaderU(HDC hDC, int node, AnsiString text)
 {
+if (!QGlobal::bSIMSTARTED)
+  {
  QGlobal::fscreenfade = 1;
  while ( QGlobal::fscreenfade > 0.01 )
     {
@@ -4847,19 +4869,10 @@ bool __fastcall TWorld::RenderLoaderU(HDC hDC, int node, AnsiString text)
 
    if (!QGlobal::bSCNLOADED) SwapBuffers(hDC);
   }
+ }
  return true;
 }
 
-void Disk( float x, float y, float r )
-{
-    glBegin( GL_TRIANGLE_FAN );
-        glVertex2f( x, y );
-        for( float i = 0; i <= 2 * PI + 0.1; i += 0.1 )
-        {
-            glVertex2f( x + sin( i ) * r, y + cos( i ) * r );
-        }
-    glEnd();
-}
 
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // RenderLoader() - SCREEN WCZYTYWANIA SCENERII ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -4867,22 +4880,26 @@ void Disk( float x, float y, float r )
 
 bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
 {
-    if (!floaded) BFONT = new Font();
-    if (!floaded) BFONT->init("none");
-    floaded = true;
+    int fip;
+    int margin = QGlobal::LDRBORDER;
+    
+//    if (!floaded) BFONT = new Font();
+//    if (!floaded) BFONT->init("none");
+//    floaded = true;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_PROJECTION);
+
     glLoadIdentity();
     glOrtho(0, Global::iWindowWidth, Global::iWindowHeight, 0, -100, 100);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity( );
     glClearColor (LDR_COLOR_R, LDR_COLOR_G, LDR_COLOR_B, 0.7);     // 09 07 04 07
-
-    glDisable(GL_DEPTH_TEST);			// Disables depth testing
-    glDisable(GL_LIGHTING);
-    glDisable(GL_FOG);
     glEnable(GL_TEXTURE_2D);
+    glDisable(GL_FOG);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);			                                     // Disables depth testing
+    glShadeModel(GL_FLAT);
 
 //    if (node != 77) nn = Global::iPARSERBYTESPASSED;
 
@@ -4893,40 +4910,32 @@ bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
    // else { currloading = IntToStr(nn) + "N, PIERWSZE WCZYTYWANIE"; }
     currloading_b = text;
 
-   //glColor4f(1.0,1.0,1.0,1);
-   glColor4f(LDR_COLOR_R, LDR_COLOR_G, LDR_COLOR_B, 1.0);
-   int margin = QGlobal::LDRBORDER;
+    glColor4f(LDR_COLOR_R, LDR_COLOR_G, LDR_COLOR_B, 1.0);
+    QGlobal::aspectratio = 169;
 
-   //glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-   //glEnable(GL_BLEND);
-   // glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-   //glColor4f(0.5,0.45,0.4, 0.5);
-
-
-   QGlobal::aspectratio = 169;
    // OBRAZEK LOADERA ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   if (QGlobal::aspectratio == 43)
-   {
-   glBindTexture(GL_TEXTURE_2D, loaderbackg);
-   glBegin( GL_QUADS );
-   glTexCoord2f(0, 1); glVertex3i(margin-174,   margin,0);   // GORNY LEWY
-   glTexCoord2f(0, 0); glVertex3i(margin-174,   Global::iWindowHeight-margin,0); // DOLY LEWY
-   glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+174, Global::iWindowHeight-margin,0); // DOLNY PRAWY
-   glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+174, margin,0);   // GORNY PRAWY
-   glEnd( );
-   }
+    if (QGlobal::aspectratio == 43)
+    {
+     glBindTexture(GL_TEXTURE_2D, loaderbackg);
+     glBegin( GL_QUADS );
+     glTexCoord2f(0, 1); glVertex3i(margin-174,   margin,0);   // GORNY LEWY
+     glTexCoord2f(0, 0); glVertex3i(margin-174,   Global::iWindowHeight-margin,0); // DOLY LEWY
+     glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+174, Global::iWindowHeight-margin,0); // DOLNY PRAWY
+     glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+174, margin,0);   // GORNY PRAWY
+     glEnd( );
+    }
 
-   if (QGlobal::aspectratio == 169)
-   {
-   int pm = 0;
-   glBindTexture(GL_TEXTURE_2D, loaderbackg);
-   glBegin( GL_QUADS );
-   glTexCoord2f(0, 1); glVertex3i(margin-pm,   margin,0);   // GORNY LEWY
-   glTexCoord2f(0, 0); glVertex3i(margin-pm,   Global::iWindowHeight-margin,0); // DOLY LEWY
-   glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+pm, Global::iWindowHeight-margin,0); // DOLNY PRAWY
-   glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+pm, margin,0);   // GORNY PRAWY
-   glEnd( );
-   }
+    if (QGlobal::aspectratio == 169)
+    {
+     int pm = 0;
+     glBindTexture(GL_TEXTURE_2D, loaderbackg);
+     glBegin( GL_QUADS );
+     glTexCoord2f(0, 1); glVertex3i(margin-pm,   margin,0);   // GORNY LEWY
+     glTexCoord2f(0, 0); glVertex3i(margin-pm,   Global::iWindowHeight-margin,0); // DOLY LEWY
+     glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+pm, Global::iWindowHeight-margin,0); // DOLNY PRAWY
+     glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+pm, margin,0);   // GORNY PRAWY
+     glEnd( );
+    }
 
 
    // LOGO PROGRAMU ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -4947,65 +4956,56 @@ bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
     */
 
    // BRIEFING - OPIS MISJI ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   if (LDR_DESCVIS != 0 && QGlobal::bloaderbriefing)
-   {
-   glEnable(GL_BLEND);
-   glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+    if (LDR_DESCVIS != 0 && QGlobal::bloaderbriefing)
+    {
+     glEnable(GL_BLEND);
+     glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+     glColor4f(1.9,1.9,1.9,0.6);
+     glBindTexture(GL_TEXTURE_2D, loaderbrief);
+     glBegin( GL_QUADS );
+     glTexCoord2f(0, 1); glVertex3i( LDR_BRIEF_X,   LDR_BRIEF_Y,0);   // GORNY LEWY
+     glTexCoord2f(0, 0); glVertex3i( LDR_BRIEF_X,   LDR_BRIEF_Y+1000,0); // DOLY LEWY
+     glTexCoord2f(1, 0); glVertex3i( LDR_BRIEF_X+500, LDR_BRIEF_Y+1000,0); // DOLNY PRAWY
+     glTexCoord2f(1, 1); glVertex3i( LDR_BRIEF_X+500, LDR_BRIEF_Y,0);   // GORNY PRAWY
+     glEnd( );
+    }
 
-// glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_COLOR);  // PRAWIE OK
+   //PROGRESSBAR (LINIA SRODKOWA) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    int PBARY = PBY + 68;
+    int ONEPROCLEN = Global::iWindowWidth / 100; //LDR_PBARLEN;
+    int PBC = PBARY + 5;
+    glDisable(GL_TEXTURE_2D);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(LDR_PBAR__R, LDR_PBAR__G, LDR_PBAR__B, LDR_PBAR__A);
+    glBegin(GL_QUADS);
+    glVertex2f(20, PBC+0);                                   // gorny lewy    -2
+    glVertex2f(20, PBC+1);                                   // dolny lewy    +1
+    glVertex2f(100*ONEPROCLEN, PBC+1);                       // dolny prawy   +1
+    glVertex2f(100*ONEPROCLEN, PBC+0);                       // gorny prawy   -2
+    glEnd();
 
-   glColor4f(1.9,1.9,1.9,0.6);
- //glEnable(GL_BLEND);
-   glBindTexture(GL_TEXTURE_2D, loaderbrief);
-   glBegin( GL_QUADS );
-   glTexCoord2f(0, 1); glVertex3i( LDR_BRIEF_X,   LDR_BRIEF_Y,0);   // GORNY LEWY
-   glTexCoord2f(0, 0); glVertex3i( LDR_BRIEF_X,   LDR_BRIEF_Y+1000,0); // DOLY LEWY
-   glTexCoord2f(1, 0); glVertex3i( LDR_BRIEF_X+500, LDR_BRIEF_Y+1000,0); // DOLNY PRAWY
-   glTexCoord2f(1, 1); glVertex3i( LDR_BRIEF_X+500, LDR_BRIEF_Y,0);   // GORNY PRAWY
-   glEnd( );
-   }
-   glEnable(GL_BLEND);
-
-
-
-   //PROGRESSBAR ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   int PBARY = PBY+68;
-   int ONEPROCLEN = Global::iWindowWidth / 100; //LDR_PBARLEN;
-   int PBC = PBARY+5;
-   glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-   glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-   glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A-0.6);
-   glEnable(GL_BLEND);
-   glBegin(GL_QUADS);
-   glColor4f(1,1,1,1); glVertex2f(20, PBC+0);                                   // gorny lewy    -2
-   glColor4f(1,1,1,1); glVertex2f(20, PBC+1);                                   // dolny lewy    +1
-   glColor4f(1,1,1,1); glVertex2f(100*ONEPROCLEN, PBC+1);                       // dolny prawy   +1
-   glColor4f(1,1,1,1); glVertex2f(100*ONEPROCLEN, PBC+0);                       // gorny prawy   -2
-   glEnd();
-
-  if (QGlobal::bfirstloadingscn) QGlobal::postep = 0;
-  if (QGlobal::bfirstloadingscn) ONEPROCLEN = 1;
+    if (QGlobal::bfirstloadingscn) QGlobal::postep = 0;
+    if (QGlobal::bfirstloadingscn) ONEPROCLEN = 1;
                                                     //QGlobal::iPARSERBYTESPASSED
-  if (!QGlobal::bfirstloadingscn) QGlobal::postep = (QGlobal::iNODESPASSED * 100 / QGlobal::iNODES ); //QGlobal::postep = (QGlobal::iNODES * 100 / QGlobal::iPARSERBYTESPASSED );
+    if (!QGlobal::bfirstloadingscn) QGlobal::postep = (QGlobal::iNODESPASSED * 100 / QGlobal::iNODES ); //QGlobal::postep = (QGlobal::iNODES * 100 / QGlobal::iPARSERBYTESPASSED );
 
-   if (QGlobal::bfirstloadingscn)   // PRZY PIERWSZYM WCZYTYWANIU PASEK POSTEPU JEST USTAWIONY NA 100%
+    if (QGlobal::bfirstloadingscn)   // PRZY PIERWSZYM WCZYTYWANIU PASEK POSTEPU JEST USTAWIONY NA 1%
        {
+        glDisable(GL_TEXTURE_2D);
         glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-        //glEnable(GL_BLEND);
         glColor4f(LDR_PBAR__R, LDR_PBAR__G, LDR_PBAR__B, LDR_PBAR__A);
         glBegin(GL_QUADS);
         glVertex2f(20, PBARY-2);    // gorny lewy
-        glVertex2f(20, PBARY+2);   // dolny lewy
-        glVertex2f(1*ONEPROCLEN, PBARY+2);   // dolny prawy
+        glVertex2f(20, PBARY+3);   // dolny lewy
+        glVertex2f(1*ONEPROCLEN, PBARY+3);   // dolny prawy
         glVertex2f(1*ONEPROCLEN, PBARY-2);   // gorny prawy
         glEnd();
        }
     else
        {
+        glDisable(GL_TEXTURE_2D);
         glBlendFunc(GL_SRC_ALPHA,GL_ONE);
       //glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-      //glEnable(GL_BLEND);
-        glDisable(GL_TEXTURE_2D);
         glColor4f(LDR_PBAR__R, LDR_PBAR__G, LDR_PBAR__B, LDR_PBAR__A);
         glBegin(GL_QUADS);
         glVertex2f(20, PBC-2);    // gorny lewy
@@ -5014,31 +5014,31 @@ bool __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
         glVertex2f(QGlobal::postep*ONEPROCLEN, PBC-2);   // gorny prawy
         glEnd();
        }
-int fip;
-int endpointx = (ONEPROCLEN * 100) + 12;
+
+   int endpointx = (ONEPROCLEN * 100) + 12;
 
 //if (QGlobal::postep*ONEPROCLEN > QGlobal::iNODES-100) endpointblink+= 0.01;
 
-glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+   glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
 // FIRST INIT POINT
-glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A);
-glColor4f(QGlobal::lfipc.r, QGlobal::lfipc.g, QGlobal::lfipc.b, LDR_FINIT_A-0.2);
-fip = endpointx;
-if (!QGlobal::bfirstloadingscn) fip = (QGlobal::iNODESFIRSTINIT * 100 / QGlobal::iNODES );
-if (!QGlobal::bfirstloadingscn) Disk(fip*ONEPROCLEN, 906, 4.0);
-if ( QGlobal::bfirstloadingscn) ONEPROCLEN = Global::iWindowWidth / 100;
-if ( QGlobal::bfirstloadingscn) endpointx = (ONEPROCLEN * 100) + 12;
-glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A-0.4);
-DrawCircle(fip*ONEPROCLEN, PBC+1, 6, 64);
+   glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A);
+   glColor4f(QGlobal::lfipc.r, QGlobal::lfipc.g, QGlobal::lfipc.b, LDR_FINIT_A-0.2);
+   fip = endpointx;
+   if (!QGlobal::bfirstloadingscn) fip = (QGlobal::iNODESFIRSTINIT * 100 / QGlobal::iNODES );
+   if (!QGlobal::bfirstloadingscn) Disk(fip*ONEPROCLEN, 906, 4.0);
+   if ( QGlobal::bfirstloadingscn) ONEPROCLEN = Global::iWindowWidth / 100;
+   if ( QGlobal::bfirstloadingscn) endpointx = (ONEPROCLEN * 100) + 12;
+   glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A-0.4);
+   DrawCircle(fip*ONEPROCLEN, PBC+1, 6, 64);
 
 // END POINT
-glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A-0.4);
-glColor4f(QGlobal::lepc.r, QGlobal::lepc.g, QGlobal::lepc.b, LDR_FINIT_A-0.5);
-Disk(endpointx, PBC, 10.0);
+   glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A-0.4);
+   glColor4f(QGlobal::lepc.r, QGlobal::lepc.g, QGlobal::lepc.b, LDR_FINIT_A-0.5);
+   Disk(endpointx, PBC, 10.0);
 
-glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A);
-DrawCircle(endpointx, PBC, 12, 64);
+   glColor4f(LDR_FINIT_R, LDR_FINIT_G, LDR_FINIT_B, LDR_FINIT_A);
+   DrawCircle(endpointx, PBC, 12, 64);
 
    RenderInformation(99);
 
@@ -5071,25 +5071,21 @@ if ( QGlobal::fscreenfade > 0.01 )
 
     BFONT->End();
 
-    glEnable(GL_TEXTURE_2D);
-   // glEnable(GL_FOG);
    // if (QGlobal::fscreenfade > 0.01)
     QGlobal::fscreenfade -= 0.25;
-
-   // SwapBuffers(hDC);
-
     }
 
    glEnable(GL_TEXTURE_2D); // Enable Texture Mapping
    glShadeModel(GL_SMOOTH); // Enable Smooth Shading
    glEnable(GL_DEPTH_TEST);
+   glEnable(GL_LIGHTING);
+   glEnable(GL_FOG);
 
-
-        glEnable(GL_BLEND);
-        glEnable(GL_ALPHA_TEST);
-        glAlphaFunc(GL_GREATER, 0.04);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glDepthFunc(GL_LEQUAL);
+   glEnable(GL_BLEND);
+   glEnable(GL_ALPHA_TEST);
+   glAlphaFunc(GL_GREATER, 0.04);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   glDepthFunc(GL_LEQUAL);
 
    if (!QGlobal::bSCNLOADED) SwapBuffers(hDC);
 

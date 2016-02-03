@@ -564,6 +564,7 @@ AnsiString TGroundNode::GetPosStr()
  return  AnsiString(FloatToStr(pCenter.x) + " " + FloatToStr(pCenter.y) + " " + FloatToStr(pCenter.z));
 }
 
+//bool TGround::RenderDl() -> void TSubRect::RenderDL() -> void TGroundNode::RenderDL()
 void TGroundNode::RenderDL()
 { // wyœwietlanie obiektu przez Display List
   // WriteLog(asName + ", " + GetPosStr());
@@ -654,7 +655,7 @@ void TGroundNode::RenderAlphaDL()
         Model->RenderAlphaDL(&pCenter);
         return;
     case TP_TRACK:
-        // pTrack->RenderAlpha();
+        // pTrack->RenderA();
         return;
     };
 
@@ -1235,11 +1236,17 @@ void TSubRect::RenderDL()
     TGroundNode *node;
     RaAnimate(); // przeliczenia animacji torów w sektorze
     for (node = nRender; node; node = node->nNext3)
+    {  
         node->RenderDL(); // nieprzezroczyste obiekty (oprócz pojazdów)
+        }
     for (node = nRenderMixed; node; node = node->nNext3)
+    {
         node->RenderDL(); // nieprzezroczyste z mieszanych modeli
+        }
     for (int j = 0; j < iTracks; ++j)
+    {
         tTracks[j]->RenderDyn(); // nieprzezroczyste fragmenty pojazdów na torach
+        }
 };
 
 void TSubRect::RenderAlphaDL()
@@ -1682,6 +1689,118 @@ void TGround::RaTriangleDivider(TGroundNode *node)
     RaTriangleDivider(node); // rekurencja, bo nawet na TD raz nie wystarczy
     RaTriangleDivider(ntri);
 };
+
+
+
+TGroundNode* __fastcall TGround::AddGroundNodeQ(AnsiString NAME, AnsiString TYPE, AnsiString EXPS, AnsiString MODEL, AnsiString TEX, double rmax, double rmin, double x, double y, double z, double r, double roll)
+{
+ //WriteLog("TGroundNode* __fastcall TGround::AddGroundNodeQ(AnsiString STR)");
+    AnsiString str,str1,str2,str3,asNodeName;
+    TGroundNode *tmp,*tmp2;
+    float maxd = double(2000);
+
+    asNodeName = NAME + "_" + AnsiString(GetTickCount()); //+   FormatDateTime("mmss", Now());
+
+    //if (TYPE == "TP_HMPOST") asNodeName = STR;
+
+    tmp= new TGroundNode();
+    tmp->asName = (asNodeName == AnsiString("none") ? AnsiString("") : asNodeName);
+    tmp->fSquareRadius = rmax*rmax;
+    tmp->fSquareMinRadius = 1*1;
+    tmp->iType= TP_MODEL;
+    tmp->pCenter.x = x;
+    tmp->pCenter.y = y + 0.01;
+    tmp->pCenter.z = z;
+    tmp->pCenter.RotateY(aRotate.y/180*M_PI);
+    tmp->pCenter += pOrigin;
+
+    tmp->Model = new TAnimModel();
+    tmp->Model->RaAnglesSet(roll + aRotate.x, r + aRotate.y, aRotate.z); // dostosowanie do pochylania linii
+
+    if (tmp->Model->Load(MODEL, TEX, tmp->asName)) // wczytanie modelu, tekstury i stanu œwiate³...
+         {
+            tmp->iFlags = tmp->Model->Flags() | 0x200; // ustalenie, czy przezroczysty; flaga usuwania
+            tmp->Model->iTYPE = 0;
+         }
+        else if (tmp->iType != TP_TERRAIN)
+        { // model nie wczyta³ siê - ignorowanie node
+            delete tmp;
+            tmp = NULL; // nie mo¿e byæ tu return
+        }
+      /*
+        if (tmp->iType == TP_TERRAIN)
+        { // jeœli model jest terenem, trzeba utworzyæ dodatkowe obiekty
+            // po wczytaniu model ma ju¿ utworzone DL albo VBO
+            Global::pTerrainCompact = tmp->Model; // istnieje co najmniej jeden obiekt terenu
+            tmp->iCount = Global::pTerrainCompact->TerrainCount() + 1; // zliczenie submodeli
+            tmp->nNode = new TGroundNode[tmp->iCount]; // sztuczne node dla kwadratów
+            tmp->nNode[0].iType = TP_MODEL; // pierwszy zawiera model (dla delete)
+            tmp->nNode[0].Model = Global::pTerrainCompact;
+            tmp->nNode[0].iFlags = 0x200; // nie wyœwietlany, ale usuwany
+            WriteLog("IS TERRAIN");
+            for (int i = 1; i < tmp->iCount; ++i)
+            { // a reszta to submodele
+                tmp->nNode[i].iType = TP_SUBMODEL; //
+                tmp->nNode[i].smTerrain = Global::pTerrainCompact->TerrainSquare(i - 1);
+                tmp->nNode[i].iFlags = 0x10; // nieprzezroczyste; nie usuwany
+                tmp->nNode[i].bVisible = true;
+                tmp->nNode[i].pCenter = tmp->pCenter; // nie przesuwamy w inne miejsce
+            }
+        }
+        else
+        */
+        if (!tmp->asName.IsEmpty()) // jest pusta gdy "none"
+        { // dodanie do wyszukiwarki
+            if (sTracks->Update(TP_MODEL, tmp->asName.c_str(), tmp)) // najpierw sprawdziæ, czy ju¿ jest
+            { // przy zdublowaniu wskaŸnik zostanie podmieniony w drzewku na póŸniejszy (zgodnoœæ
+                // wsteczna)
+                ErrorLog("Duplicated model: " + tmp->asName); // to zg³aszaæ duplikat
+            }
+            else
+            {
+                sTracks->Add(TP_MODEL, tmp->asName.c_str(), tmp); // nazwa jest unikalna
+            }
+        }
+
+    tmp->nNext = nRootOfType[TP_MODEL]; // ostatni dodany do³¹czamy
+    nRootOfType[TP_MODEL] =tmp; // ustawienie nowego na pocz¹tku listy
+    iNumNodes++;
+
+    for (int i = 0; i < TP_LAST; ++i)
+    {
+     for (TGroundNode *Current = nRootOfType[i]; Current; Current = Current->nNext)
+      {
+       if (Current->iType == TP_MODEL)
+         if (Current->asName == asNodeName)
+          {
+            Current->InitNormals();
+           // if (Current->iType != TP_DYNAMIC)
+           // { // pojazdów w ogóle nie dotyczy dodawanie do mapy
+               // if (i == TP_EVLAUNCH ? Current->EvLaunch->IsGlobal() : false)
+               //     srGlobal.NodeAdd(Current); // dodanie do globalnego obiektu
+                //
+               //else
+               // if ((Current->iType != GL_TRIANGLES) ?
+               //              true //~czy trójk¹t?
+               //              :
+               //              (Current->iFlags & 0x20) ?
+               //              true //~czy teksturê ma nieprzezroczyst¹?
+               //              :
+               //              (Current->fSquareMinRadius != 0.0) ?
+               //              true //~czy widoczny z bliska?
+               //              :
+               //              (Current->fSquareRadius <= 90000.0)) //~czy widoczny z daleka?
+                    GetSubRect(Current->pCenter.x, Current->pCenter.z)->NodeAdd(Current);
+              //  else // dodajemy do kwadratu kilometrowego
+              //      GetRect(Current->pCenter.x, Current->pCenter.z)->NodeAdd(Current);
+           // }
+          }
+        }
+    }
+  return tmp;
+}
+
+
 
 TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
 { // wczytanie wpisu typu "node"
@@ -2664,7 +2783,7 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
             if (QGlobal::asINCLUDETYPE == "posers") LastNode->fPassengerDDelay = getRandomMinMax( 0.30f, 4.00f );
             if (QGlobal::asINCLUDETYPE == "posers") LastNode->fPassengerCDelay = 0.0;
             
-            if (LastNode->asName == "") LastNode->asName = QGlobal::asINCLUDETYPE + "-" + LastNode->asTrainNumber + "-" + LastNode->asDest;
+            //if (LastNode->asName == "") LastNode->asName = QGlobal::asINCLUDETYPE + "-" + LastNode->asTrainNumber + "-" + LastNode->asDest;
             if (LastNode)
             { // je¿eli przetworzony poprawnie
              // WriteLog(IntToStr(LastNode->iType) + " [" + LastNode->asTrainNumber + "]:[" + LastNode->asDest + "]");
@@ -3070,6 +3189,16 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
                 parser.getTokens();
                 parser >> token;
             } while (token.compare("enddescription") != 0);
+        }
+        else if (str == AnsiString("defaultsleeper"))
+        {
+            do
+            {
+                parser.getTokens();
+                parser >> token;
+                QGlobal::asDEFAULTSLEEPER = Trim(AnsiString(token.c_str()));
+                WriteLog("default sleeper tex: " + QGlobal::asDEFAULTSLEEPER);
+            } while (token.compare("end") != 0);
         }
         else if (str == AnsiString("test"))
         { // wypisywanie treœci po przetworzeniu

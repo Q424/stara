@@ -441,6 +441,9 @@ TAnimModel::~TAnimModel()
     SafeDelete(pRoot);
 }
 
+
+// ***********************************************************************************************************
+// 3
 bool TAnimModel::Init(TModel3d *pNewModel)
 {
     fBlinkTimer = double(random(1000 * fOffTime)) / (1000 * fOffTime);
@@ -449,10 +452,12 @@ bool TAnimModel::Init(TModel3d *pNewModel)
     return (pModel != NULL);
 }
 
+
+// ***********************************************************************************************************
+// 2
 bool TAnimModel::Init(AnsiString asName, AnsiString asReplacableTexture)
 {
-    if (asReplacableTexture.SubString(1, 1) ==
-        "*") // od gwiazdki zaczynaj¹ siê teksty na wyœwietlaczach
+    if (asReplacableTexture.SubString(1, 1) == "*") // od gwiazdki zaczynaj¹ siê teksty na wyœwietlaczach
         asText = asReplacableTexture.SubString(2, asReplacableTexture.Length() -
                                                       1); // zapamiêtanie tekstu
     else if (asReplacableTexture != "none")
@@ -464,9 +469,12 @@ bool TAnimModel::Init(AnsiString asName, AnsiString asReplacableTexture)
     else
         iTexAlpha = 0x30300030; // tekstura nieprzezroczysta - nie renderowaæ w cyklu
     // przezroczystych
-    return (Init(TModelsManager::GetModel(asName.c_str())));
+    return (Init(TModelsManager::GetModel(asName.c_str())));   // -> STEP 3
 }
 
+
+// ***********************************************************************************************************
+// 1
 bool TAnimModel::Load(cParser *parser, bool ter)
 { // rozpoznanie wpisu modelu i ustawienie œwiate³
     AnsiString str;
@@ -537,6 +545,21 @@ bool TAnimModel::Load(cParser *parser, bool ter)
     }
     return true;
 }
+
+
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// FUNKCJA POTRZEBNA DO DYNAMICZNEGO WCZYTYWANIA MODELI ^^^^^^^^^^^^^^^^^^^^^^^^  
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+bool TAnimModel::Load(AnsiString model, AnsiString texture, AnsiString asNodeName)
+{
+ // WriteLog("bool __fastcall TAnimModel::Load(" + model + ", " + "AnsiString texture)");
+
+ Init(model, texture);
+
+ return true;
+}
+
 
 TAnimContainer *__fastcall TAnimModel::AddContainer(char *pName)
 { // dodanie sterowania submodelem dla egzemplarza

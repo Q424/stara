@@ -136,7 +136,6 @@ int MouseButton = -1;         // mouse button down
 static POINT mouse;
 static POINT xmouse;
 static int mx=0, my=0;
-char **argv = NULL;  // zmienna trzymajaca mocne argumenty
 
 AnsiString appath, commandline, filetoopen, FDT;
 
@@ -158,41 +157,29 @@ FunctionFunc _FunctionFunc;
 #define IDM_FILE_OPEN 2
 #define IDM_FILE_QUIT 3
 #define IDM_FILE_CONTINUE 4
-//#include "dbgForm.h"
 //---------------------------------------------------------------------------
 
 
- 
-int ParseCommandline1()
+void AddMenus(HWND hwnd)
 {
-	int    argc, BuffSize, i;
-	WCHAR  *wcCommandLine;
-	LPWSTR *argw;
+  hMenubar = CreateMenu();
+  hMenu = CreateMenu();
 
-	// Get a WCHAR version of the parsed commande line
-	wcCommandLine = GetCommandLineW();
-	argw = CommandLineToArgvW( wcCommandLine, &argc);
+  AppendMenuW(hMenu, MF_STRING, IDM_FILE_NEW, L"&Nowy");
+  AppendMenuW(hMenu, MF_STRING, IDM_FILE_OPEN, L"&Otworz...");
+  AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
+  AppendMenuW(hMenu, MF_STRING, IDM_FILE_QUIT, L"&Zakoncz");
+  AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
+  AppendMenuW(hMenu, MF_STRING, IDM_FILE_CONTINUE, L"&Kontynuuj");
 
-	// Create the first dimension of the double array
-	argv = (char **)GlobalAlloc( LPTR, argc + 1 );
-
-	// convert eich line of wcCommandeLine to MultiByte and place them
-	// to the argv[] array
-	for( i=0; i < argc; i++)
-	{
-		BuffSize = WideCharToMultiByte( CP_ACP, WC_COMPOSITECHECK, argw[i], -1, NULL, 0, NULL, NULL );
-		argv[i] = (char *)GlobalAlloc( LPTR, BuffSize );
-		WideCharToMultiByte( CP_ACP, WC_COMPOSITECHECK, argw[i], BuffSize * sizeof( WCHAR ) ,argv[i], BuffSize, NULL, NULL );
-	}
-
-	// return the number of argument
-	return argc;
+  AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR)hMenu, L"&File");
+  SetMenu(hwnd, hMenubar);
 }
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // InitGl() - Taka se wstepna funkcja inicjalizacji OpenGL
-// *****************************************************************************
+// ***********************************************************************************************************
 
 int InitGL(GLvoid) // All Setup For OpenGL Goes Here
 {
@@ -325,8 +312,7 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
         if (!RegisterClass(&wc)) // Attempt To Register The Window Class
         {
             ErrorLog("Fail: window class registeration");
-            MessageBox(NULL, "Failed to register the window class.", "ERROR",
-                       MB_OK | MB_ICONEXCLAMATION);
+            MessageBox(NULL, "Failed to register the window class.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
             return FALSE; // Return FALSE
         }
 
@@ -544,21 +530,21 @@ static int test = 0;
 PCOPYDATASTRUCT pDane;
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // TAKIE CIEZKIE KODZENIE DLA OBSLUGI PrtScrn (VK_SNAPSHOT), TRZEBA WYKRYWAC NA NISKIM POZIOMIE
 // TEN KLAWISZ. CO ZA OKRUTNE JEST ZYCIE Q: 261215
-// *****************************************************************************
+// ***********************************************************************************************************
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
   BOOL fEatKeystroke = FALSE;
  
   if (nCode == HC_ACTION) 
   {
-     switch (wParam) 
+     switch (wParam)
      {
        // case WM_KEYDOWN:
        // case WM_SYSKEYDOWN:
-        case WM_KEYUP:    
+        case WM_KEYUP:
        // case WM_SYSKEYUP:
             {
                 PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT) lParam;
@@ -573,27 +559,13 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
             }
      }
   }
- 
   return(fEatKeystroke ? 1 : CallNextHookEx(NULL, nCode, wParam, lParam));
 }
 
-void AddMenus(HWND hwnd)
-{
-  hMenubar = CreateMenu();
-  hMenu = CreateMenu();
 
-  AppendMenuW(hMenu, MF_STRING, IDM_FILE_NEW, L"&Nowy");
-  AppendMenuW(hMenu, MF_STRING, IDM_FILE_OPEN, L"&Otworz...");
-  AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
-  AppendMenuW(hMenu, MF_STRING, IDM_FILE_QUIT, L"&Zakoncz");
-  AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
-  AppendMenuW(hMenu, MF_STRING, IDM_FILE_CONTINUE, L"&Kontynuuj");
-
-  AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR)hMenu, L"&File");
-  SetMenu(hwnd, hMenubar);
-}
-
-
+// ***********************************************************************************************************
+// OBSLUGA KOMUNIKATOW ZWROTNYCH
+// ***********************************************************************************************************
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 //HINSTANCE hINST;
@@ -668,10 +640,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         if (Global::bActive && ((mouse.x != mx) || (mouse.y != my)))
         {
+            if (!Console::Pressed(VK_RMENU)) SetCursorPos(mx, my);
             if (!Console::Pressed(VK_RMENU)) World.OnMouseMove(double(mouse.x - mx) * 0.005, double(mouse.y - my) * 0.01);
           //World.OnMouseMove(double(mouse.x - mx) * 0.005, double(mouse.y - my) * 0.01,  LOWORD(lParam), HIWORD(lParam));
-
-            if (!Console::Pressed(VK_RMENU)) SetCursorPos(mx, my);
         }
         return 0; // jump back
     }
@@ -771,7 +742,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     Global::iTextMode = VK_F1; // to wyœwietliæ zegar i informacjê
                 break;
             case VK_F7:
-                if (DebugModeFlag)
+               // if (DebugModeFlag)
                 { // siatki wyœwietlane tyko w trybie testowym
                     Global::bWireFrame = !Global::bWireFrame;
                     ++Global::iReCompile; // odœwie¿yæ siatki
@@ -862,9 +833,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 };
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // POCZATEK WSZYSTKIEGO
-// *****************************************************************************
+// ***********************************************************************************************************
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 
@@ -941,7 +912,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
  QGlobal::LOKTUT = new TStringList;
  QGlobal::MBRIEF = new TStringList;
  QGlobal::MISSIO = new TStringList;
- DEBUGGER = new TDEBUGGER(NULL);                                                // UTWORZENIE FORMY DEBUGGERA
+ DEBUGGER = new TDEBUGGER(NULL);                                                 // UTWORZENIE FORMY DEBUGGERA
  DEBUGGER->Hide();
  MV = new TModelViewer;
  AnsiString FULLEXE = Application->ExeName;
@@ -1018,7 +989,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 // argc = ParseCommandline1();
 
 
-// READING FILE SYTEM ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// CHECKINGF ILE SYTEM (FOLDERS) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  WriteLog("");
  WriteLog("READING FILE SYSTEM...");
 
@@ -1068,7 +1039,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     }
     else
     {
-     WriteLog("FILE SYSTEM READ ERROR, CHECK FILE 'FSYS.TXT'.");
+     WriteLog("FILE SYSTEM CHECK ERROR, CHECK FILE 'FSYS.TXT'.");
      MessageBox(NULL,"FILE SYSTEM READ ERROR, CHECK FILE 'FSYS.TXT'.", "ERROR",MB_OK|MB_ICONEXCLAMATION);
     }
 
@@ -1122,6 +1093,9 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
                 if (test == "exifauthor") QGlobal::asEXIFAUTHOR = par1;
                 if (test == "exifcpyrgt") QGlobal::asEXIFCOPYRIGHT = par1;
                 if (test == "rail_model") QGlobal::asRAILTYPE = UpperCase(par1);
+                if (test == "rail_ties") QGlobal::bRTIES = atoi(par1.c_str());
+                if (test == "tiemaxdist") QGlobal::fTIEMAXDIST = StrToFloat(Trim(par1));
+                if (test == "swtchbllst") QGlobal::bAUTOSWITCHBALLAST = atoi(par1.c_str());
                 if (test == "env_sky001") QGlobal::bRENDERSKY1 = atoi(par1.c_str());
                 if (test == "env_sky002") QGlobal::bRENDERSKY2 = atoi(par1.c_str());
                 if (test == "env_clouds") QGlobal::bRENDERCLDS = atoi(par1.c_str());
@@ -1167,8 +1141,8 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
  if (rege3dt3d) WriteLog("Registering model file extensions e3d/t3d...");
 // if (rege3dt3d) RegisterFileExtansion(".e3d", "maszynamodelbin", "Binarny plik modelu MaSZyna", "\\data\\icons\\e3d.ico,0" );
 // if (rege3dt3d) RegisterFileExtansion(".t3d", "maszynamodeltxt", "Tekstowy plik modelu MaSZyna", "\\data\\icons\\t3d.ico,0" );
- if (rege3dt3d) CreateREGfile(".e3d", "maszynamodelbin", "Binarny plik modelu MaSZyna", "\\data\\icons\\e3d.ico,0", "e3d");
- if (rege3dt3d) CreateREGfile(".t3d", "maszynamodeltxt", "Tekstowy plik modelu MaSZyna", "\\data\\icons\\t3d.ico,0", "t3d");
+ if (rege3dt3d) MV->CreateREGfile(".e3d", "maszynamodelbin", "Binarny plik modelu MaSZyna", "\\data\\icons\\e3d.ico,0", "e3d");
+ if (rege3dt3d) MV->CreateREGfile(".t3d", "maszynamodeltxt", "Tekstowy plik modelu MaSZyna", "\\data\\icons\\t3d.ico,0", "t3d");
 
 
  WriteLog("");
@@ -1227,10 +1201,9 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
  WriteLog("");
  WriteLog("");
 
-
- //HWND aHWnd;
- //aHWnd = FindWindow(NULL, QGlobal::logwinname.c_str()); // Szukanie okna z otwartm logiem znajac etykiete
- //SendMessage(aHWnd, WM_CLOSE, 0, 0);    // ZAMYKAMY OTWARTY LOG
+ HWND aHWnd;
+ aHWnd = FindWindow(NULL, QGlobal::logwinname.c_str());                 // Szukanie okna z otwartm logiem znajac etykiete
+ SendMessage(aHWnd, WM_CLOSE, 0, 0);                                    // ZAMYKAMY OTWARTY LOG
 
     //SetCurrentDirectory(QGlobal::asAPPDIR.c_str());
 
@@ -1245,7 +1218,6 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
   //      if (!Global::bHideConsole) AllocConsole();
   //      if (!Global::bHideConsole) SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_GREEN);
   //  }
-  //WriteLog(lpCmdLine);
 
     WriteLog("Parsing command line (" + AnsiString(lpCmdLine) + ")...");
     AnsiString str = lpCmdLine; // parametry uruchomienia
@@ -1309,8 +1281,6 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     if (Bpp != 32)
         Bpp = 16;
 
-    //WriteLog(".");
-
     if (getscreenb) // JEZELI OPCJA ROZDZIELCZOSCI IDENTYCZNEJ JAK PULPIT
         {
          GetDesktopResolution(QGlobal::iWW, QGlobal::iWH); // USTAW ROZDZIELCZOSC TAKA JAK PULPIT
@@ -1326,7 +1296,8 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
          else Global::bFullScreen  = true;
          fullscreen = Global::bFullScreen;
         }
-    if (!getscreenb) // JEZELI OPCJA ROZDZIELCZOSCI IDENTYCZNEJ JAK PULPIT
+        
+    if (!getscreenb) // JEZELI PODANA ROZDZIELCZOSC W config.txt
         {
          if (QGlobal::iWH > 0) Global::iWindowHeight = QGlobal::iWH;
          if (QGlobal::iWW > 0) Global::iWindowWidth = QGlobal::iWW;
@@ -1346,8 +1317,8 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 
     if (QGlobal::brendermenu)
     {
-     DEBUGGER->Left =Global::iWindowWidth / 2 - (DEBUGGER->Width / 2);
-     DEBUGGER->Top =Global::iWindowHeight / 2 - (DEBUGGER->Height / 2);
+     DEBUGGER->Left = Global::iWindowWidth / 2 - (DEBUGGER->Width / 2);
+     DEBUGGER->Top = Global::iWindowHeight / 2 - (DEBUGGER->Height / 2);
      DEBUGGER->SCENERYDIR = QGlobal::asAPPDIR + "scenery\\";
      DEBUGGER->Show();
      DEBUGGER->DoubleBuffered = true;
@@ -1404,8 +1375,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     SystemParametersInfo(SPI_SETKEYBOARDSPEED, 20, NULL, 0);
 
 
-    if (!joyGetNumDevs())
-        WriteLog("No joystick");
+    if (!joyGetNumDevs()) WriteLog("No joystick");
     if (Global::iModifyTGA < 0)
     { // tylko modyfikacja TGA, bez uruchamiania symulacji
         Global::iMaxTextureSize = 64; //¿eby nie zamulaæ pamiêci
@@ -1466,6 +1436,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     if (hRC) KillGLWindow(); // kill the window
     return (msg.wParam); // exit the program
 }
+
 
 
 
