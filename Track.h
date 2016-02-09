@@ -139,10 +139,7 @@ class TTrack : public Resource
     GLuint TextureID1; // tekstura szyn albo nawierzchni
     GLuint TextureID2; // tekstura automatycznej podsypki albo pobocza
     GLuint TextureID3; // tekstura podsypki dla rozjazdu
-    GLuint TextureT01;
-    GLuint TextureT02;
-    GLuint TextureT03;
-    GLuint TextureS01;
+
     float fTexLength; // d³ugoœæ powtarzania tekstury w metrach
     float fTexRatio1; // proporcja rozmiarów tekstury dla nawierzchni drogi
     float fTexRatio2; // proporcja rozmiarów tekstury dla chodnika
@@ -156,6 +153,10 @@ class TTrack : public Resource
     TGroundNode *
         pMyNode; // Ra: proteza, ¿eby tor zna³ swoj¹ nazwê TODO: odziedziczyæ TTrack z TGroundNode
   public:
+    GLuint TextureT01;
+    GLuint TextureT02;
+    GLuint TextureT03;
+    GLuint TextureS01;
     int iNumDynamics;
     int iRAILTYPE;
     TDynamicObject *Dynamics[iMaxNumDynamics];
@@ -260,6 +261,7 @@ class TTrack : public Resource
     bool AddDynamicObject(TDynamicObject *Dynamic);
     bool RemoveDynamicObject(TDynamicObject *Dynamic);
     void MoveMe(vector3 pPosition);
+    void AddSleepers(GLuint tex = 0);
 
     void Release();
     void Compile(GLuint tex = 0);

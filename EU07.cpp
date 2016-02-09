@@ -16,7 +16,6 @@ http://mozilla.org/MPL/2.0/.
 #include "opengl/glut.h"
 #include "opengl/ARB_Multisample.h"
 
-#include <vector>
 #include <vcl.h>
 #include <winuser.h>
 #include <windows.h>
@@ -29,7 +28,7 @@ http://mozilla.org/MPL/2.0/.
 #include <wininet.h>
 #include <iostream>
 #include <string>
- #include <vector>
+#include <vector>
 #include <fstream>
 #include <sstream>
 #include <istream>
@@ -127,7 +126,7 @@ HGLRC hRC = NULL; // Permanent Rendering Context
 HWND hWnd = NULL; // Holds Our Window Handle
 HWND hWnd2 = NULL;
 // bool active=TRUE;	//window active flag set to TRUE by default
-bool fullscreen = TRUE; // fullscreen flag set to fullscreen mode by default
+bool fullscreen = true; // fullscreen flag set to fullscreen mode by default
 int WindowWidth = 800;
 int WindowHeight = 600;
 int Bpp = 32;
@@ -290,6 +289,7 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
     WindowRect.right = (long)width; // set right value to requested width
     WindowRect.top = (long)0; // set top value to 0
     WindowRect.bottom = (long)height; // set bottom value to requested height
+    bool fullscreen;
 
     fullscreen = fullscreenflag; // set the global fullscreen flag
 
@@ -362,7 +362,8 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
             if (MessageBox(NULL, AnsiString("The requested fullscreen mode is not supported by\nyour video card. Use windowed mode instead? (" + IntToStr(width) + "x" + IntToStr(height) + ")").c_str() ,
                            "EU07", MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
             {
-                fullscreen = FALSE; // Windowed Mode Selected.  Fullscreen = FALSE
+                fullscreen = false; // Windowed Mode Selected.  Fullscreen = FALSE
+                Global::bFullScreen = false;
             }
             else
             {
@@ -474,8 +475,7 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
     {
         KillGLWindow(); // Reset The Display
         ErrorLog("Fail: OpenGL rendering context creation");
-        MessageBox(NULL, "Can't create a GL rendering context.", "ERROR",
-                   MB_OK | MB_ICONEXCLAMATION);
+        MessageBox(NULL, "Can't create a GL rendering context.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
         return FALSE; // Return FALSE
     }
 
@@ -483,8 +483,7 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
     {
         KillGLWindow(); // Reset The Display
         ErrorLog("Fail: OpenGL rendering context activation");
-        MessageBox(NULL, "Can't activate the GL rendering context.", "ERROR",
-                   MB_OK | MB_ICONEXCLAMATION);
+        MessageBox(NULL, "Can't activate the GL rendering context.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
         return FALSE; // Return FALSE
     }
 
@@ -510,10 +509,11 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
             }
 
     ShowWindow(hWnd, SW_SHOW); // show the window
+    ReSizeGLScene(width, height); // set up our perspective GL screen
     SetForegroundWindow(hWnd); // slightly higher priority
     SetFocus(hWnd); // sets keyboard focus to the window
-    ReSizeGLScene(width, height); // set up our perspective GL screen
-
+    Sleep(5);
+    Application->ProcessMessages();
     if (!InitGL()) // initialize our newly created GL Window
     {
         KillGLWindow(); // reset the display
@@ -890,6 +890,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
  char shotdir[100];
  char kbdlayo[100];
  char szFILE[200];
+ char szFILELIST[200];
  char szCFGFILE[200];
  std::string line;
  WORD vmajor, vminor, vbuild, vrev;
@@ -991,7 +992,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 
 // CHECKINGF ILE SYTEM (FOLDERS) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  WriteLog("");
- WriteLog("READING FILE SYSTEM...");
+ WriteLog("CHECKING FILE SYSTEM...");
 
  sprintf(szFILE,"%s%s", appath.c_str() , "\\fsys.txt");
  std::ifstream File(szFILE);
@@ -1016,11 +1017,11 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
                 if (test == "dynpath")  Global::asCurrentDynamicPath = par1.c_str();
 
                 if (DirectoryExists(QGlobal::asAPPDIR + par1.c_str()))
-                WriteLog("varname: " + AnsiString(test.c_str()) + ", " + AnsiString(par1.c_str())  + ", OK");
+                WriteLog("FLDR: " + AnsiString(test.c_str()) + ", " + AnsiString(par1.c_str())  + ", OK");
                 else
                 {
                  errc++;
-                 WriteLog("varname: " + AnsiString(test.c_str()) + ", " + AnsiString(par1.c_str())  + ", MISSED!");
+                 WriteLog("FLDR: " + AnsiString(test.c_str()) + ", " + AnsiString(par1.c_str())  + ", MISSED!");
                 }
 		//sprintf(tolog,"varname: [%s] = [%s]", test.c_str(), par1.c_str());
 
@@ -1042,6 +1043,82 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
      WriteLog("FILE SYSTEM CHECK ERROR, CHECK FILE 'FSYS.TXT'.");
      MessageBox(NULL,"FILE SYSTEM READ ERROR, CHECK FILE 'FSYS.TXT'.", "ERROR",MB_OK|MB_ICONEXCLAMATION);
     }
+
+
+// CHECKING FILE SYTEM (FILES) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ WriteLog("");
+ WriteLog("CHECKING IMPORTANT FILES...");
+
+ sprintf(szFILELIST,"%s%s", appath.c_str() , "\\filelist.txt");
+ std::ifstream filelist(szFILELIST);
+ AnsiString chkfull, chkfile, chkflag, xstr;
+ bool isfile = false;
+
+  errc = 0;
+   if (File)
+    {
+        while(getline(filelist, line))
+       {
+		std::string test, par1;
+
+                isfile = false;
+
+                std::vector<std::string> x = split(line, ':');
+
+                chkfile = Trim(x[0].c_str());
+                chkflag = Trim(x[1].c_str());
+
+
+                if (chkfile.Pos(".") > 0) isfile = true;
+
+                if (isfile) xstr = "FILE"; else xstr = "FLDR";
+
+                chkfull = QGlobal::asAPPDIR + chkfile;
+
+                if (isfile)
+                 {
+                  if (FileExists(chkfull)) WriteLog(xstr + ": " + chkfile + ", [" + chkflag + "] OK.");
+                   else
+                    { WriteLog(xstr + ": " + chkfile + ", [" + chkflag + "] FAIL."); errc++;}
+                 }
+                if (!isfile)
+                 {
+                  if (DirectoryExists(chkfull)) WriteLog(xstr + ": " + chkfile + ", [" + chkflag + "] OK.");
+                   else
+                    { WriteLog(xstr + ": " + chkfile + ", [" + chkflag + "] FAIL.");  errc++;}
+                 }
+                 
+                //if (DirectoryExists(QGlobal::asAPPDIR + par1.c_str()))
+                //WriteLog("varname: " + AnsiString(test.c_str()) + ", " + AnsiString(par1.c_str())  + ", OK");
+                //else
+                //{
+                // errc++;
+                // WriteLog("varname: " + AnsiString(test.c_str()) + ", " + AnsiString(par1.c_str())  + ", MISSED!");
+                //}
+		//sprintf(tolog,"varname: [%s] = [%s]", test.c_str(), par1.c_str());
+
+		//MessageBox(NULL,tolog, "ERROR",MB_OK|MB_ICONEXCLAMATION);
+
+        }
+     if (errc == 0) WriteLog("FILESYS OK.");
+     if (errc > 0) WriteLog("FILESYS ERRORS. (" + IntToStr(errc) + ")");
+     WriteLog("");
+     filelist.close();
+
+	// TU SA TRZYMANE DEFAULTOWE SCIEZKI
+	//Global::asFSYSTEXTUREPATH = Global::asCurrentTexturePath;
+	//Global::asFSYSMODELSPATH = Global::asCurrentModelsPath;
+	//Global::asFSYSSCENERYPATH = Global::asCurrentSceneryPath;
+    }
+    else
+    {
+     WriteLog("FILE SYSTEM CHECK ERROR, CHECK FILE 'FILELIST.TXT'.");
+     MessageBox(NULL,"FILE SYSTEM READ ERROR, CHECK FILE 'FILELIST.TXT'.", "ERROR",MB_OK|MB_ICONEXCLAMATION);
+    }
+
+    WriteLog("Reading eu07.ini...");
+    Global::LoadIniFile("eu07.ini"); // teraz dopiero mo¿na przejrzeæ plik z ustawieniami
+    Global::InitKeys("keys.ini"); // wczytanie mapowania klawiszy - jest na sta³e
 
 
 // READING CONFIG ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1067,10 +1144,10 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 
                 //WriteLog(test + "=[" + par1 + "]");
 
-		if (test == "getscreenb") getscreenb = atoi(par1.c_str());
-	      	if (test == "screenresw") QGlobal::iWW = StrToInt(par1.c_str());
-	     	if (test == "screenresh") QGlobal::iWH = StrToInt(par1.c_str());
-		if (test == "fullscreen") fullscreen = atoi(par1.c_str());
+	      //if (test == "getscreenb") getscreenb = atoi(par1.c_str());
+	        if (test == "screenresw") QGlobal::iWW = StrToInt(par1.c_str());
+	        if (test == "screenresh") QGlobal::iWH = StrToInt(par1.c_str());
+		if (test == "fullscreen") Global::bFullScreen = atoi(par1.c_str());
                 if (test == "askforfull") askforfull = atoi(par1.c_str());
                 if (test == "aspectratio") QGlobal::aspectratio = atoi(par1.c_str());
               //if (test == "debugmode1") DebugMode1 = atoi(par1.c_str());
@@ -1086,7 +1163,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
               //if (test == "ldrrefresh") QGlobal::LDRREFRESH = atoi(par1.c_str());
                 if (test == "z-fightfix") QGlobal::bzfightfix = atoi(par1.c_str());
                 if (test == "reg-t3de3d") rege3dt3d = atoi(par1.c_str());
-              //if (test == "guitutopac") QGlobal::GUITUTOPAC = atof(par1.c_str());
+                if (test == "guitutopac") QGlobal::GUITUTOPAC = atof(par1.c_str());
                 if (test == "sshotexif+") QGlobal::bWRITEEXIF = atoi(par1.c_str());
                 if (test == "splashscrn") QGlobal::bSPLASHSCR = atoi(par1.c_str());
                 if (test == "rendermenu") QGlobal::brendermenu = atoi(par1.c_str());
@@ -1115,13 +1192,11 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
               //if (test == "deftextext") Global::szDefaultExt = par1;
 
                TSCREEN::CFOV = QGlobal::ffov;
-               //if (sh > 0) QGlobal::iWW = sh;
-               //if (sv > 0) QGlobal::iWH = sv;
-               Global::iWindowWidth = QGlobal::iWW;
-               Global::iWindowHeight = QGlobal::iWH;
-               //WindowWidth = sh;
-               //WindowHeight = sv;
-               Global::bFullScreen = fullscreen;
+               if (QGlobal::iWW > 0) Global::iWindowWidth = QGlobal::iWW;
+               if (QGlobal::iWH > 0) Global::iWindowHeight = QGlobal::iWH;
+               if (QGlobal::bRTIES) Global::bRollFix = true;
+
+               fullscreen = Global::bFullScreen;
         }
 
      WriteLog("CONFIG FILE OK.");
@@ -1134,7 +1209,6 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
      MessageBox(NULL,"CONFIG READ ERROR, CHECK FILE 'CONFIG.TXT'. BE APPLY DEFAULT SETS...", "ERROR",MB_OK|MB_ICONEXCLAMATION);
      //WriteLog("");
     }
-
 
 
  // !!! REJESTROWANIE DZIALA TYLKO W TRYBIE ZGODNOSCI NA WINDOWS 8
@@ -1184,7 +1258,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
  sprintf(appdate, "rundate: %s", FormatDateTime("yyyymmdd hhmmss", Now()));
  WriteLog(appdate);
 
- sprintf(screendim, "deskdim: %ix%i", sh, sv);
+ sprintf(screendim, "deskdim: %ix%i", Global::iWindowWidth, Global::iWindowHeight);
  WriteLog(screendim);
 
  QGlobal::USERPID =  AnsiString(GetMachineID("C:\\"));
@@ -1206,10 +1280,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
  SendMessage(aHWnd, WM_CLOSE, 0, 0);                                    // ZAMYKAMY OTWARTY LOG
 
     //SetCurrentDirectory(QGlobal::asAPPDIR.c_str());
-
-    WriteLog("Reading eu07.ini...");
-    Global::LoadIniFile("eu07.ini"); // teraz dopiero mo¿na przejrzeæ plik z ustawieniami
-    Global::InitKeys("keys.ini"); // wczytanie mapowania klawiszy - jest na sta³e
+ // TUTAJ BYLO CZYTANIE .INI!!!
 
     // hunter-271211: ukrywanie konsoli
   //  if (Global::iWriteLogEnabled & 2)
@@ -1283,10 +1354,9 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 
     if (getscreenb) // JEZELI OPCJA ROZDZIELCZOSCI IDENTYCZNEJ JAK PULPIT
         {
-         GetDesktopResolution(QGlobal::iWW, QGlobal::iWH); // USTAW ROZDZIELCZOSC TAKA JAK PULPIT
 
-         //Global::iWindowWidth = QGlobal::iWW;
-         //Global::iWindowHeight = QGlobal::iWH;
+         Global::iWindowWidth = WindowWidth = QGlobal::iWW;
+         Global::iWindowHeight = WindowHeight = QGlobal::iWH;
         }
 
     if (askforfull)  // OKIENKO DIALOGOWE Z ZAPYTANIEM O TRYB OKNA
@@ -1299,8 +1369,8 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
         
     if (!getscreenb) // JEZELI PODANA ROZDZIELCZOSC W config.txt
         {
-         if (QGlobal::iWH > 0) Global::iWindowHeight = QGlobal::iWH;
-         if (QGlobal::iWW > 0) Global::iWindowWidth = QGlobal::iWW;
+         if (QGlobal::iWH > 0) Global::iWindowHeight = WindowHeight = QGlobal::iWH;
+         if (QGlobal::iWW > 0) Global::iWindowWidth = WindowWidth = QGlobal::iWW;
         }
 
     if (!CreateGLWindow(Global::asHumanCtrlVehicle.c_str(), Global::iWindowWidth, Global::iWindowHeight, Bpp, fullscreen))// create our OpenGL window
@@ -1311,9 +1381,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 
     // CreateGLWindow() -> InitGL() - > World.Init() -> World.RenderMenu() -> (World.Load()
 
-    //if (Console::Pressed(VK_F9)) QGlobal::brendermenu = true;                   // BACK DOOR ;)
-
-    if (!QGlobal::brendermenu) { World.Load(hWnd, hDC); ShowCursor(FALSE);}
+    //if (!QGlobal::brendermenu) {ShowCursor(FALSE); World.Load(hWnd, hDC); }
 
     if (QGlobal::brendermenu)
     {
@@ -1436,6 +1504,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     if (hRC) KillGLWindow(); // kill the window
     return (msg.wParam); // exit the program
 }
+
 
 
 

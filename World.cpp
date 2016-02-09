@@ -307,6 +307,7 @@ TWorld::TWorld()
     QGlobal::LOKTUT = new TStringList;
 
     BRx = BRy = BRw = BRh = 0;
+    QGlobal::gCOLOR4F = Color4(1.0, 1.0, 1.0, 1.0);
 }
 
 
@@ -624,43 +625,18 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     // McZapkie:261102-uruchomienie polprzezroczystosci (na razie linie) pod kierunkiem Marcina
     // if (Global::bRenderAlpha) //Ra: wywalam tê flagê
     {
-        WriteLog("glEnable(GL_BLEND);");
-        glEnable(GL_BLEND);
-        WriteLog("glEnable(GL_ALPHA_TEST);");
-        glEnable(GL_ALPHA_TEST);
-        WriteLog("glAlphaFunc(GL_GREATER,0.04);");
-        glAlphaFunc(GL_GREATER, 0.04);
-        WriteLog("glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);");
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        WriteLog("glDepthFunc(GL_LEQUAL);");
-        glDepthFunc(GL_LEQUAL);
+    WriteLog("glEnable(GL_BLEND);");
+    glEnable(GL_BLEND);
+    WriteLog("glEnable(GL_ALPHA_TEST);");
+    glEnable(GL_ALPHA_TEST);
+    WriteLog("glAlphaFunc(GL_GREATER,0.04);");
+    glAlphaFunc(GL_GREATER, 0.04);
+    WriteLog("glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);");
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    WriteLog("glDepthFunc(GL_LEQUAL);");
+    glDepthFunc(GL_LEQUAL);
     }
-    /*
-        else
-        {
-          WriteLog("glEnable(GL_ALPHA_TEST);");
-          glEnable(GL_ALPHA_TEST);
-          WriteLog("glAlphaFunc(GL_GREATER,0.5);");
-          glAlphaFunc(GL_GREATER,0.5);
-          WriteLog("glDepthFunc(GL_LEQUAL);");
-          glDepthFunc(GL_LEQUAL);
-          WriteLog("glDisable(GL_BLEND);");
-          glDisable(GL_BLEND);
-        }
-    */
-    /* zakomentowanie to co bylo kiedys mieszane
-        WriteLog("glEnable(GL_ALPHA_TEST);");
-        glEnable(GL_ALPHA_TEST);//glGetIntegerv()
-        WriteLog("glAlphaFunc(GL_GREATER,0.5);");
-    //    glAlphaFunc(GL_LESS,0.5);
-        glAlphaFunc(GL_GREATER,0.5);
-    //    glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-        WriteLog("glDepthFunc(GL_LEQUAL);");
-        glDepthFunc(GL_LEQUAL);//EQUAL);
-    // The Type Of Depth Testing To Do
-      //  glEnable(GL_BLEND);
-    //    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    */
+
 
     WriteLog("glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);");
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // Really Nice Perspective Calculations
@@ -711,34 +687,32 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     WriteLog("glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);");
     glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 
-    //    WriteLog("glMaterialfv( GL_FRONT, GL_AMBIENT, whiteLight );");
-    //	glMaterialfv( GL_FRONT, GL_AMBIENT, Global::whiteLight );
+//  WriteLog("glMaterialfv( GL_FRONT, GL_AMBIENT, whiteLight );");
+//  glMaterialfv( GL_FRONT, GL_AMBIENT, Global::whiteLight );
 
     WriteLog("glMaterialfv( GL_FRONT, GL_AMBIENT_AND_DIFFUSE, whiteLight );");
     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, Global::whiteLight);
 
     /*
-        WriteLog("glMaterialfv( GL_FRONT, GL_SPECULAR, noLight );");
-            glMaterialfv( GL_FRONT, GL_SPECULAR, Global::noLight );
+    WriteLog("glMaterialfv( GL_FRONT, GL_SPECULAR, noLight );");
+    glMaterialfv( GL_FRONT, GL_SPECULAR, Global::noLight );
     */
 
     WriteLog("glEnable(GL_LIGHTING);");
     glEnable(GL_LIGHTING);
 
     WriteLog("glFogi(GL_FOG_MODE, GL_LINEAR);");
-    glFogi(GL_FOG_MODE, GL_LINEAR); // Fog Mode
+    glFogi(GL_FOG_MODE, GL_LINEAR);                                             // Fog Mode
     WriteLog("glFogfv(GL_FOG_COLOR, FogColor);");
-    glFogfv(GL_FOG_COLOR, FogColor); // Set Fog Color
-    //	glFogf(GL_FOG_DENSITY, 0.594f);						// How Dense Will The
-    //Fog
-    // Be
-    //	glHint(GL_FOG_HINT, GL_NICEST);					        // Fog Hint Value
+    glFogfv(GL_FOG_COLOR, FogColor);                                            // Set Fog Color
+//  glFogf(GL_FOG_DENSITY, 0.594f);						// How Dense Will The Fog Be
+//  glHint(GL_FOG_HINT, GL_NICEST);					        // Fog Hint Value
     WriteLog("glFogf(GL_FOG_START, 1000.0f);");
-    glFogf(GL_FOG_START, 10.0f); // Fog Start Depth
+    glFogf(GL_FOG_START, 10.0f);                                                // Fog Start Depth
     WriteLog("glFogf(GL_FOG_END, 2000.0f);");
-    glFogf(GL_FOG_END, 200.0f); // Fog End Depth
+    glFogf(GL_FOG_END, 200.0f);                                                 // Fog End Depth
     WriteLog("glEnable(GL_FOG);");
-    glEnable(GL_FOG); // Enables GL_FOG
+    glEnable(GL_FOG);                                                           // Enables GL_FOG
 
     // Ra: ustawienia testowe
     WriteLog("glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);");
@@ -746,65 +720,10 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     WriteLog("glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);");
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
     WriteLog("");
+    getprogressfile();                                                          // LOADING PROGRESSBAR DATA
+    QGlobal::rtim = 0;
 
-    if (QGlobal::bSPLASHSCR) RenderSPLASHSCR(hDC, 77, "SS", 1);                 // Pierwsza czesc splasha (7s)
-    if (QGlobal::bSPLASHSCR) RenderLoaderU(hDC, 77, "SS");                      // Zaraz po splashu stopniowe wylonienie sie z czerni ekranu wczytywania
-    QGlobal::fscreenfade2 = 1;
-
-    /*--------------------Render Initialization End---------------------*/
-    /*
-    WriteLog("Font init"); // pocz¹tek inicjacji fontów 2D
-    if (Global::bGlutFont) // jeœli wybrano GLUT font, próbujemy zlinkowaæ GLUT32.DLL
-    {
-        UINT mode = SetErrorMode(SEM_NOOPENFILEERRORBOX); // aby nie wrzeszcza³, ¿e znaleŸæ nie mo¿e
-        hinstGLUT32 = LoadLibrary(TEXT("GLUT32.DLL")); // get a handle to the DLL module
-        SetErrorMode(mode);
-        // If the handle is valid, try to get the function address.
-        if (hinstGLUT32)
-            glutBitmapCharacterDLL = (FglutBitmapCharacter)GetProcAddress(hinstGLUT32, "glutBitmapCharacter");
-        else
-            WriteLog("Missed GLUT32.DLL.");
-        if (glutBitmapCharacterDLL)
-            WriteLog("Used font from GLUT32.DLL.");
-        else
-            Global::bGlutFont = false; // nie uda³o siê, trzeba spróbowaæ na Display List
-    }
-    if (!Global::bGlutFont)
-    { // jeœli bezGLUTowy font
-        HFONT font; // Windows Font ID
-        base = glGenLists(96); // storage for 96 characters
-        font = CreateFont(-15, // height of font
-                          0, // width of font
-                          0, // angle of escapement
-                          0, // orientation angle
-                          FW_BOLD, // font weight
-                          FALSE, // italic
-                          FALSE, // underline
-                          FALSE, // strikeout
-                          ANSI_CHARSET, // character set identifier
-                          OUT_TT_PRECIS, // output precision
-                          CLIP_DEFAULT_PRECIS, // clipping precision
-                          ANTIALIASED_QUALITY, // output quality
-                          FF_DONTCARE | DEFAULT_PITCH, // family and pitch
-                          "Courier New"); // font name
-        SelectObject(hDC, font); // selects the font we want
-        wglUseFontBitmapsA(hDC, 32, 96, base); // builds 96 characters starting at character 32
-        WriteLog("Display Lists font used."); //+AnsiString(glGetError())
-    }
-    WriteLog("Font init OK"); //+AnsiString(glGetError())
-    WriteLog("");
-     */
-
-    //SetForegroundWindow(hWnd);
-
-    //Timer::ResetTimers();
-
-    glColor4f(1.0f, 3.0f, 3.0f, 0.0f);
-
-    //glDisable(GL_DEPTH_TEST); // Disables depth testing
-    //glColor3f(3.0f, 3.0f, 3.0f);
-
-   //Load(NhWnd, hDC);
+    Load(NhWnd, hDC);
 
   return true;
 }
@@ -815,14 +734,16 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 // ***********************************************************************************************************
 bool TWorld::Load(HWND NhWnd, HDC hDC)
 {
-
-    QGlobal::rtim = 0;
-    getprogressfile();                                                             // LOADING PROGRESSBAR DATA
-    WriteLog(AnsiString(QGlobal::iNODES));
+    Timer::ResetTimers();
     hWnd = NhWnd;
-    //SetFocus(NhWnd);
+    if (QGlobal::bSPLASHSCR) RenderSPLASHSCR(hDC, 77, "SS", 1);                 // Pierwsza czesc splasha (7s)
+  //if (QGlobal::bSPLASHSCR) RenderLoaderU(hDC, 77, "SS");                    // Zaraz po splashu stopniowe wylonienie sie z czerni ekranu wczytywania
 
-    SetCurrentDirectory(QGlobal::asAPPDIR.c_str());
+    RenderLoader(hDC, 77, "...");
+
+    SetFocus(NhWnd);
+
+    //--SetCurrentDirectory(QGlobal::asAPPDIR.c_str());
     RenderLoader(hDC, 77, "SOUND INITIALIZATION...");
     WriteLog("Sound Init");
     TSoundsManager::Init(hWnd);
@@ -853,6 +774,13 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     //    Global::tSinceStart= 0;
     WriteLog("Ground init OK");
     WriteLog("");
+
+    QGlobal::bCALCNORMALS = true;
+  //Ground.AddGroundNodeQ("TSTOBJ1", "TIE", "-", "ip/wloclawek/wwek_rewidenci_derel.t3d", "none", 200, 0, 15.0, -0.2, 20.0, 90, 0.0, true);
+  //Ground.AddGroundNodeQ("TSTOBJ2", "TIE", "-", "ip/wloclawek/wwek_rewidenci_derel.t3d", "none", 200, 0, 15.0, -0.2, 50.0, 90, 0.0, true);
+    Ground.AddGroundNodeQ("podklad", "SLP", "-", "1435mm/sleepers/podklad-hd-1l.t3d", "1435mm/sleepers/" + QGlobal::asDEFAULTSLEEPER, 140, 0, 10.0, -0.2, 90.0, 90, 0.0, QGlobal::bCALCNORMALS);
+    Ground.AddGroundNodeQ("lacznik", "JNT", "-", "1435mm/elements/lacznikszyn-1.t3d", "none", 100, 0, 10.0, -0.2, 90.0, 90, 0.0, QGlobal::bCALCNORMALS);
+
 
     RenderLoader(hDC, 77, "SKY INITIALIZATION...");
     WriteLog("Sky init");
@@ -953,14 +881,21 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     }
     // glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);  //{Texture blends with object background}
     light = TTexturesManager::GetTextureID(szTexturePath, szSceneryPath, "smuga.tga");
-    // Camera.Reset();
+ // Camera.Reset();
     ResetTimers();
-    WriteLog("Load time: " + FloatToStrF((86400.0 * ((double)Now() - timex)), ffFixed, 7, 1) + " seconds");
 
+
+    RenderLoader(hDC, 77, "GENEROWANIE PODKLADOW...");
+    Ground.FindTrackAndSet(TP_TRACK);
+    QGlobal::bRTIES = false;             // TODO: tory bez segmentacji dla podkladow
+    QGlobal::bWIREFRAMETRACK = false;
+
+    RenderLoader(hDC, 77, "...");
+    WriteLog("Load time: " + FloatToStrF((86400.0 * ((double)Now() - timex)), ffFixed, 7, 1) + " seconds");
     AnsiString logdate = FormatDateTime("yymmdd hhmmss", Now());
     AnsiString ftpdate = FormatDateTime("ddmmyy-hhmmss", Now());  // name on FTP
 
-    CopyFile("log.txt", AnsiString("data\\logs\\" + logdate + ".txt").c_str(), false);
+    CopyFile("log.txt", AnsiString("data/logs/" + logdate + ".txt").c_str(), false);
 
     if (DebugModeFlag) // w Debugmode automatyczne w³¹czenie AI
         if (Train)
@@ -977,6 +912,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
         if (FreeFlyModeFlag) Camera.RaLook(); // jednorazowe przestawienie kamery
        }
 
+    if (QGlobal::bSENDLOGFTP > 0) RenderLoader(hDC, 77, "Sending log file to FTP...");
     if (QGlobal::bSENDLOGFTP > 0) SENDLOGTOFTP(ftpdate);
 
     if (!QGlobal::bmodelpreview) generatenoisetex(); // W efects2d.cpp
@@ -988,17 +924,9 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
 
     LOADMISSIONDESCRIPTION();
 
-  //Ground.AddGroundNodeQ("TSTOBJ1", "TIE", "-", "ip/wloclawek/wwek_rewidenci_derel.t3d", "none", 200, 0, 15.0, -0.2, 20.0, 90, 0.0);
-  //Ground.AddGroundNodeQ("TSTOBJ2", "TIE", "-", "ip/wloclawek/wwek_rewidenci_derel.t3d", "none", 200, 0, 15.0, -0.2, 50.0, 90, 0.0);
-    Ground.AddGroundNodeQ("podklad", "SLP", "-", "1435mm/sleepers/podklad-hd-1l.t3d", "none", 140, 0, 10.0, -0.2, 90.0, 90, 0.0);
-    Ground.AddGroundNodeQ("lacznik", "JNT", "-", "1435mm/elements/lacznikszyn-1.t3d", "none", 100, 0, 10.0, -0.2, 90.0, 90, 0.0);
-  //Ground.AddGroundNodeQ("lacznik", "lacznik", "-", "lacznikszyn-1.t3d", "none", 200, 0, 10.0, -0.2, 90.0, 90, 0.0);
-
-    RenderLoader(hDC, 77, "GENEROWANIE PODKLADOW :-D...");
-
     QGlobal::bSCNLOADED = true;
     Global::iPause = true;
-
+    RenderLoader(hDC, 77, "Done.");
     SetForegroundWindow(NhWnd);
     SetFocus(NhWnd);
     return true;
@@ -1041,7 +969,6 @@ void TWorld::OnKeyDown(int cKey)
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('f'))) QGlobal::bscrfilter = !QGlobal::bscrfilter;
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('n'))) QGlobal::bscrnoise = !QGlobal::bscrnoise;
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('w'))) QGlobal::bWATERMARK = !QGlobal::bWATERMARK;
- if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('t'))) QGlobal::bRTIES = !QGlobal::bRTIES;
 
  if (QGlobal::bSCNLOADED && Global::iPause && cKey == Global::Keys[k_Czuwak]) STARTSIMULATION();       // Q 291215: Bo po zaladowaniu symulacji jest pauza i pozostaje obraz wczytywania jako tlo pauzy
 
@@ -2351,21 +2278,22 @@ bool TWorld::Render()
     if (QGlobal::bscrnoise ||
         QGlobal::bTUTORIAL ||
         QGlobal::bKEYBOARD ||
-     // QGlobal::bSHOWBRIEFING ||
         QGlobal::bscrfilter ||
         QGlobal::bEXITQUERY ||
         QGlobal::bWATERMARK ||
         QGlobal::infotype >= 0 ||
         QGlobal::mousemode){
 
-        switch2dRender();
 
+        switch2dRender();
+        if (QGlobal::bWIREFRAMETRACK) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
         if (QGlobal::bEXITQUERY) RenderEXITQUERY(0.50f);
         if (QGlobal::bWATERMARK) RenderWATERMARK(0.30f);
         if (QGlobal::infotype >= 0) RenderINFOPANEL(QGlobal::infotype, QGlobal::GUITUTOPAC);
 
         if (QGlobal::bscrfilter) RenderFILTER(0.15f);
         if (QGlobal::bscrnoise) drawNoise(1, QGlobal::fnoisealpha);             // W efects2d.cpp
+
      }
 
     if ((Console::Pressed(VK_DELETE)) || (Console::Pressed(VK_INSERT)))
@@ -2387,7 +2315,7 @@ bool TWorld::Render()
 
 bool TWorld::RenderCab(bool colormode)
 {
-
+    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
     if (Train)
     { // rendering kabiny gdy jest oddzielnym modelem i ma byc wyswietlana
         glPushMatrix();

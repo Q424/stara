@@ -184,6 +184,8 @@ bool QGlobal::bCABLOADING = false;
 bool QGlobal::bRTIES = false;
 bool QGlobal::bAUTOSWITCHBALLAST = false;
 bool QGlobal::bFIRSTFRAME = true;
+bool QGlobal::bCALCNORMALS = false;
+bool QGlobal::bWIREFRAMETRACK = false;
 double QGlobal::fdestfogend = 0;
 double QGlobal::fdestfogstart = 0;
 double QGlobal::fogchangef = 0;
@@ -206,12 +208,13 @@ int QGlobal::aspectratio = 43;
 int QGlobal::loaderrefresh = 5;
 int QGlobal::iINCLUDETYPE = 999;
 int QGlobal::iSTATIONPOSINTAB = 0;
-int QGlobal::iWH = 768;
-int QGlobal::iWW = 1024;
+int QGlobal::iWH = 0;
+int QGlobal::iWW = 0;
 int QGlobal::iRENDEREDTIES = 0;
 int QGlobal::iRENDEREDTRIS = 0;
 int QGlobal::iRENDEREDSUBS = 0;
 int QGlobal::iSWITCHDIRECT = 0;
+int QGlobal::iSPLASHTIME = 0;
 
 double QGlobal::fMoveLightS = -1.0f;
 double QGlobal::fps = 1.0f;
@@ -245,6 +248,7 @@ GLuint QGlobal::SCRFILTER;
 GLfloat QGlobal::selcolor[4];
 GLuint QGlobal::semlight;
 GLuint QGlobal::semlense;
+Color4 QGlobal::gCOLOR4F;
 
 char **QGlobal::argv = NULL;
 
@@ -445,7 +449,7 @@ AnsiString Global::GetNextSymbol()
 void Global::LoadIniFile(AnsiString asFileName)
 {
  //WriteLog("LoadIniFile() - 1");
- /*
+
     int i;
     for (i = 0; i < 10; ++i)
     { // zerowanie pozycji kamer
@@ -474,10 +478,10 @@ void Global::LoadIniFile(AnsiString asFileName)
 ConfigParse(Parser);
 
     delete Parser; // Ra: tego jak zwykle nie by³o wczeœniej :]
- */
 
 
-  ConfigParseQ(asFileName);
+
+ // ConfigParseQ(asFileName);
 };
 
 
@@ -555,7 +559,7 @@ void Global::ConfigParseQ(AnsiString filename)
              if (key == "humanctrlvehicle") asHumanCtrlVehicle = p01;
              if (key == "width") iWindowWidth = p01.ToIntDef(800);
              if (key == "height") iWindowHeight = p01.ToIntDef(600);
-             if (key == "fullscreen") bFullScreen = YNToBool(p01);
+             if (key == "fullscreen") Global::bFullScreen = YNToBool(p01);
              if (key == "bpp") iBpp = p01.ToIntDef(32);
              if (key == "debugmode") DebugModeFlag = YNToBool(p01);
              if (key == "soundenabled") bSoundEnabled = YNToBool(p01);
@@ -726,7 +730,7 @@ void Global::ConfigParse(TQueryParserComp *qp, cParser *cp)
         else if (str == AnsiString("bpp"))
             iBpp = ((GetNextSymbol().LowerCase() == AnsiString("32")) ? 32 : 16);
         else if (str == AnsiString("fullscreen"))
-            bFullScreen = (GetNextSymbol().LowerCase() == AnsiString("yes"));
+            Global::bFullScreen = (GetNextSymbol().LowerCase() == AnsiString("yes"));
         else if (str == AnsiString("freefly")) // Mczapkie-130302
         {
             bFreeFly = (GetNextSymbol().LowerCase() == AnsiString("yes"));

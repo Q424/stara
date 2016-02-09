@@ -554,6 +554,8 @@ class QGlobal
  static bool bRTIES;
  static bool bFIRSTFRAME;
  static bool bAUTOSWITCHBALLAST;
+ static bool bCALCNORMALS;
+ static bool bWIREFRAMETRACK;
  static double fdestfogend;
  static double fdestfogstart;
  static double fogchangef;
@@ -582,6 +584,7 @@ class QGlobal
  static int iRENDEREDTRIS;
  static int iRENDEREDSUBS;
  static int iSWITCHDIRECT;
+ static int iSPLASHTIME;
 
  static double fscreenfade;
  static double fscreenfade2;
@@ -614,6 +617,7 @@ class QGlobal
  static GLfloat selcolor[4];
  static GLuint semlight;
  static GLuint semlense;
+ static Color4 gCOLOR4F;
 
  static a array[MAXPASSENGERENTYPOINTS];
  static stationscontainer station[MAXSTATIONS];     // POWODUJE KRZACZENIE PODCZAS WYCHODZENIA???

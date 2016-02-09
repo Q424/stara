@@ -74,10 +74,11 @@ class TWorld
     bool __fastcall RenderFPS(double alpha);
     bool __fastcall RenderFILTER(double alpha);
     bool __fastcall RenderMOUSE(double alpha);
-    bool __fastcall RenderSPLASHSCR(HDC hDC, int node, AnsiString text, double alpha);
+    void __fastcall RenderSPLASHSCR(HDC hDC, int node, AnsiString text, double alpha);
     bool __fastcall RenderEXITQUERY(double alpha);
     bool __fastcall RenderWATERMARK(double alpha);
     bool __fastcall RenderINFOPANEL(int num, double alpha);
+    bool __fastcall RenderINFOPANELB(int x, int y, int w, int h, float r, float a, AnsiString title);
     bool __fastcall RenderConsole(double speed, double dt);
     bool __fastcall RenderConsoleText();
     bool __fastcall RenderIRCEU07Text();
@@ -90,8 +91,8 @@ class TWorld
     bool __fastcall RenderMenuPanel1(int w, int h, int x, int y, int ident, bool selected, AnsiString label, AnsiString backg);
     bool __fastcall RenderMenuListBox(int w, int h, int x, int y, int ident, bool selected, int items, AnsiString label);
     bool __fastcall RenderMenuListBoxItem(int w, int h, int x, int y, int ident, int selid, bool selected, int item, AnsiString label);
-    bool __fastcall RenderLoader(HDC hDC, int node, AnsiString text);
-    bool __fastcall RenderLoaderU(HDC hDC, int node, AnsiString text);
+    void __fastcall RenderLoader(HDC hDC, int node, AnsiString text);
+    void __fastcall RenderLoaderU(HDC hDC, int node, AnsiString text);
     bool __fastcall RenderFadeOff(int percent);
     bool __fastcall RenderProjTex(float zpos);
     bool __fastcall RenderINFOX(int node);

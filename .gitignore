@@ -68,3 +68,5 @@ qutils.asm
 *.~dfm
 *.hpp
 *.~dfm
+*.~dfm
+*.hpp

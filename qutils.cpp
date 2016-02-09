@@ -364,8 +364,8 @@ bool FEX(AnsiString filename)
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 char* stdstrtocharc(std::string var)
 {
-	char* ReturnString = new char[100];
-	char szBuffer[100];
+	char* ReturnString = new char[150];
+	char szBuffer[150];
 	LPCSTR lpMyString = var.c_str();
 
         sprintf(szBuffer,"%s",lpMyString);
@@ -373,6 +373,41 @@ char* stdstrtocharc(std::string var)
 	strcpy( ReturnString, szBuffer );
 
 	return ReturnString;
+}
+
+
+char* stdstrtochar(std::string var)
+{
+	char* ReturnString = new char[150];
+	char szBuffer[150];
+	LPCSTR lpMyString = var.c_str();
+
+    sprintf(szBuffer,"%s",lpMyString);
+
+	strcpy( ReturnString, szBuffer );
+
+	return ReturnString;
+}
+
+
+std::string chartostdstr(char *var)
+{
+std::string strFromChar;
+strFromChar.append(var);
+
+return strFromChar;
+}
+
+std::string ToLowerCase(std::string text)
+{
+
+   for(int i = 0; i<text.length(); i++){
+      char c = text[i]; 
+      if((c>=65)&&(c<=90)){
+	 text[i]|=0x20; 
+      }
+   }
+   return text; 
 }
 
 bool StrToBool(AnsiString str)
@@ -406,6 +441,47 @@ AnsiString StrToPERON(AnsiString value)
   if (value == "lr") return "P-b";
   if (value == "0") return "";
  }
+
+char* trim_and_reduce_spaces( char* s )
+  {
+  if (s)
+    {
+    char* from = s + strspn( s, " " );
+    char* to   = s;
+
+    do if ((*to = *from++) == ' ') 
+      from += strspn( from, " " );
+    while (*to++);
+    
+    while (*--to == ' ') 
+      *to = '\0';
+    }
+  return s;
+  }
+// trim_and_reduce_spaces( s );
+
+
+
+std::string trimextras(const string & sStr)
+{
+    int nSize = sStr.size();
+    int nSPos = 0, nEPos = 1, i;
+    for(i = 0; i< nSize; ++i) {
+        if( !isspace( sStr[i] ) ) {
+            nSPos = i ;
+            break;
+        }
+    }
+    for(i = nSize -1 ; i >= 0 ; --i) {
+        if( !isspace( sStr[i] ) ) {
+            nEPos = i;
+            break;
+        }
+    }
+    return string(sStr, nSPos, nEPos - nSPos + 1);
+}
+
+
 
 // *****************************************************************************
 // GETCWD() - POBIERA SCIEZKE DO KATALOGU EXE
@@ -521,11 +597,12 @@ void GetDesktopResolution(int& horizontal, int& vertical)
    // The top left corner will have coordinates (0,0)
    // and the bottom right corner will have coordinates
    // (horizontal, vertical)
-   Global::iWindowWidth = horizontal;
-   Global::iWindowHeight = vertical;
-
+   QGlobal::iWW = desktop.right;
+   QGlobal::iWH = desktop.bottom;
    horizontal = desktop.right;
    vertical = desktop.bottom;
+
+
 }
 
 void CreateREGfile(AnsiString ext, AnsiString key, AnsiString desc, AnsiString iconfile, AnsiString icon)

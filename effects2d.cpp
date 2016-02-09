@@ -22,6 +22,9 @@ http://mozilla.org/MPL/2.0/.
 #include "effects2d.h"
 #include "Globals.h"
 
+#define PI_2   1.57079632679490f
+#define ROUNDING_POINT_COUNT 8      // Larger values makes circle smoother.
+
 bool bNoise=true;
 GLuint noise[30];
 int actNoise=0;
@@ -114,19 +117,18 @@ typedef struct
 
 } Vector2f;
 
-void RoundRectW( int x, int y, int width, int height, int radius, int resolution, Color4 color)
+void DrawRoundRectF( int x, int y, int width, int height, int radius, int resolution, Color4 color)
 {
 
 y = height + y;
 
-float step = ( 2.0f * M_PI ) / resolution,
-      angle = 0.0f,
-      x_offset,
-      y_offset;
+float step = ( 2.0f * M_PI ) / resolution, angle = 0.0f, x_offset, y_offset;
+float cr = color.r;
+float cg = color.g;
+float cb = color.b;
 
 int i = 0;
-
-unsigned int index = 0,
+int index = 0,
 segment_count = ( int )( resolution / 4 );
 
 Vector2f *top_left             = ( Vector2f * ) malloc( segment_count * sizeof( Vector2f ) ),
@@ -191,75 +193,16 @@ while( i != segment_count )
 
     ++i;
 }
-/*
-glDisable(GL_LIGHTING);
-glDisable( GL_FOG );
-glDisable( GL_TEXTURE_2D );
-glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
 
-glBegin( GL_TRIANGLE_STRIP );
-{
-    // Top
-    {
-        i = 0;
-        while( i != segment_count )
-        {
-            glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
-            glVertex2i( top_left[ i ].x, top_left[ i ].y );
-
-            glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
-            glVertex2i( top_right[ i ].x, top_right[ i ].y );
-
-            ++i;
-        }
-    }
-
-
-    // In order to stop and restart the strip.
-    glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
-    glVertex2i( top_right[ 0 ].x, top_right[ 0 ].y );
-
-    glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
-    glVertex2i( top_right[ 0 ].x, top_right[ 0 ].y );
-
-
-    // Center
-    {
-        glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
-        glVertex2i( top_right[ 0 ].x, top_right[ 0 ].y );
-        glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
-        glVertex2i( top_left[ 0 ].x, top_left[ 0 ].y );
-
-
-        glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
-        glVertex2i( bottom_right[ 0 ].x, bottom_right[ 0 ].y );
-         glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
-        glVertex2i( bottom_left[ 0 ].x, bottom_left[ 0 ].y );
-    }
-
-
-    // Bottom
-    i = 0;
-    while( i != segment_count )
-    {
-        glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
-        glVertex2i( bottom_right[ i ].x, bottom_right[ i ].y );
-        glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
-        glVertex2i( bottom_left[ i ].x, bottom_left[ i ].y );
-
-        ++i;
-    }    
-}
-glEnd();
- */
 
 glDisable(GL_LIGHTING);
 glDisable( GL_FOG );
 glDisable( GL_TEXTURE_2D );
-//glColor4f(color.r, color.g, color.b, color.o);
-glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
-glBegin( GL_LINE_STRIP );
+glLineWidth(1.0f);
+//glColor4f(0.2f, 0.2f, 0.2f, color.o);
+
 // Border
+glBegin( GL_LINE_STRIP );
 {
     i = ( segment_count - 1 );
     while( i > -1 )
@@ -307,32 +250,17 @@ glBegin( GL_LINE_STRIP );
 }
 glEnd();
 
-
-
-//glColor4f(color.r, color.g, color.b, color.o);
-
-glColor4f(0.4f, 0.4f, 0.4f, 0.6f);
-glBegin( GL_LINES );
-
-//glColor4f( 0.0f, 1.0f, 1.0f, 1.0f );
-//glColor4f( 0.0f, 0.5f, 1.0f, 1.0f );
-
 // Separator
+//glColor4f(color.r, color.g, color.b, color.o);
+glBegin( GL_LINES );
 {
     // Top bar
-    glVertex2i( top_right[ 0 ].x,
-                top_right[ 0 ].y );
-
-    glVertex2i( top_left[ 0 ].x,
-                top_left[ 0 ].y );    
-
+    glVertex2i( top_right[ 0 ].x, top_right[ 0 ].y );
+    glVertex2i( top_left[ 0 ].x, top_left[ 0 ].y );
 
     // Bottom bar
-    glVertex2i( bottom_left[ 0 ].x,
-                bottom_left[ 0 ].y );    
-
-    glVertex2i( bottom_right[ 0 ].x,
-                bottom_right[ 0 ].y );    
+    glVertex2i( bottom_left[ 0 ].x, bottom_left[ 0 ].y + 20);
+    glVertex2i( bottom_right[ 0 ].x, bottom_right[ 0 ].y + 20);
 }
 glEnd();
 
@@ -527,6 +455,87 @@ void drawNoise(int bnoise, float alpha)
         glBlendFunc(blendSrc, blendDst);
 }
 
+void DrawRoundRectB( float x, float y, float width, float height, float radius, Color4 color)
+{
+    Vector2f top_left[ROUNDING_POINT_COUNT];
+    Vector2f bottom_left[ROUNDING_POINT_COUNT];
+    Vector2f top_right[ROUNDING_POINT_COUNT];
+    Vector2f bottom_right[ROUNDING_POINT_COUNT];
+
+    if( radius == 0.0 ) { radius = min(width, height); radius *= 0.10; }   // 10%
+    float w = width;
+    float h = height;
+    int i = 0;
+    float x_offset, y_offset;
+    float step = ( 2.0f * PI ) / (ROUNDING_POINT_COUNT * 4),
+          angle = 0.0f;
+
+    unsigned int index, segment_count;
+
+    index = 0;
+    segment_count = ROUNDING_POINT_COUNT;
+   // Vector2f bottom_left_corner = { x + radius, y + (radius*2) };
+    Vector2f bottom_left_corner = { x + radius, height + y + (radius) };
+    Vector2f top_left_corner = { x + radius, y-radius };
+    while( i != segment_count )
+    {
+        x_offset = cos( angle );
+        y_offset = sin( angle );
+
+        bottom_left[ index ].x = bottom_left_corner.x -( x_offset * radius );
+        bottom_left[ index ].y = ( 0 - ( radius * 2.0f ) ) + bottom_left_corner.y - ( y_offset * radius );
+        bottom_right[ index ].x = ( width - ( radius * 2.0f ) ) + bottom_left_corner.x + ( x_offset * radius );
+        bottom_right[ index ].y = ( 0- ( radius * 2.0f ) ) + bottom_left_corner.y -( y_offset * radius );
+        
+        top_left[ index ].x = top_left_corner.x -( x_offset * radius );
+        top_left[ index ].y = (( radius * 2.0f ) ) + top_left_corner.y + ( y_offset * radius );
+        top_right[ index ].x = ( width - ( radius * 2.0f ) ) + top_left_corner.x + ( x_offset * radius );
+        top_right[ index ].y = (( radius * 2.0f ) ) + top_left_corner.y + ( y_offset * radius );
+
+        angle -= step;
+
+        ++index;
+
+        ++i;
+    }
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable( GL_LIGHTING );
+    glDisable( GL_FOG );
+    glDisable( GL_TEXTURE_2D);
+    //glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    //glEnable(GL_BLEND);
+    //glColor4f(color.r, color.g, color.b, color.o);
+    // Center
+    glBegin( GL_QUADS );
+    glTexCoord2f(0, 1); glVertex3i(x,   y+radius, 0);   // GORNY LEWY
+    glTexCoord2f(0, 0); glVertex3i(x,   y+h-radius,0); // DOLY LEWY
+    glTexCoord2f(1, 0); glVertex3i(x+w,  y+h-radius,0); // DOLNY PRAWY
+    glTexCoord2f(1, 1); glVertex3i(x+w,  y+radius, 0);   // GORNY PRAWY
+    glEnd( );
+
+    // bottom
+    //glColor4f(color.r, color.g, color.b, color.o);
+    glBegin( GL_TRIANGLE_STRIP );
+    for( i = segment_count - 1 ; i >= 0 ; i--)
+        {
+            glVertex2f( bottom_left[ i ].x, bottom_left[ i ].y);
+            glVertex2f( bottom_right[ i ].x, bottom_right[ i ].y);
+        }
+   glEnd();
+   // top
+   //glColor4f(color.r, color.g, color.b, color.o);
+   glBegin( GL_TRIANGLE_STRIP );
+   for( i = 0; i != segment_count ; i++ )
+        {
+            glVertex2f( top_left[ i ].x, top_left[ i ].y );
+            glVertex2f( top_right[ i ].x, top_right[ i ].y );
+
+        }
+   glEnd();
+   glEnable( GL_TEXTURE_2D);
+   glEnable( GL_DEPTH_TEST );
+} 
 //---------------------------------------------------------------------------
 
 #pragma package(smart_init)

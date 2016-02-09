@@ -313,7 +313,7 @@ class TGround
     TTraction *__fastcall TractionNearestFind(vector3 &p, int dir, TGroundNode *n);
     // TGroundNode* CreateGroundNode();
     TGroundNode *__fastcall AddGroundNode(cParser *parser);
-    TGroundNode* __fastcall AddGroundNodeQ(AnsiString NAME, AnsiString TYPE, AnsiString EXPS, AnsiString MODEL, AnsiString TEX, double rmax, double rmin, double x, double y, double z, double r, double roll);
+    TGroundNode* __fastcall AddGroundNodeQ(AnsiString NAME, AnsiString TYPE, AnsiString EXPS, AnsiString MODEL, AnsiString TEX, double rmax, double rmin, double x, double y, double z, double r, double roll, bool cn);
     bool AddGroundNode(double x, double z, TGroundNode *Node)
     {
         TSubRect *tmp = GetSubRect(x, z);
@@ -364,6 +364,7 @@ class TGround
     TGroundNode *__fastcall FindGroundNode(AnsiString asNameToFind, TGroundNodeType iNodeType);
     TGroundNode *__fastcall FindGroundNodeDist(float dist, TGroundNodeType iNodeType);          //Q 020116: do wyszukiwania rozjazdu w celu przelozenia
     TGroundNode *__fastcall FindGroundNodeDYND(vector3 PPos, AnsiString REL, AnsiString DST, TGroundNodeType iNodeType);
+    TGroundNode *__fastcall FindTrackAndSet(TGroundNodeType iNodeType);
     TGroundRect *__fastcall GetRect(double x, double z)
     {
         return &Rects[GetColFromX(x) / iNumSubRects][GetRowFromZ(z) / iNumSubRects];

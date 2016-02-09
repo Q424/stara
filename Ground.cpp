@@ -589,6 +589,7 @@ void TGroundNode::RenderDL()
     case TP_TRACK:
         return pTrack->Render();
     case TP_MODEL:
+        if (QGlobal::bWIREFRAMETRACK) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
         if (!bINTRAIN) return Model->RenderDL(&pCenter);  // Q 070116: !bINTRAIN bo model moze byc pasazerem ktory moze wejsc do wagonu - wtedy nie renderujemy
     }
     // TODO: sprawdzic czy jest potrzebny warunek fLineThickness < 0
@@ -1510,6 +1511,28 @@ TGroundNode *__fastcall TGround::FindGroundNode(AnsiString asNameToFind, TGround
 }
 
 
+// ***********************************************************************************************************
+TGroundNode *__fastcall TGround::FindTrackAndSet(TGroundNodeType iNodeType)
+{
+ int tn = 0;
+ TGroundNode *Current;
+// wyszukiwanie toru do ustawienia wlasnosci
+
+    for (Current = nRootOfType[iNodeType]; Current; Current = Current->nNext)
+        if (Current->iType == TP_TRACK)
+            {
+             tn++;
+              if (Current->pTrack->iCategoryFlag == 1)
+               if (Current->pTrack->eType == tt_Normal)
+               {
+                Current->pTrack->Compile2();
+               }
+             //return Current;
+            }
+    return NULL;
+}
+
+
 // *****************************************************************************
 // Q 020116: ROZWOJOWA FUNKCJA DO WYSZUKIWANIA TORU W OKRESLONEJ ODLEGLOSCI OD KAMERY
 // *****************************************************************************
@@ -1692,40 +1715,37 @@ void TGround::RaTriangleDivider(TGroundNode *node)
 
 
 
-TGroundNode* __fastcall TGround::AddGroundNodeQ(AnsiString NAME, AnsiString TYPE, AnsiString EXPS, AnsiString MODEL, AnsiString TEX, double rmax, double rmin, double x, double y, double z, double r, double roll)
+TGroundNode* __fastcall TGround::AddGroundNodeQ(AnsiString NAME, AnsiString TYPE, AnsiString EXPS, AnsiString MODEL, AnsiString TEX, double rmax, double rmin, double x, double y, double z, double r, double roll, bool cn)
 {
  //WriteLog("TGroundNode* __fastcall TGround::AddGroundNodeQ(AnsiString STR)");
-    AnsiString str,str1,str2,str3,asNodeName;
-    TGroundNode *tmp,*tmp2;
-    float maxd = double(2000);
+    AnsiString str,str1,asNodeName;
+    TGroundNode *tmp;
 
     asNodeName = NAME + "_" + AnsiString(GetTickCount()); //+   FormatDateTime("mmss", Now());
-
-    //if (TYPE == "TP_HMPOST") asNodeName = STR;
 
     tmp= new TGroundNode();
     tmp->asName = (asNodeName == AnsiString("none") ? AnsiString("") : asNodeName);
     tmp->fSquareRadius = rmax*rmax;
-    tmp->fSquareMinRadius = 1*1;
-    tmp->iType= TP_MODEL;
+    tmp->fSquareMinRadius = 0.1*0.1;
+    tmp->iType = TP_MODEL;
     tmp->pCenter.x = x;
     tmp->pCenter.y = y + 0.01;
     tmp->pCenter.z = z;
     tmp->pCenter.RotateY(aRotate.y/180*M_PI);
     tmp->pCenter += pOrigin;
-
     tmp->Model = new TAnimModel();
     tmp->Model->RaAnglesSet(roll + aRotate.x, r + aRotate.y, aRotate.z); // dostosowanie do pochylania linii
 
     if (tmp->Model->Load(MODEL, TEX, tmp->asName)) // wczytanie modelu, tekstury i stanu œwiate³...
          {
-            tmp->iFlags = tmp->Model->Flags() | 0x200; // ustalenie, czy przezroczysty; flaga usuwania
+            //tmp->iFlags = tmp->Model->Flags() | 0x200; // ustalenie, czy przezroczysty; flaga usuwania
             tmp->Model->iTYPE = 0;
          }
         else if (tmp->iType != TP_TERRAIN)
         { // model nie wczyta³ siê - ignorowanie node
             delete tmp;
             tmp = NULL; // nie mo¿e byæ tu return
+            return 0;
         }
       /*
         if (tmp->iType == TP_TERRAIN)
@@ -1752,8 +1772,7 @@ TGroundNode* __fastcall TGround::AddGroundNodeQ(AnsiString NAME, AnsiString TYPE
         if (!tmp->asName.IsEmpty()) // jest pusta gdy "none"
         { // dodanie do wyszukiwarki
             if (sTracks->Update(TP_MODEL, tmp->asName.c_str(), tmp)) // najpierw sprawdziæ, czy ju¿ jest
-            { // przy zdublowaniu wskaŸnik zostanie podmieniony w drzewku na póŸniejszy (zgodnoœæ
-                // wsteczna)
+            { // przy zdublowaniu wskaŸnik zostanie podmieniony w drzewku na póŸniejszy (zgodnoœæ wsteczna)
                 ErrorLog("Duplicated model: " + tmp->asName); // to zg³aszaæ duplikat
             }
             else
@@ -1762,10 +1781,11 @@ TGroundNode* __fastcall TGround::AddGroundNodeQ(AnsiString NAME, AnsiString TYPE
             }
         }
 
-    tmp->nNext = nRootOfType[TP_MODEL]; // ostatni dodany do³¹czamy
-    nRootOfType[TP_MODEL] =tmp; // ustawienie nowego na pocz¹tku listy
-    iNumNodes++;
+   tmp->nNext = nRootOfType[TP_MODEL]; // ostatni dodany do³¹czamy
+   nRootOfType[TP_MODEL] =tmp; // ustawienie nowego na pocz¹tku listy
+   iNumNodes++;
 
+   if (cn)
     for (int i = 0; i < TP_LAST; ++i)
     {
      for (TGroundNode *Current = nRootOfType[i]; Current; Current = Current->nNext)
@@ -1774,29 +1794,16 @@ TGroundNode* __fastcall TGround::AddGroundNodeQ(AnsiString NAME, AnsiString TYPE
          if (Current->asName == asNodeName)
           {
             Current->InitNormals();
-           // if (Current->iType != TP_DYNAMIC)
-           // { // pojazdów w ogóle nie dotyczy dodawanie do mapy
-               // if (i == TP_EVLAUNCH ? Current->EvLaunch->IsGlobal() : false)
-               //     srGlobal.NodeAdd(Current); // dodanie do globalnego obiektu
-                //
-               //else
-               // if ((Current->iType != GL_TRIANGLES) ?
-               //              true //~czy trójk¹t?
-               //              :
-               //              (Current->iFlags & 0x20) ?
-               //              true //~czy teksturê ma nieprzezroczyst¹?
-               //              :
-               //              (Current->fSquareMinRadius != 0.0) ?
-               //              true //~czy widoczny z bliska?
-               //              :
-               //              (Current->fSquareRadius <= 90000.0)) //~czy widoczny z daleka?
-                    GetSubRect(Current->pCenter.x, Current->pCenter.z)->NodeAdd(Current);
+
+            GetSubRect(Current->pCenter.x, Current->pCenter.z)->NodeAdd(Current);
+            break;
               //  else // dodajemy do kwadratu kilometrowego
               //      GetRect(Current->pCenter.x, Current->pCenter.z)->NodeAdd(Current);
            // }
           }
         }
     }
+
   return tmp;
 }
 
@@ -1914,8 +1921,7 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
         *parser >> token;
         tmp->hvTraction->asPowerSupplyName = AnsiString(token.c_str()); // nazwa zasilacza
         parser->getTokens(3);
-        *parser >> tmp->hvTraction->NominalVoltage >> tmp->hvTraction->MaxCurrent >>
-            tmp->hvTraction->fResistivity;
+        *parser >> tmp->hvTraction->NominalVoltage >> tmp->hvTraction->MaxCurrent >> tmp->hvTraction->fResistivity;
         if (tmp->hvTraction->fResistivity == 0.01) // tyle jest w sceneriach [om/km]
             tmp->hvTraction->fResistivity = 0.075; // taka sensowniejsza wartoœæ za
         // http://www.ikolej.pl/fileadmin/user_upload/Seminaria_IK/13_05_07_Prezentacja_Kruczek.pdf
@@ -2032,12 +2038,11 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
         if (Global::iWriteLogEnabled & 4)
             if (!tmp->asName.IsEmpty())
                 WriteLog(tmp->asName.c_str());
-        tmp->pTrack->Load(parser, pOrigin,
-                          tmp->asName); // w nazwie mo¿e byæ nazwa odcinka izolowanego
+
+        tmp->pTrack->Load(parser, pOrigin, tmp->asName); // w nazwie mo¿e byæ nazwa odcinka izolowanego
         if (!tmp->asName.IsEmpty()) // jest pusta gdy "none"
         { // dodanie do wyszukiwarki
-            if (sTracks->Update(TP_TRACK, tmp->asName.c_str(),
-                                tmp)) // najpierw sprawdziæ, czy ju¿ jest
+            if (sTracks->Update(TP_TRACK, tmp->asName.c_str(), tmp)) // najpierw sprawdziæ, czy ju¿ jest
             { // przy zdublowaniu wskaŸnik zostanie podmieniony w drzewku na póŸniejszy (zgodnoœæ
                 // wsteczna)
                 if (tmp->pTrack->iCategoryFlag & 1) // jeœli jest zdublowany tor kolejowy
@@ -2046,10 +2051,11 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
             else
                 sTracks->Add(TP_TRACK, tmp->asName.c_str(), tmp); // nazwa jest unikalna
         }
+
         tmp->pCenter = (tmp->pTrack->CurrentSegment()->FastGetPoint_0() +
                         tmp->pTrack->CurrentSegment()->FastGetPoint(0.5) +
-                        tmp->pTrack->CurrentSegment()->FastGetPoint_1()) /
-                       3.0;
+                        tmp->pTrack->CurrentSegment()->FastGetPoint_1()) /  3.0;
+
         break;
     case TP_SOUND:
         tmp->tsStaticSound = new TTextSound;
@@ -3192,12 +3198,15 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
         }
         else if (str == AnsiString("defaultsleeper"))
         {
+           parser.getTokens();
+           parser >> token;
+           QGlobal::asDEFAULTSLEEPER = AnsiString(token.c_str());
+           WriteLog("default sleeper tex: " + QGlobal::asDEFAULTSLEEPER);
             do
             {
                 parser.getTokens();
                 parser >> token;
-                QGlobal::asDEFAULTSLEEPER = Trim(AnsiString(token.c_str()));
-                WriteLog("default sleeper tex: " + QGlobal::asDEFAULTSLEEPER);
+
             } while (token.compare("end") != 0);
         }
         else if (str == AnsiString("test"))
