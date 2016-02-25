@@ -556,6 +556,8 @@ class QGlobal
  static bool bAUTOSWITCHBALLAST;
  static bool bCALCNORMALS;
  static bool bWIREFRAMETRACK;
+ static bool bTRKISSWITCH;
+ static bool bISINTERNET;
  static double fdestfogend;
  static double fdestfogstart;
  static double fogchangef;
@@ -634,6 +636,7 @@ class QGlobal
  static Color4 lfipc;
  static TModel3d *mdTIEh;
  static TModel3d *mdTIEl;
+ static TTrack *pTrack;
 };
 
 class Global
@@ -803,6 +806,10 @@ class Global
     static int listdir(const char *szDir, bool bCountHidden, AnsiString ext, TStringList &SL );
     static int setpassengerdest(AnsiString train, AnsiString station);
     static std::string GetKbdLayout();
+    static void LOADMISSIONDESCRIPTION();
+    static bool CHECKINTERNET();
+    static void divideline(AnsiString line, TStringList *sl, int ll);
+    static void SENDLOGTOFTP(AnsiString DATE);
 };
 
 //---------------------------------------------------------------------------

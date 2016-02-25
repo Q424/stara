@@ -59,6 +59,7 @@ bool getalphablendstate();
 bool setalphablendstate();
 bool getlightstate(int n);
 bool setlightstate(int n);
+bool draw_sphere_q(double x, double y, double z, double r, int q);
 bool draw_sphere(double x, double y, double z, double r, Color4 color);
 bool draw_sphere_nt(double x, double y, double z, double r, Color4 color);
 bool draw_railtie(double x, double y, double z, double a, double roll, bool hd);

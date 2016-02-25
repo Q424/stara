@@ -20,22 +20,37 @@ http://mozilla.org/MPL/2.0/.
 
 #include "MdlMngr.h"
 #include "Globals.h"
-
+#include "qutils.h"
 #define SeekFiles AnsiString("*.t3d")
 
 TModel3d *__fastcall TMdlContainer::LoadModel(char *newName, bool dynamic)
 { // wczytanie modelu do kontenerka
+    AnsiString full, path, fn, fnwe, fext, cmdfile, filetodel;
     SafeDeleteArray(Name);
     SafeDelete(Model);
     Name = new char[strlen(newName) + 1];
     strcpy(Name, newName);
     Model = new TModel3d();
     Model->iTYPE = QGlobal::iINCLUDETYPE; //Q 010116: tutaj obiektowi przypisujemy typ pobrany w parserze
-    
-    //WriteLog("-");
+
+    full = chartostdstr(Name).c_str();
+    full = StringReplace( full.c_str(), "/", "\\", TReplaceFlags() << rfReplaceAll );
+    path = ExtractFilePath(full);
+    fn = ExtractFileName(full);
+    fnwe = fn.SubString(1, fn.Length()-4);
+    cmdfile = path + "recompile-" + fnwe + ".txt";
+    filetodel = path + fnwe + ".e3d";
+
+    if (FileExists(cmdfile))
+     {
+      DeleteFile(filetodel);   
+      DeleteFile(cmdfile);
+      WriteLog("FILE DELETED: " + filetodel + ", RECOMPILATION." );
+     }
+
     //WriteLog("MODEL: " + IntToStr(Model->iTYPE));
 
-    if (!Model->LoadFromFile(Name, dynamic)) // np. "models\\pkp/head1-y.t3d"
+    if (!Model->LoadFromFile(full.c_str(), dynamic)) // np. "models\\pkp/head1-y.t3d"
         SafeDelete(Model);
     return Model;
 };

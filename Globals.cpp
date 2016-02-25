@@ -186,6 +186,8 @@ bool QGlobal::bAUTOSWITCHBALLAST = false;
 bool QGlobal::bFIRSTFRAME = true;
 bool QGlobal::bCALCNORMALS = false;
 bool QGlobal::bWIREFRAMETRACK = false;
+bool QGlobal::bTRKISSWITCH = false;
+bool QGlobal::bISINTERNET = false;
 double QGlobal::fdestfogend = 0;
 double QGlobal::fdestfogstart = 0;
 double QGlobal::fogchangef = 0;
@@ -267,6 +269,7 @@ Color4 QGlobal::lepc;
 Color4 QGlobal::lfipc;
 TModel3d *QGlobal::mdTIEh = NULL;
 TModel3d *QGlobal::mdTIEl = NULL;
+TTrack *QGlobal::pTrack = NULL;
 
 // parametry do u¿ytku wewnêtrznego
 // double Global::tSinceStart=0;
@@ -1321,9 +1324,9 @@ double Global::Min0RSpeed(double vel1, double vel2)
 }
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // TWORZENIE LISTY PLIKOW Z WYBRANEGO KATALOGU
-// *****************************************************************************
+// ***********************************************************************************************************
 int Global::listdir(const char *szDir, bool bCountHidden, AnsiString ext, TStringList &SL)
 {
 	char path[MAX_PATH];
@@ -1362,9 +1365,9 @@ int Global::listdir(const char *szDir, bool bCountHidden, AnsiString ext, TStrin
 }
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // Q 030116: Wczytywanie informacji o stacjach
-// *****************************************************************************
+// ***********************************************************************************************************
 AnsiString Global::LoadStationsBase()
 {
  WriteLog("");
@@ -1429,9 +1432,9 @@ AnsiString Global::LoadStationsBase()
 }
 
 
-// **********************************************************************************************************
+// ***********************************************************************************************************
 // Q 03.01.16: Po pobraniu nazwy stacji z toru wypadaloby wyszukac informacji o niej w bazie
-// **********************************************************************************************************
+// ***********************************************************************************************************
 int Global::findstationbyname(AnsiString name)
 {
  int ipos = 0;
@@ -1444,9 +1447,10 @@ int Global::findstationbyname(AnsiString name)
  return -1;
 }
 
-// **********************************************************************************************************
+
+// ***********************************************************************************************************
 // USTAWIANIE PASAZEROWI NUMERU POCIAGU I MIEJSCA DOCELOWEGO
-// **********************************************************************************************************
+// ***********************************************************************************************************
 int Global::setpassengerdest(AnsiString train, AnsiString station)   // Wywolywane z parser.cpp
 {
  train = Trim(train);
@@ -1456,9 +1460,9 @@ int Global::setpassengerdest(AnsiString train, AnsiString station)   // Wywolywa
 }
 
 
-// **********************************************************************************************************
+// ***********************************************************************************************************
 // Wolane z ground.cpp w TGroundNode::RenderDL() 
-// **********************************************************************************************************
+// ***********************************************************************************************************
 int Global::findpassengerdynamic(vector3 PPos, AnsiString asName, AnsiString Prel, AnsiString DST, TGroundNode *GN)
 {
  AnsiString Drel, Ddst, Dnam;
@@ -1540,6 +1544,10 @@ int Global::findpassengerdynamic(vector3 PPos, AnsiString asName, AnsiString Pre
  return 0;
 }
 
+
+// ***********************************************************************************************************
+//
+// ***********************************************************************************************************
 std::string Global::GetKbdLayout()
 {
  char kbdlayout[100];
@@ -1582,6 +1590,208 @@ std::string Global::GetKbdLayout()
  if (kl == "422") QGlobal::asKBDLAYOUTSTR = "Ukrainian";
  if (kl == "415") QGlobal::asKBDLAYOUTSTR = "Polish";
  return skbdlayout;
+}
+
+
+// ***********************************************************************************************************
+// WYSYLANIE PLIKU LOG.TXT NA SERVER FTP
+// ***********************************************************************************************************
+void Global::SENDLOGTOFTP(AnsiString DATE)
+{
+    CopyFile("log.txt", "templog.txt", false);
+    Sleep(50);
+
+    std::string ftppassword;
+
+    ftppassword = encryptDecrypt(X2985Z457);
+
+    char ftp[]      = "lisek.org.pl";
+
+    char user[]     = "queued_q";
+
+    char password[] = "********";
+
+    char localFile[] = "templog.txt";
+
+    char remoteFile[] = "/nazwaplikunaserwerze.txt";
+
+    std::string rf = AnsiString("log-" + DATE + ".txt").c_str();
+
+    sprintf(remoteFile, "%s", stdstrtocharc(rf));
+
+    HINTERNET hInternet;
+
+    HINTERNET hFtpSession;
+
+    if(InternetAttemptConnect(0) == ERROR_SUCCESS) WriteLog("FTP: internet ok, sending log.txt...");
+     else WriteLog("FTP: Internet blocked for this app");
+
+
+    hInternet = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL,0);
+
+    if(hInternet != NULL){
+
+        hFtpSession = InternetConnect(hInternet, ftp, INTERNET_DEFAULT_FTP_PORT, user, ftppassword.c_str(), INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
+
+        if(hFtpSession != NULL)
+        {
+
+            if (!FtpCreateDirectory(hFtpSession, QGlobal::USERPID.c_str()))
+               {
+                WriteLog("FTP: creating directory error. Code:" );
+               }
+
+            if (!FtpSetCurrentDirectory(hFtpSession, QGlobal::USERPID.c_str()))
+                {
+                 WriteLog("FTP: irectory changing error. Code:" );
+                }
+
+            if(FtpPutFile(hFtpSession, localFile, remoteFile , FTP_TRANSFER_TYPE_BINARY,0)){
+
+                InternetCloseHandle(hFtpSession);
+
+                InternetCloseHandle(hInternet);
+
+                }
+            else {
+                WriteLog("FTP: Error during log upload");
+              //  return -1;
+            }
+
+
+        }
+
+      //  else return -1;
+    }
+
+   // else  return -1;
+
+    WriteLog("FTP: Wyslano Plik.");
+
+  //  return 0;
+};
+
+
+// ***********************************************************************************************************
+// SPRAWDZANIE POLACZENIA Z INTERNETEM
+// ***********************************************************************************************************
+bool Global::CHECKINTERNET()
+{
+/*
+  bool ret = false;
+  WSADATA wsaData;
+  SOCKET Socket=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
+  SOCKADDR_IN SockAddr;
+   try
+    {
+  if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0)
+    {
+       // cout << "WSAStartup failed.\n";
+    }
+
+    struct hostent *host;
+    host = gethostbyname("google.com");
+
+    SockAddr.sin_port = htons(80);
+    SockAddr.sin_family = AF_INET;
+    SockAddr.sin_addr.s_addr = *((unsigned long*)host->h_addr);
+    //cout << "Connecting...\n";
+    }
+    __finally
+    {
+     if(connect(Socket,(SOCKADDR*)(&SockAddr),sizeof(SockAddr)) != 0)
+      {
+      //  cout << "Could not connect";
+        return false;
+      }
+    }
+  //  cout << "Connected.\n";
+
+ return true;
+ */
+
+char url[128];
+strcat(url, "http://www.google.com");
+bool bConnect = InternetCheckConnection(url, FLAG_ICC_FORCE_CONNECTION, 0);
+
+if (bConnect)
+  {
+    return true;
+  }
+ else
+  {
+   return false;
+  }
+}
+
+
+// ***********************************************************************************************************
+// DZIELENIE LANCUCHA ZNAKOW NA LINIE
+// ***********************************************************************************************************
+void Global::divideline(AnsiString line, TStringList *sl, int ll)
+{
+ AnsiString tmp;
+ int linelen, linesout;
+
+ linelen = line.Length();
+
+ linesout = linelen % ll;
+
+ for (int i = 1; i < linesout+1; i++)
+  {
+    tmp = line.SubString(1, ll);
+     line.Delete(1, ll);
+
+     sl->Add(tmp);
+  }
+}
+
+
+// ***********************************************************************************************************
+// WCZYTYWANIE OPISU MISJI Z PLIKU SCENERII
+// ***********************************************************************************************************
+void Global::LOADMISSIONDESCRIPTION()
+{
+    WriteLog("Loading mission description...");
+    AnsiString asfile, line, xtest, isd;
+    AnsiString cscn = Global::szSceneryFile;
+
+    asfile = QGlobal::asAPPDIR + "scenery\\" + cscn;
+
+    if (!FileExists(asfile)) return;
+
+    QGlobal::SLTEMP->LoadFromFile(asfile);
+
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "³", "l", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "ê", "e", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "¹", "a", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "³", "l", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "æ", "c", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "œ", "s", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "ó", "o", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "¿", "z", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "ñ", "n", TReplaceFlags() << rfReplaceAll );
+    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "Ÿ", "z", TReplaceFlags() << rfReplaceAll );
+    
+    bool descr = false;
+    for (int i= 0; i < QGlobal::SLTEMP->Count-1; i++)
+     {
+      descr = false;
+      xtest = QGlobal::SLTEMP->Strings[i];
+
+      isd = xtest.SubString(1,5);
+
+      if (isd.SubString(1,4) == "//$d") descr = true; //WriteLog("^isdescript");;
+      if (isd.Pos("d") && isd.Pos("/") && descr)
+       {
+       xtest = QGlobal::SLTEMP->Strings[i];
+        line = xtest.SubString(5,1024);
+
+        if (line.Length() >= 110) Global::divideline(line, QGlobal::MISSIO, 110);
+         else  QGlobal::MISSIO->Add(line);
+       }
+     }
+ WriteLog("OK.");
 }
 
 #pragma package(smart_init)

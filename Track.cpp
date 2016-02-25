@@ -2088,13 +2088,14 @@ void TTrack::Compile(GLuint tex)
          ri60pts2[147-i]=vector6((-fHTW2-szynaRI60N[i].x)*cos2+szynaRI60N[i].y*sin2,-(-fHTW2-szynaRI60N[i].x)*sin2+szynaRI60N[i].y*cos2,szynaRI60N[i].z);
         }
 
-
+       QGlobal::pTrack = this;
 
         switch (eType) // dalej zale¿nie od typu
         {
         case tt_Table: // obrotnica jak zwyk³y tor, animacja wykonywana w RaAnimate(), tutaj tylko
         // regeneracja siatek
         case tt_Normal:
+        QGlobal::bTRKISSWITCH = false;
 
 // NAWIERZCHNIA ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
             if (TextureID2)
@@ -2216,6 +2217,7 @@ void TTrack::Compile(GLuint tex)
 
 // RENDEROWANIE ROZJAZDOW ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         case tt_Switch: // dla zwrotnicy dwa razy szyny
+        QGlobal::bTRKISSWITCH = true;
 
             //WriteLog(asName);
              if (Length() > 31)
@@ -2343,7 +2345,9 @@ void TTrack::Compile(GLuint tex)
                  if ((trNext) || (trPrev))
                   {
                    glBindTexture(GL_TEXTURE_2D,TextureID3);
+                   SwitchExtension->dir = 0;
                    SwitchExtension->Segments[0]->RenderLoft(bpts1,numPts,fTexLength);                            // PROSTO
+                   SwitchExtension->dir = 1;
                    SwitchExtension->Segments[1]->RenderLoft(bpts2,numPts,fTexLength);                            // NA BOK
 
                    if (SwitchExtension->RightSwitch == true) QGlobal::iSWITCHDIRECT = 1;

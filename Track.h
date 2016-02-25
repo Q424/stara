@@ -65,6 +65,7 @@ class TSwitchExtension
     double fOffset, fDesiredOffset; // aktualne i docelowe po³o¿enie napêdu iglic
     double fOffsetSpeed; // prêdkoœæ liniowa ruchu iglic
     double fOffsetDelay; // opóŸnienie ruchu drugiej iglicy wzglêdem pierwszej
+    bool dir;
     union
     {
         struct
@@ -131,7 +132,7 @@ class TIsolated
 class TTrack : public Resource
 { // trajektoria ruchu - opakowanie
   private:
-    TSwitchExtension *SwitchExtension; // dodatkowe dane do toru, który jest zwrotnic¹
+
     TSegment *Segment;
     TTrack *trNext; // odcinek od strony punktu 2 - to powinno byæ w segmencie
     TTrack *trPrev; // odcinek od strony punktu 1
@@ -153,6 +154,7 @@ class TTrack : public Resource
     TGroundNode *
         pMyNode; // Ra: proteza, ¿eby tor zna³ swoj¹ nazwê TODO: odziedziczyæ TTrack z TGroundNode
   public:
+    TSwitchExtension *SwitchExtension; // dodatkowe dane do toru, który jest zwrotnic¹
     GLuint TextureT01;
     GLuint TextureT02;
     GLuint TextureT03;

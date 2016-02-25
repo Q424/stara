@@ -57,113 +57,50 @@ GLuint TWorld::loaderbrief;
 GLuint TWorld::loaderlogo;
 GLuint TWorld::bfonttex;
 GLuint TWorld::consolebackg;
-
 TGroundNode *tmp;
 TDynamicObject *DO;
 bool FOVSET;
 
 
 
-// *****************************************************************************
+
+// ***********************************************************************************************************
 // WYSYLANIE PLIKU LOG.TXT NA SERVER FTP
-// *****************************************************************************
-SENDLOGTOFTP(AnsiString DATE)
+// ***********************************************************************************************************
+void HTTPPOSTFILE(AnsiString FN)
 {
-    CopyFile("log.txt", "templog.txt", false);
-    Sleep(50);
+ /*
+  TIdHTTP  *HTTP;
+  TIdMultiPartFormDataStream    *POSTData;
+  AnsiString ext, ofn;
+  ofn = ExtractFileName(FN);
+  ext = ExtractFileExt(FN);
 
-    std::string ftppassword;
+  ShowMessage(ext);
 
-    ftppassword = encryptDecrypt(X2985Z457);
+  if (ext != ".txt") return;
 
-    char ftp[]      = "lisek.org.pl";
+  HTTP = new TIdHTTP(NULL);
+  POSTData = new TIdMultiPartFormDataStream;
+//HTTP->Request->Host = "eu07.es";
+  HTTP->Request->Connection = "keep-alive";
+  HTTP->Request->Accept = "multipart/mixed";
 
-    char user[]     = "queued_q";
+  POSTData->AddFile("fileToUpload", FN, ""); // works
+  POSTData->AddFormField("fileToUpload", "fileToUpload");
 
-    char password[] = "********";
+  HTTP->Post("http://eu07.es/mfaq/upload/upload.php", POSTData);
 
-    char localFile[] = "templog.txt";
-
-    char remoteFile[] = "/nazwaplikunaserwerze.txt";
-
-    std::string rf = AnsiString("log-" + DATE + ".txt").c_str();
-
-    sprintf(remoteFile, "%s", stdstrtocharc(rf));
-
-    HINTERNET hInternet;
-
-    HINTERNET hFtpSession;
-
-    if(InternetAttemptConnect(0) == ERROR_SUCCESS) WriteLog("FTP: internet ok, sending log.txt...");
-     else WriteLog("FTP: Internet blocked for this app");
-
-
-    hInternet = InternetOpen(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL,0);
-
-    if(hInternet != NULL){
-
-        hFtpSession = InternetConnect(hInternet, ftp, INTERNET_DEFAULT_FTP_PORT, user, ftppassword.c_str(), INTERNET_SERVICE_FTP, INTERNET_FLAG_PASSIVE, 0);
-
-        if(hFtpSession != NULL)
-        {
-
-            if (!FtpCreateDirectory(hFtpSession, QGlobal::USERPID.c_str()))
-               {
-                WriteLog("FTP: creating directory error. Code:" );
-               }
-
-            if (!FtpSetCurrentDirectory(hFtpSession, QGlobal::USERPID.c_str()))
-                {
-                 WriteLog("FTP: irectory changing error. Code:" );
-                }
-
-            if(FtpPutFile(hFtpSession, localFile, remoteFile , FTP_TRANSFER_TYPE_BINARY,0)){
-
-                InternetCloseHandle(hFtpSession);
-
-                InternetCloseHandle(hInternet);
-
-                }
-            else {
-                WriteLog("FTP: Error during log upload");
-              //  return -1;
-            }
-
-
-        }
-
-      //  else return -1;
-    }
-
-   // else  return -1;
-
-    WriteLog("FTP: Wyslano Plik.");
-
-  //  return 0;
-};
-
-
-void divideline(AnsiString line, TStringList *sl, int ll)
-{
- AnsiString tmp;
- int linelen, linesout;
-
- linelen = line.Length();
-
- linesout = linelen % ll;
-
- for (int i = 1; i < linesout+1; i++)
-  {
-    tmp = line.SubString(1,ll);
-     line.Delete(1, ll);
-
-     sl->Add(tmp);
-  }
+  delete POSTData;
+  */
 }
 
 
+// ***********************************************************************************************************
+// ODCZYTANIE DANYCH DLA PASKA POSTEPU WCZYTYWANIA SCENERII
+// ***********************************************************************************************************
 int getprogressfile()
-    {
+  {
      QGlobal::iNODES = 1000000;
      AnsiString asfile;
      AnsiString cscn = Global::szSceneryFile;
@@ -180,11 +117,14 @@ int getprogressfile()
 
         }
        else return 1000000;
-    }
+  }
 
-    
+
+// ***********************************************************************************************************
+// ZAPISANIE PLIKU Z DANYMI PASKA POSTEPU DLA SCENERII
+// ***********************************************************************************************************
 int setprogressfile()
-    {
+  {
      //Global::iNODES = 1000000;
      AnsiString asfile;
      AnsiString cscn = Global::szSceneryFile;
@@ -195,53 +135,12 @@ int setprogressfile()
      QGlobal::SLTEMP->Add(IntToStr(QGlobal::iNODESFIRSTINIT)); 
      QGlobal::SLTEMP->SaveToFile(asfile);
      WriteLog("PROGRESS FILE UPDATED ");
-    }
+  }
 
 
-void LOADMISSIONDESCRIPTION()
-{
-    WriteLog("Loading mission description...");
-    AnsiString asfile, line, xtest, isd;
-    AnsiString cscn = Global::szSceneryFile;
-
-    asfile = QGlobal::asAPPDIR + "scenery\\" + cscn;
-
-    if (!FileExists(asfile)) return;
-
-    QGlobal::SLTEMP->LoadFromFile(asfile);
-
-    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "³", "l", TReplaceFlags() << rfReplaceAll );
-    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "ê", "e", TReplaceFlags() << rfReplaceAll );
-    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "¹", "a", TReplaceFlags() << rfReplaceAll );
-    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "³", "l", TReplaceFlags() << rfReplaceAll );
-    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "æ", "c", TReplaceFlags() << rfReplaceAll );
-    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "œ", "s", TReplaceFlags() << rfReplaceAll );
-    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "ó", "o", TReplaceFlags() << rfReplaceAll );
-    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "¿", "z", TReplaceFlags() << rfReplaceAll );
-    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "ñ", "n", TReplaceFlags() << rfReplaceAll );
-    QGlobal::SLTEMP->Text= StringReplace( QGlobal::SLTEMP->Text, "Ÿ", "z", TReplaceFlags() << rfReplaceAll );
-    
-    bool descr = false;
-    for (int i= 0; i < QGlobal::SLTEMP->Count-1; i++)
-     {
-      descr = false;
-      xtest = QGlobal::SLTEMP->Strings[i];
-
-      isd = xtest.SubString(1,5);
-
-      if (isd.SubString(1,4) == "//$d") descr = true; //WriteLog("^isdescript");;
-      if (isd.Pos("d") && isd.Pos("/") && descr)
-       {
-       xtest = QGlobal::SLTEMP->Strings[i];
-        line = xtest.SubString(5,1024);
-
-        if (line.Length() >= 110) divideline(line, QGlobal::MISSIO, 110);
-         else  QGlobal::MISSIO->Add(line);
-       }
-     }
- WriteLog("OK.");
-}
-
+// ***********************************************************************************************************
+// Wykonywane po wcisnieciu spacji po zaladowaniu scenerii (kasowanie ekranu pauzy po zaladowaniu)
+// ***********************************************************************************************************
 bool __fastcall TWorld::STARTSIMULATION()
 {
    QGlobal::bSHOWBRIEFING = false;
@@ -263,9 +162,9 @@ bool __fastcall TWorld::STARTSIMULATION()
 }
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // Konstruktor klasy TWorld
-// *****************************************************************************
+// ***********************************************************************************************************
 TWorld::TWorld()
 {
     Train = NULL;
@@ -311,9 +210,9 @@ TWorld::TWorld()
 }
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // Destruktor klasy TWorld
-// *****************************************************************************
+// ***********************************************************************************************************
 TWorld::~TWorld()
 {
     Global::bManageNodes = false; // Ra: wy³¹czenie wyrejestrowania, bo siê sypie
@@ -328,9 +227,9 @@ TWorld::~TWorld()
 }
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // USUWANIE POJAZDU
-// *****************************************************************************
+// ***********************************************************************************************************
 void TWorld::TrainDelete(TDynamicObject *d)
 { // usuniêcie pojazdu prowadzonego przez u¿ytkownika
     if (d)
@@ -345,9 +244,9 @@ void TWorld::TrainDelete(TDynamicObject *d)
 };
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // FUNKCJA DO WYPISYWANIA ROZNYCH INFORMACJI W 2D
-// *****************************************************************************
+// ***********************************************************************************************************
 GLvoid TWorld::glPrint(const char *txt) // custom GL "Print" routine
 { // wypisywanie tekstu 2D na ekranie
     if (!txt)
@@ -428,11 +327,18 @@ double timex;
 // ***********************************************************************************************************
 bool TWorld::Init(HWND NhWnd, HDC hDC)
 {
+    QGlobal::bISINTERNET = Global::CHECKINTERNET();
+
  //WriteLog("USTAWIANIE KATALOGU DLA ZRZUTOW EKRANU...");
     CreateDir(QGlobal::asAPPDIR + QGlobal::asSSHOTDIR);
     CreateDir(QGlobal::asAPPDIR + QGlobal::asSSHOTDIR + QGlobal::asSSHOTSUB); // SCREENSHOTS DIRECTORY CONTAINER
     CreateDir(QGlobal::asAPPDIR + "data\\");
     CreateDir(QGlobal::asAPPDIR + "data\\logs\\");
+
+    QGlobal::bISINTERNET = Global::CHECKINTERNET();
+
+    WriteLog("Checking internet connection...");
+    WriteLog(BoolToStr(QGlobal::bISINTERNET));
 
     QGlobal::gtc1 =  GetTickCount();
     QGlobal::iRANDTABPOS = 0;
@@ -736,8 +642,8 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
 {
     Timer::ResetTimers();
     hWnd = NhWnd;
-    if (QGlobal::bSPLASHSCR) RenderSPLASHSCR(hDC, 77, "SS", 1);                 // Pierwsza czesc splasha (7s)
-  //if (QGlobal::bSPLASHSCR) RenderLoaderU(hDC, 77, "SS");                    // Zaraz po splashu stopniowe wylonienie sie z czerni ekranu wczytywania
+    if (QGlobal::bSPLASHSCR) RenderSPLASHSCR(hDC, 77, "SS", 1)  // Pierwsza czesc splasha (7s)
+  //if (QGlobal::bSPLASHSCR) RenderLoaderU(hDC, 77, "SS");     // Zaraz po splashu stopniowe wylonienie sie z czerni ekranu wczytywania
 
     RenderLoader(hDC, 77, "...");
 
@@ -913,7 +819,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
        }
 
     if (QGlobal::bSENDLOGFTP > 0) RenderLoader(hDC, 77, "Sending log file to FTP...");
-    if (QGlobal::bSENDLOGFTP > 0) SENDLOGTOFTP(ftpdate);
+    if (QGlobal::bSENDLOGFTP > 0) Global::SENDLOGTOFTP(ftpdate);
 
     if (!QGlobal::bmodelpreview) generatenoisetex(); // W efects2d.cpp
 
@@ -922,7 +828,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     //if (!FOVSET) {SCR->FOVADD(0); FOVSET=true;}
     setprogressfile();
 
-    LOADMISSIONDESCRIPTION();
+    Global::LOADMISSIONDESCRIPTION();
 
     QGlobal::bSCNLOADED = true;
     Global::iPause = true;
@@ -2031,10 +1937,10 @@ if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
     }
 
 
-    //if (Controlled)
-    //    SetWindowText(hWnd, AnsiString(Controlled->MoverParameters->Name).c_str());
-    //else
-    //    SetWindowText(hWnd, Global::szSceneryFile); // nazwa scenerii
+    if (Controlled)
+        SetWindowText(hWnd, AnsiString("MaSZyna - " + Controlled->MoverParameters->Name).c_str());
+    else
+        SetWindowText(hWnd, AnsiString("MaSZyna - " + AnsiString(Global::szSceneryFile)).c_str()); // nazwa scenerii
     glDisable(GL_LIGHTING);
     glBindTexture(GL_TEXTURE_2D, 0);
     glColor4f(1.0f, 0.0f, 0.0f, 1.0f);

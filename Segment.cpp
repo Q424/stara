@@ -387,6 +387,64 @@ float zDiff = p2.z - p1.z;
 return atan2(zDiff, xDiff) * (180 / PI);
 }
 
+LZB(vector3 pos1, vector3 pos2, float s, float fLength)
+{
+bool lasth;
+
+        glColor4f(1.0, 0.0, 0.0, 1.0);
+        draw_sphere_q(pos1.x, pos1.y-0.15, pos1.z, 0.02, 4);
+        glColor4f(1.0, 1.0, 1.0, 1.0);
+// LZB (Linienzugbeeinflussung) ******************************************************************************
+
+            glColor4f(0.0, 0.0, 1.0, 1.0);
+            draw_sphere_q(pos1.x, pos1.y-0.15, pos1.z, 0.02, 4);
+            glColor3f(0.0, 0.0, 1.0f);
+
+            glEnable(GL_LINE_SMOOTH);
+            if (!QGlobal::bTRKISSWITCH)
+             {
+              glLineWidth(2.3);
+              //glColor4f(0.6, 0.6f, 0.6f, 1);
+              glBegin(GL_LINE_STRIP);
+              glVertex3f(pos1.x, pos1.y-0.14, pos1.z);
+              glVertex3f(pos2.x, pos2.y-0.14, pos2.z);
+              glEnd();
+              glLineWidth(1.0f);
+              //glColor4f(1, 1, 1, 1);
+             }
+
+             glLineWidth(2.4);
+            // glColor4f(0.6, 0.6f, 0.6f, 1);
+             glBegin(GL_LINE_STRIP);
+             if (QGlobal::bTRKISSWITCH && QGlobal::pTrack->SwitchExtension->dir == 0 && lasth)
+              {
+               glVertex3f(pos1.x+0.0, pos1.y-0.14, pos1.z);
+               glVertex3f(pos1.x+0.71, pos1.y-0.14, pos1.z);
+               lasth = false;
+              }
+
+            if (QGlobal::bTRKISSWITCH && QGlobal::pTrack->SwitchExtension->dir == 0 && s > (fLength/2))
+              {
+               glVertex3f(pos1.x+0.71, pos1.y-0.14, pos1.z);
+               glVertex3f(pos2.x+0.71, pos2.y-0.14, pos2.z);
+              }
+
+            lasth = false;
+            if (QGlobal::bTRKISSWITCH && QGlobal::pTrack->SwitchExtension->dir == 0 && s < (fLength/2))
+              {
+               glVertex3f(pos1.x, pos1.y-0.13, pos1.z);
+               glVertex3f(pos2.x, pos2.y-0.13, pos2.z);
+               lasth = true;
+              }
+            glLineWidth(1.0f);
+            glColor4f(1, 1, 1, 1);
+            glEnd();
+
+}
+
+
+// ***********************************************************************************************************
+//
 void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, double fTextureLength,
                           int iSkip, int iQualityFactor, vector3 **p, bool bRender)
 { // generowanie trójk¹tów dla odcinka trajektorii ruchu
@@ -400,8 +458,12 @@ void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, doubl
     vector3 pos1, pos2, dir, parallel1, parallel2, pt, norm;
     double s, step, fOffset, tv1, tv2, t;
     int i, j;
+    bool LZBPROTO = true;
+    bool lasth;
     bool trapez = iNumShapePoints < 0; // sygnalizacja trapezowatoœci
     iNumShapePoints = abs(iNumShapePoints);
+    //glColor3f(1.0, 1.0, 1.0f);
+    glColor4f(1.0, 1.0, 1.0f, 1.0f);
     if (bCurve)
     {
         double m1, jmm1, m2, jmm2; // pozycje wzglêdne na odcinku 0...1 (ale nie parametr Beziera)
@@ -524,9 +586,61 @@ void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, doubl
             //draw_sphere_nt(pos1.x, pos1.y, pos1.z, 0.1, Color4(1.0, 0.1, 0.1, 1.0));   // qqq
 
             //--float angle = GetAngleOfLineBetweenTwoPoints(pos1, pos2);
-            
-            //--draw_cube(pos1.x, pos1.y, pos1.z, angle, 0.1, Color4(1.0, 0.1, 0.1, 1.0));
 
+// LZB (Linienzugbeeinflussung) ******************************************************************************
+     /*
+          if (LZBPROTO)
+           {
+            glColor4f(0.0, 0.0, 1.0, 1.0);
+            draw_sphere_q(pos1.x, pos1.y-0.15, pos1.z, 0.02, 4);
+            glColor3f(0.0, 0.0, 1.0f);
+
+            glEnable(GL_LINE_SMOOTH);
+            if (!QGlobal::bTRKISSWITCH)
+             {
+              glLineWidth(2.3);
+              //glColor4f(0.6, 0.6f, 0.6f, 1);
+              glBegin(GL_LINE_STRIP);
+              glVertex3f(pos1.x, pos1.y-0.14, pos1.z);
+              glVertex3f(pos2.x, pos2.y-0.14, pos2.z);
+              glEnd();
+              glLineWidth(1.0f);
+              //glColor4f(1, 1, 1, 1);
+             }
+
+             glLineWidth(2.4);
+            // glColor4f(0.6, 0.6f, 0.6f, 1);
+             glBegin(GL_LINE_STRIP);
+             if (QGlobal::bTRKISSWITCH && QGlobal::pTrack->SwitchExtension->dir == 0 && lasth)
+              {
+               glVertex3f(pos1.x+0.0, pos1.y-0.14, pos1.z);
+               glVertex3f(pos1.x+0.71, pos1.y-0.14, pos1.z);
+               lasth = false;
+              }
+
+            if (QGlobal::bTRKISSWITCH && QGlobal::pTrack->SwitchExtension->dir == 0 && s > (fLength/2))
+              {
+               glVertex3f(pos1.x+0.71, pos1.y-0.14, pos1.z);
+               glVertex3f(pos2.x+0.71, pos2.y-0.14, pos2.z);
+              }
+
+            lasth = false;
+            if (QGlobal::bTRKISSWITCH && QGlobal::pTrack->SwitchExtension->dir == 0 && s < (fLength/2))
+              {
+               glVertex3f(pos1.x, pos1.y-0.13, pos1.z);
+               glVertex3f(pos2.x, pos2.y-0.13, pos2.z);
+               lasth = true;
+              }
+            glLineWidth(1.0f);
+            glColor4f(1, 1, 1, 1);
+            //glColor3f(1.0, 1.0, 1.0f);
+            glEnd();
+           }
+            glColor4f(1, 1, 1, 1);
+            */
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           
+           //--if (LZBPROTO) LZB(pos1, pos2, s, fLength);
 
             pos1 = pos2;
             parallel1 = parallel2;
@@ -538,6 +652,8 @@ void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, doubl
         pos1 = FastGetPoint((fStep * iSkip) / fLength);
         pos2 = FastGetPoint_1();
         dir = GetDirection();
+
+        //--if (LZBPROTO) LZB(pos1, pos2, s, fLength);
 
         // parallel1=Normalize(CrossProduct(dir,vector3(0,1,0)));
         parallel1 = Normalize(vector3(-dir.z, 0.0, dir.x)); // wektor poprzeczny
@@ -584,31 +700,12 @@ void TSegment::RenderLoft(const vector6 *ShapePoints, int iNumShapePoints, doubl
 
             }
         glEnd();
-        if (QGlobal::bWIREFRAMETRACK) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+       glColor3f(1.0, 1.0, 1.0);
+     if (QGlobal::bWIREFRAMETRACK) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
     }
+
 };
 
-
-
-// ***********************************************************************************************************
-// PIERWSZA WERSJA PROTOTYPOWA RENDEROWANIA PODKLADOW 'NA SZTYWNO' BEZ OPTYMALIZACJI
-// ***********************************************************************************************************
-bool draw_railtiex(double x, double y, double z, double a, double roll, bool hd)
-{
-    glDisable(GL_BLEND);
-    glColor4f(1.0, 1.0, 1.0, 1.0);
-    glPushMatrix();
-    glTranslatef(x, y, z);
-    glRotatef(-a,0,1,0);
-    glRotatef(roll,1,0,0);  // przechylka
-
-//--    if ( hd && QGlobal::mdTIEh) QGlobal::mdTIEh->Render(100, 0);
-//    if ( hd && QGlobal::mdTIEh) QGlobal::mdTIEh->RenderAlpha(100, 0);
-//--    if (!hd && QGlobal::mdTIEl) QGlobal::mdTIEl->Render(100, 0);
-//    if (!hd && QGlobal::mdTIEl) QGlobal::mdTIEl->RenderAlpha(100, 0);
-
-    glPopMatrix();
-}
 
 // ***********************************************************************************************************
 // Renderowanie rozjazdow modelowanych 250116 Q
@@ -772,52 +869,52 @@ void TSegment::RenderRTie(const vector6 *ShapePoints, int iNumShapePoints, doubl
             dir = FastGetDirection(t, fOffset); // nowy wektor kierunku
             parallel2 = Normalize(vector3(-dir.z, 0.0, dir.x)); // wektor poprzeczny
 
-            // Tutaj renderowanie podkladow?
-
+          //  RenderTie();
             if (!bTieAdded)
-              {
+             {
+
+            // Tutaj renderowanie podkladow?
               float r1 = RadToDeg(fRoll1);
               float r2 = RadToDeg(fRoll2);
               float angle = GetAngleOfLineBetweenTwoPoints(pos1, pos2);
               float troll = r2;
-              
+
               QGlobal::bCALCNORMALS = true;
 
               if (pos1.z > 0) troll = -troll;
               if ( r2 < 0.1)  troll = 0.0f;
 
-              // CZY TUTAJ POWINNO BYC ZROBIONE TWORZENIE PODKLADOW JAKO TGroundNode, POZWOLILOBY TO NA USTAWIENIE MAXDISTANCE
+              NN = "tie-" + IntToStr(QGlobal::iRENDEREDTIES)+ "-" + IntToStr(i);// + "-" + FloatToStr(pos1.z);
 
-               NN = "tie-" + IntToStr(QGlobal::iRENDEREDTIES)+ "-" + IntToStr(i);// + "-" + FloatToStr(pos1.z);
+              tiefile = "1435mm/sleepers/podklad-hd-1l.t3d";     // DEFAULTOWY MODEL PODKLADU JEZELI NIE MA WE WPISIE
 
-               tiefile = "1435mm/sleepers/podklad-hd-1l.t3d";     // DEFAULTOWY MODEL PODKLADU JEZELI NIE MA WE WPISIE
+              if (TRK->asTieModelL == "none") tiefile = "1435mm/sleepers/podklad-hd-1l.t3d";                 // -
+              if (TRK->asTieTexture1 == "1435mm/sleepers/" + QGlobal::asDEFAULTSLEEPER)  TRK->asTieTexture1 = "1435mm/sleepers/" + QGlobal::asDEFAULTSLEEPER;
 
-               if (TRK->asTieModelL == "none") tiefile = "1435mm/sleepers/podklad-hd-1l.t3d";                 // -
-               if (TRK->asTieTexture1 == "1435mm/sleepers/" + QGlobal::asDEFAULTSLEEPER)  TRK->asTieTexture1 = "1435mm/sleepers/" + QGlobal::asDEFAULTSLEEPER;
-
-               // LUBEK LACZACY SZYNY
-               asRailJointModel = "1435mm/elements/lacznikszyn-1.t3d";
-               if ((lastS >= fLength-0.5))
-                {
+              // LUBEK LACZACY SZYNY
+              asRailJointModel = "1435mm/elements/lacznikszyn-1.t3d";
+              if ((lastS >= fLength-0.5))
+               {
                  Global::pGround->AddGroundNodeQ("J" + NN, "jnt", "none", asRailJointModel, "none", 80, 0, pos2.x, pos2.y-0.14, pos2.z, -angle, troll, QGlobal::bCALCNORMALS);
-                }
+               }
 
-               if (TRK->asTieModelL != "none") tiefile = TRK->asTieModelL;
+              if (TRK->asTieModelL != "none") tiefile = TRK->asTieModelL;
 
-               // RESZTA PODKLADOW
-               if ((lastS < fLength-0.8) && (lastS > 0.4))
-               if (tiefile != "none")
-                {
+              // RESZTA PODKLADOW
+              if ((lastS < fLength-0.8) && (lastS > 0.4))
+              if (tiefile != "none")
+               {
                  //QGlobal::SLTEMP->Add("rt" + NN + "," + tiefile + ", " + TRK->asTieTexture1 + ", " + FloatToStr(QGlobal::fTIEMAXDIST));
                  Global::pGround->AddGroundNodeQ("rt" + NN, "tie", "none", tiefile, TRK->asTieTexture1, QGlobal::fTIEMAXDIST, 0, pos1.x, pos1.y-0.38, pos1.z, -angle, troll, QGlobal::bCALCNORMALS);
-                }
+               }
 
                // PIERWSZY PODKLAD ODCINKA STYKA SIE Z PODKLADEM POPRZEDNIEGO ODCINKA
-               if ((lastS <= 0.65))
-               if (tiefile != "none") Global::pGround->AddGroundNodeQ("ft" + NN, "tie", "none", tiefile, TRK->asTieTexture1, QGlobal::fTIEMAXDIST, 0, pos1.x+0.0, pos1.y-0.38, pos1.z+0.23, -angle, troll, QGlobal::bCALCNORMALS);
+              if ((lastS <= 0.65))
+              if (tiefile != "none") Global::pGround->AddGroundNodeQ("ft" + NN, "tie", "none", tiefile, TRK->asTieTexture1, QGlobal::fTIEMAXDIST, 0, pos1.x+0.0, pos1.y-0.38, pos1.z+0.23, -angle, troll, QGlobal::bCALCNORMALS);
 
-               if (tiefile != "none") QGlobal::iRENDEREDTIES++;
-              }
+              if (tiefile != "none") QGlobal::iRENDEREDTIES++;
+
+             }
 
             pos1 = pos2;
             parallel1 = parallel2;
@@ -829,16 +926,17 @@ void TSegment::RenderRTie(const vector6 *ShapePoints, int iNumShapePoints, doubl
     { // gdy prosty, nie modyfikujemy wektora kierunkowego i poprzecznego
         //float angle = GetAngleOfLineBetweenTwoPoints(pos1, pos2);
         //draw_railtie(pos1.x, pos1.y-0.37, pos1.z, angle, 0.0, false);
+
         pos1 = FastGetPoint((fStep * iSkip) / fLength);
         pos2 = FastGetPoint_1();
         dir = GetDirection();
-        // parallel1=Normalize(CrossProduct(dir,vector3(0,1,0)));
         parallel1 = Normalize(vector3(-dir.z, 0.0, dir.x)); // wektor poprzeczny
 
     }
-   bTieAdded = true;
+ bTieAdded = true;
 
 };
+
 
 void TSegment::RenderSwitchRail(const vector6 *ShapePoints1, const vector6 *ShapePoints2,
                                 int iNumShapePoints, double fTextureLength, int iSkip,

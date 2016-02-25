@@ -70,3 +70,10 @@ qutils.asm
 *.~dfm
 *.~dfm
 *.hpp
+*.~dfm
+frm_debugger.~dfm
+*.~dfm
+*.hpp
+McZapkie/_Mover.hpp
+frm_debugger.~dfm
+McZapkie/_Mover.hpp

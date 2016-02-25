@@ -21,6 +21,7 @@ http://mozilla.org/MPL/2.0/.
 #include <math.h>	// Header File For The Math Library
 #include <olectl.h>	// Header File For The OLE Controls Library
 
+
 #include "system.hpp"
 #include "classes.hpp"
 #include "stdio.h"
@@ -37,10 +38,9 @@ http://mozilla.org/MPL/2.0/.
 TTexturesManager::Alphas TTexturesManager::_alphas;
 TTexturesManager::Names TTexturesManager::_names;
 
-
-
 void TTexturesManager::Init(){};
 
+ IPicture	*xpPicture;
 
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // PCX TEXTURES ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -391,10 +391,10 @@ TTexturesManager::AlphaValue   TTexturesManager::ReadPCX (char *szFileName)
 
 
 
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // LOADING JPEG TEXTURES
 
-TTexturesManager::AlphaValue   TTexturesManager::LOADJPG(char* szPathName)				// Load Image And Convert To A Texture
+TTexturesManager::AlphaValue   TTexturesManager::LOADJPG(char* szPathName, bool inet)	// Load Image And Convert To A Texture
 {
 
 	HDC		hdcTemp;						// The DC To Hold Our Bitmap
@@ -418,6 +418,12 @@ TTexturesManager::AlphaValue   TTexturesManager::LOADJPG(char* szPathName)				//
         GLfloat maxaniso;
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxaniso);
 
+        QGlobal::bISINTERNET = Global::CHECKINTERNET();      // SPRAWDZENIE PLACZEINA Z INTERNETEM
+
+        //WriteLog("ISINET: " + IntToStr(QGlobal::bISINTERNET ));
+        if (!QGlobal::bISINTERNET ) return LOADJPG2(szPathName);                // JEZELI NIE MA INTERNETU TO Z DYSKU
+
+
          /*
 	if (strstr(szPathName, "http://"))					// If PathName Contains http:// Then...
 	{
@@ -432,6 +438,8 @@ TTexturesManager::AlphaValue   TTexturesManager::LOADJPG(char* szPathName)				//
 		strcat(szPath, szPathName);					// Append The PathName
 	}
           */
+          
+
 	if (strstr(szPathName, "qqq"))						// If PathName Contains http:// Then...
 	{
 
@@ -454,13 +462,14 @@ TTexturesManager::AlphaValue   TTexturesManager::LOADJPG(char* szPathName)				//
 	}
 
         AnsiString x =StringReplace( szPath, "\\", "/", TReplaceFlags() << rfReplaceAll );
-      //WriteLog(x);
         HRESULT hr;
         DeleteUrlCacheEntry(x.c_str());
 
-     	MultiByteToWideChar(CP_ACP, 0, szPath, -1, wszPath, MAX_PATH);		// Convert From ASCII To Unicode
-
-	if (!hr == OleLoadPicturePath(wszPath, 0, 0, 0, IID_IPicture, (LPVOID *)&pPicture)); // NA TYM SIE SYPIE U STELE'go
+        MultiByteToWideChar(CP_ACP, 0, szPath, -1, wszPath, MAX_PATH);		// Convert From ASCII To Unicode
+        WriteLog(IntToStr(QGlobal::bISINTERNET));
+        
+        if (QGlobal::bISINTERNET)
+         if (!hr == OleLoadPicturePath(wszPath, 0, 0, 0, IID_IPicture, (LPVOID *)&pPicture)); // NA TYM SIE SYPIE U STELE'go
 
       	if(FAILED(hr))								// If Loading Failed
 		return fail;							// Return False
@@ -515,6 +524,7 @@ TTexturesManager::AlphaValue   TTexturesManager::LOADJPG(char* szPathName)				//
 
 	// Render The IPicture On To The Bitmap
 	pPicture->Render(hdcTemp, 0, 0, lWidthPixels, lHeightPixels, 0, lHeight, lWidth, -lHeight, 0);
+      
 
 	// Convert From BGR To RGB Format And Add An Alpha Value Of 255
 	for(long i = 0; i < lWidthPixels * lHeightPixels; i++)			// Loop Through All Of The Pixels
@@ -566,6 +576,51 @@ TTexturesManager::AlphaValue   TTexturesManager::LOADJPG(char* szPathName)				//
 }
 
 
+// ***********************************************************************************************************
+// WCZYTANIE JPG, KONWERSJA NA BMP I POBRANIE ID *************************************************************
+
+TTexturesManager::AlphaValue TTexturesManager::LOADJPG2(char* szFileName)
+{
+ GLuint tmpid;
+ Graphics::TBitmap *BMP = new Graphics::TBitmap();      // KONWERSJA NA JPG
+ TJPEGImage *JPG = new TJPEGImage();
+ char *cNewName;
+ AnsiString fpath, fn, fnnoext, fext, asNewName, asNewExt;
+
+ fpath =   ExtractFilePath(szFileName);
+ fn =      ExtractFileName(szFileName);
+ fext =    ExtractFileExt(szFileName);
+ fnnoext = fn.SubString(1, fn.Length() - 4);
+ asNewName = fpath + fnnoext + ".bmp";
+ cNewName = asNewName.c_str();                // JUZ JAKO BMP
+
+ char buff[255]= "Loading - texture: ";
+ char suf1[255]= "……………ok";
+ char suf2[255]= "……………be";
+
+ strcat(buff,szFileName);
+
+ if (FileExists(szFileName) )  // np: d:\eu07-220204\textures\ip\nastawnia.jpg
+    {
+         JPG->LoadFromFile(szFileName);                                 // WCZYTAJ...
+         BMP->Assign(JPG);                                              // PRZYDZIEL DO BMP
+         BMP->SaveToFile(cNewName);                                     // ZAPISZ JAKO BMP
+         if (FileExists(cNewName)) WriteLog(strcat(buff, suf1));        // ...OK
+
+         tmpid = TTexturesManager::GetTextureID("", Global::asCurrentTexturePath.c_str(),  cNewName );  // PRZYDZIELENIE ID DLA BMP
+         JPG->Free();
+         BMP->Free();
+         DeleteFile(cNewName);
+     }
+     else
+     {
+        tmpid = TTexturesManager::GetTextureID("", Global::asCurrentTexturePath.c_str(), "notex.tga");
+        WriteLog(strcat(buff, suf2)); // ...FAILED
+     }
+ return std::make_pair(tmpid, false);                                       // Return True (All Good)
+}
+
+
 TTexturesManager::Names::iterator TTexturesManager::LoadFromFile(std::string fileName, int filter)
 {
 
@@ -590,15 +645,20 @@ TTexturesManager::Names::iterator TTexturesManager::LoadFromFile(std::string fil
     std::string ext(fileName, pos + 1, std::string::npos);
 
 
-    if (strstr(realFileName.c_str(), "http-"))
-        {
-         str = AnsiString(realFileName.c_str());                                // textures\http-xxxxxx.jpg
-         inetlink = "http://eu07.es/textures\\" + str.SubString(15, 255);       // UCINAMY  "textures\http-"
-         WriteLog("INETLINK: " + inetlink);                                     // INETLINK: http://q.matinf.pl/textures\ip\jpegtestd.jpg
-         cFileName = inetlink.c_str();
-        }
+//    if (strstr(realFileName.c_str(), "http-"))
+//        {
+//         str = AnsiString(realFileName.c_str());                                // textures\http-xxxxxx.jpg
+//         inetlink = "http://eu07.es/textures\\" + str.SubString(15, 255);       // UCINAMY  "textures\http-"
+//         WriteLog("INETLINK: " + inetlink);                                     // INETLINK: http://q.matinf.pl/textures\ip\jpegtestd.jpg
+//         cFileName = inetlink.c_str();
+//        }
 
     AlphaValue texinfo;
+    bool frominet = false;
+
+    size_t fpos = fileName.find( "qqq" );
+
+    if( fpos == std::string::npos ) frominet = false; else frominet = true;
 
     if (ext == "tga")
         texinfo = LoadTGA(realFileName, filter);
@@ -609,11 +669,11 @@ TTexturesManager::Names::iterator TTexturesManager::LoadFromFile(std::string fil
     else if (ext == "dds")
         texinfo = LoadDDS(realFileName, filter);
     else if (ext == "jpg")
-     texinfo = LOADJPG( cFileName );
+        texinfo = LOADJPG( cFileName, frominet);
     else if (ext == "gif")
-     texinfo = LOADJPG( cFileName );
+        texinfo = LOADJPG( cFileName, frominet);
     else if (ext == "pcx")
-     texinfo = ReadPCX( cFileName );
+        texinfo = ReadPCX( cFileName );
      
     _alphas.insert(texinfo); // zapamiêtanie stanu przezroczystoœci tekstury - mo¿na by tylko przezroczyste
     std::pair<Names::iterator, bool> ret = _names.insert(std::make_pair(fileName, texinfo.first));

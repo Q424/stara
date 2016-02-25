@@ -732,6 +732,20 @@ bool draw_sphere(double x, double y, double z, double r, Color4 color)
     glutSolidSphere(r, 16, 16);
     glPopMatrix();
 }
+
+// *****************************************************************************
+// RENDEROWANIE SFERY W ZADANYM MIEJSCU
+// *****************************************************************************
+bool draw_sphere_q(double x, double y, double z, double r, int q)
+{
+    glDisable(GL_BLEND);
+    glColor4f(0.3, 0.3, 0.3, 0.9);
+    glPushMatrix();
+    glTranslatef(x, y, z);
+    glutSolidSphere(r, q, q);
+    glPopMatrix();
+}
+
 // *****************************************************************************
 // RENDEROWANIE SFERY W ZADANYM MIEJSCU BEZ TRANSLACJI
 // *****************************************************************************
