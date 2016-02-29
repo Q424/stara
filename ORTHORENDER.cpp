@@ -1051,6 +1051,8 @@ bool __fastcall TWorld::RenderInformation(int type)
 
     glDisable( GL_FOG );
     glDisable( GL_LIGHTING );
+    if (!QGlobal::bSCNLOADED) QGlobal::gtc2 = GetTickCount();
+    if (!QGlobal::bSCNLOADED) QGlobal::lsec = QGlobal::gtc2 - QGlobal::gtc1;
 /*
 //if (TWorld::cph < 10)
 //    {
@@ -2944,30 +2946,24 @@ bool __fastcall TWorld::RenderFPS(double alpha)
 }
 
 
+// ***********************************************************************************************************
+// TRANSLUCENTNY FILTR LEKKO ZMIENIAJACY KONTRAST OBRAZU
+// ***********************************************************************************************************
 bool __fastcall TWorld::RenderFILTER(double alpha)
 {
     GWW = Global::iWindowWidth;
     GWH = Global::iWindowHeight;
     QGlobal::bTUTORIAL = false;
     QGlobal::bKEYBOARD = false;
+    QGlobal::bWATERMARK = false;
   //QGlobal::infotype = 0;
     float margin = 1;
     int pm = 0;
-//    if (!floaded) BFONT = new Font();
-//    if (!floaded) BFONT->loadf("none");
-//    floaded = true;
-
-//    glMatrixMode(GL_PROJECTION);
-//    glLoadIdentity();
-//    glOrtho(0, Global::iWindowWidth, Global::iWindowHeight, 0, -100, 100);
-//    glMatrixMode(GL_MODELVIEW);
-//    glLoadIdentity( );
 
     glDisable(GL_DEPTH_TEST);
     glDisable( GL_LIGHTING );
     glDisable( GL_FOG );
     glEnable( GL_TEXTURE_2D);
-//    BFONT->Begin();
 
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.20,0.20,0.20, alpha);
@@ -2982,11 +2978,8 @@ bool __fastcall TWorld::RenderFILTER(double alpha)
     glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+pm, margin,0);   // GORNY PRAWY
     glEnd( );
 
-     
- //    BFONT->End();
-
-    glColor4f(0.5,0.5,0.5, 0.35);
-    freetype::print(font12, 20, Global::iWindowHeight-1000, "FPS: %7.2f", QGlobal::fps);
+    glColor4f(0.7,0.7,0.7, 0.75);
+    freetype::print(font16, 20, Global::iWindowHeight-20, "FPS: %7.2f", QGlobal::fps);
     glEnable( GL_TEXTURE_2D );
     glEnable( GL_FOG );
     glEnable( GL_LIGHTING );
@@ -2995,11 +2988,15 @@ bool __fastcall TWorld::RenderFILTER(double alpha)
 }
 
 
+// ***********************************************************************************************************
+// RENDEROWANIE POTWIERDZENIA WYJSCIA Z APLIKACJI
+// ***********************************************************************************************************
 bool __fastcall TWorld::RenderEXITQUERY(double alpha)
 {
     QGlobal::bTUTORIAL = false;
     QGlobal::bKEYBOARD = false;
     QGlobal::bWATERMARK = false;
+    QGlobal::bscrfilter = false;
     QGlobal::infotype = 0;
     float margin = 1;
 
@@ -3032,10 +3029,14 @@ bool __fastcall TWorld::RenderEXITQUERY(double alpha)
 }
 
 
+// ***********************************************************************************************************
+// RENDEROWANIE ZNAKU WODNEGO
+// ***********************************************************************************************************
 bool __fastcall TWorld::RenderWATERMARK(double alpha)
 {
     QGlobal::bTUTORIAL = false;
     QGlobal::bKEYBOARD = false;
+    QGlobal::bscrfilter = false;
     QGlobal::infotype = 0;
     float margin = 1;
 
@@ -3052,7 +3053,6 @@ bool __fastcall TWorld::RenderWATERMARK(double alpha)
     glTexCoord2f(1, 0); glVertex3i(Global::iWindowWidth-margin+0, Global::iWindowHeight-margin,0); // DOLNY PRAWY
     glTexCoord2f(1, 1); glVertex3i(Global::iWindowWidth-margin+0, margin,0);   // GORNY PRAWY
     glEnd( );
-
 
     glColor4f(0.5, 0.5, 0.5, 0.35);
     freetype::print(font12, 20, Global::iWindowHeight-980, "FPS: %7.2f", QGlobal::fps);
@@ -3098,11 +3098,13 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
 {
   QGlobal::bTUTORIAL = false;
   QGlobal::bKEYBOARD = false;
+  
 
   float margin = 1;
   float sh = Global::iWindowHeight;
   int lc = QGlobal::CONSISTF->Count;
   int iWH = Global::iWindowHeight;
+  int iWW = Global::iWindowWidth;
   AnsiString asTrainNumber, asVechName;
 
   if (Controlled) asTrainNumber = Controlled->asTrainNumber;
@@ -3928,7 +3930,6 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   if (num == 9)  // PANEL 5 - INFORMACJE O NAJBLIZSZYM POJEZDZIE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
     glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
-    //freetype::print(font16, 10, Global::iWindowHeight-20, "INFORMACJE O WERSJI I OpenGL");
 
     int posy = 20;
 
@@ -3949,6 +3950,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
 
         freetype::print(font10, 10, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText02)).c_str());
         freetype::print(font10, 10, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText03)).c_str());
+        freetype::print(font14, iWW-100, iWH-(20), "FPS: %7.2f", QGlobal::fps);
      }
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

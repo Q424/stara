@@ -114,6 +114,7 @@ USEUNIT("orthorender.cpp");
 USEUNIT("effects2d.cpp");
 USEUNIT("submodelsops.cpp");
 USEUNIT("dynamicmodules.cpp");
+USEUNIT("env_SNOW.cpp");
 USEFORM("frm_debugger.cpp", DEBUGGER);
 //---------------------------------------------------------------------------
 #include "World.h"
@@ -1175,10 +1176,13 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
                 if (test == "swtchbllst") QGlobal::bAUTOSWITCHBALLAST = atoi(par1.c_str());
                 if (test == "env_sky001") QGlobal::bRENDERSKY1 = atoi(par1.c_str());
                 if (test == "env_sky002") QGlobal::bRENDERSKY2 = atoi(par1.c_str());
-                if (test == "env_clouds") QGlobal::bRENDERCLDS = atoi(par1.c_str());
-                if (test == "env_rain") QGlobal::bRENDERRAIN = atoi(par1.c_str());
-                if (test == "env_sun") QGlobal::bRENDERSUN = atoi(par1.c_str());
-                if (test == "env_moon") QGlobal::bRENDERMOON = atoi(par1.c_str());
+                if (test == "env--cloud") QGlobal::bRENDERCLDS = atoi(par1.c_str());
+                if (test == "env---rain") QGlobal::bRENDERRAIN = atoi(par1.c_str());
+                if (test == "env---snow") QGlobal::bRENDERSNOW = atoi(par1.c_str());
+                if (test == "env---sun1") QGlobal::bRENDERSUN = atoi(par1.c_str());
+                if (test == "env---moon") QGlobal::bRENDERMOON = atoi(par1.c_str());
+                if (test == "snowflakes") QGlobal::iSNOWFLAKES = atoi(par1.c_str());
+                if (test == "snowsquare") QGlobal::iSNOWSQUARE = atoi(par1.c_str());
                 if (test == "trwiresize") QGlobal::ftrwiresize = StrToFloat(Trim(par1));
                 if (test == "noisealpha") QGlobal::fnoisealpha = StrToFloat(Trim(par1));
                 if (test == "fovonstart") QGlobal::ffov = StrToFloat(Trim(par1));
@@ -1376,7 +1380,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     if (!CreateGLWindow(Global::asHumanCtrlVehicle.c_str(), Global::iWindowWidth, Global::iWindowHeight, Bpp, fullscreen))// create our OpenGL window
      return 0; // quit if window was not created
 
-    //SetForegroundWindow(hWnd);
+    SetForegroundWindow(hWnd);
     SetFocus(hWnd);
 
     // CreateGLWindow() -> InitGL() - > World.Init() -> World.RenderMenu() -> (World.Load()

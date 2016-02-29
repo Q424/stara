@@ -821,8 +821,8 @@ void TTrack::Load(cParser *parser, vector3 pOrigin, AnsiString name)
         *parser >> token;
         str = AnsiString(token.c_str()); // tekstura podsypki || szyny
 
-        if (QGlobal::bRTIES) str = "1435mm/ballasts/" + str;
-        WriteLog("tex=" + str);
+        if (QGlobal::bRTIES) str = "1435mm/ballasts/" + str;   // jezeli podklady 3D wlaczone to tejstury podsypki w wersji bez podkladow
+
         TextureID2 = (str == "none" ? 0 : TTexturesManager::GetTextureID( szTexturePath, szSceneryPath, str.c_str(),
                                               (eType == tt_Normal) ? Global::iBallastFiltering : Global::iRailProFiltering));
         parser->getTokens(3);

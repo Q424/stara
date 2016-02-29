@@ -18,6 +18,7 @@ http://mozilla.org/MPL/2.0/.
 #include "MdlMngr.h"
 #include "Globals.h"
 #include "sky.h"
+#include "env_snow.h"
 #include "screen.h"
 #include "freetype.h"
 
@@ -110,7 +111,7 @@ class TWorld
     bool __fastcall renderpointerx(double sizepx, int sw, int sh);
     bool __fastcall RenderRain(float rf, float s, int d, int m);
     bool __fastcall RenderSnow();
-    bool __fastcall SnowInit();
+    bool __fastcall SnowInit(int snowflakesnum, float size);
     bool __fastcall setBR(int x, int y, int w, int h);
   private:
     AnsiString OutText01; // teksty na ekranie
@@ -175,6 +176,7 @@ AnsiString LDR_STR_FRST;
     GLuint base; // numer DL dla znaków w napisach
     GLuint light; // numer tekstury dla smugi
     TSky Clouds;
+    TSnow SNOW;
     TEvent *KeyEvents[10]; // eventy wyzwalane z klawiaury
     TMoverParameters *mvControlled; // wskaŸnik na cz³on silnikowy, do wyœwietlania jego parametrów
     int iCheckFPS; // kiedy znów sprawdziæ FPS, ¿eby wy³¹czaæ optymalizacji od razu do zera

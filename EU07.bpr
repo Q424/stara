@@ -15,7 +15,7 @@
       Float3d.obj Classes.obj Driver.obj Names.obj Console.obj Mover.obj 
       Console\PoKeys55.obj Forth.obj Console\LPT.obj qutils.obj modelpreview.obj 
       freetype.obj screen.obj menu\bitmap_Font.obj orthorender.obj effects2d.obj 
-      submodelsops.obj dynamicmodules.obj frm_debugger.obj"/>
+      submodelsops.obj dynamicmodules.obj env_SNOW.obj frm_debugger.obj"/>
     <RESFILES value="EU07.res"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>

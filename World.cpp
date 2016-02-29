@@ -36,6 +36,7 @@ http://mozilla.org/MPL/2.0/.
 #include "freetype.h"		// Header for our little font library.
 #include "effects2d.h"
 #include "frm_debugger.h"
+#include "env_snow.h"
 
 #define TEXTURE_FILTER_CONTROL_EXT 0x8500
 #define TEXTURE_LOD_BIAS_EXT 0x8501
@@ -362,6 +363,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     QGlobal::mousesymbol = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/ismouse.bmp").c_str());
     QGlobal::semlight = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlight.bmp").c_str());
     QGlobal::semlense = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlense.bmp").c_str());
+    QGlobal::texturetab[2] = TTexturesManager::GetTextureID("../data/", Global::asCurrentTexturePath.c_str(),AnsiString("data/gfxs/snow.bmp").c_str());
 
     Global::LoadStationsBase(); // Q 030116: Wczytywanie informacji o stacjach ( POWINNO BYC ZALEZNE OD SCENERII )
 
@@ -642,7 +644,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
 {
     Timer::ResetTimers();
     hWnd = NhWnd;
-    if (QGlobal::bSPLASHSCR) RenderSPLASHSCR(hDC, 77, "SS", 1)  // Pierwsza czesc splasha (7s)
+    if (QGlobal::bSPLASHSCR) RenderSPLASHSCR(hDC, 77, "SS", 1);  // Pierwsza czesc splasha (7s)
   //if (QGlobal::bSPLASHSCR) RenderLoaderU(hDC, 77, "SS");     // Zaraz po splashu stopniowe wylonienie sie z czerni ekranu wczytywania
 
     RenderLoader(hDC, 77, "...");
@@ -677,6 +679,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     WriteLog("Ground init");
 
     Ground.Init(Global::szSceneryFile, hDC);
+    SNOW.Init(QGlobal::iSNOWFLAKES, QGlobal::iSNOWSQUARE);                     // 52000, 500
     //    Global::tSinceStart= 0;
     WriteLog("Ground init OK");
     WriteLog("");
@@ -839,6 +842,15 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
 };
 
 
+// ***********************************************************************************************************
+// USTAWIENIE IDENTYFIKATORA PANELU INFORMACYJNEGO
+// ***********************************************************************************************************
+void SETINFOTYPE(int it)
+{
+  QGlobal::infotype = it;
+  QGlobal::bWATERMARK = false;
+}
+
 
 // ***********************************************************************************************************
 // OBSLUGA WCISNIECIA KLAWISZY W ROZNYCH KOMBINACJACH
@@ -870,8 +882,8 @@ void TWorld::OnKeyDown(int cKey)
  if (Console::Pressed(VK_SLEEP)) WriteLog("VK_SLEEP");
  if (Console::Pressed(VK_LAUNCH_APP1)) WriteLog("VK_LAUNCH_APP1");
  if (Console::Pressed(VK_LAUNCH_APP2)) WriteLog("VK_LAUNCH_APP2");
-
  if (Console::Pressed(VK_RMENU)) WriteLog("R ALT");                             // PRAWY ALT
+ 
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('f'))) QGlobal::bscrfilter = !QGlobal::bscrfilter;
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('n'))) QGlobal::bscrnoise = !QGlobal::bscrnoise;
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('w'))) QGlobal::bWATERMARK = !QGlobal::bWATERMARK;
@@ -933,23 +945,23 @@ void TWorld::OnKeyDown(int cKey)
     }
 
 
-      if (Console::Pressed(VK_LBUTTON) && cKey == '0') QGlobal::infotype = 0;
-      if (Console::Pressed(VK_LBUTTON) && cKey == '1') QGlobal::infotype = 1;
-      if (Console::Pressed(VK_LBUTTON) && cKey == '2') QGlobal::infotype = 2;
-      if (Console::Pressed(VK_LBUTTON) && cKey == '3') QGlobal::infotype = 3;
-      if (Console::Pressed(VK_LBUTTON) && cKey == '4') QGlobal::infotype = 4;
-      if (Console::Pressed(VK_LBUTTON) && cKey == '5') QGlobal::infotype = 5;
-      if (Console::Pressed(VK_LBUTTON) && cKey == '6') QGlobal::infotype = 6;
-      if (Console::Pressed(VK_LBUTTON) && cKey == '7') QGlobal::infotype = 7;
-      if (Console::Pressed(VK_LBUTTON) && cKey == '8') QGlobal::infotype = 8;
-      if (Console::Pressed(VK_LBUTTON) && cKey == '9') QGlobal::infotype = 9;
-      if (Console::Pressed(VK_LBUTTON) && cKey == 'A') QGlobal::infotype = 10;
-      if (Console::Pressed(VK_LBUTTON) && cKey == 'B') QGlobal::infotype = 11;
-      if (Console::Pressed(VK_LBUTTON) && cKey == 'C') QGlobal::infotype = 12;
-      if (Console::Pressed(VK_LBUTTON) && cKey == 'D') QGlobal::infotype = 13;
-      if (Console::Pressed(VK_LBUTTON) && cKey == 'E') QGlobal::infotype = 14;
-      if (Console::Pressed(VK_LBUTTON) && cKey == 'F') QGlobal::infotype = 15;
-  //    if (Console::Pressed(VK_LBUTTON) && cKey  > '0') Global::iTextMode = -999;
+      if (Console::Pressed(VK_LBUTTON) && cKey == '0') SETINFOTYPE(0);
+      if (Console::Pressed(VK_LBUTTON) && cKey == '1') SETINFOTYPE(1);
+      if (Console::Pressed(VK_LBUTTON) && cKey == '2') SETINFOTYPE(2);
+      if (Console::Pressed(VK_LBUTTON) && cKey == '3') SETINFOTYPE(3);
+      if (Console::Pressed(VK_LBUTTON) && cKey == '4') SETINFOTYPE(4);
+      if (Console::Pressed(VK_LBUTTON) && cKey == '5') SETINFOTYPE(5);
+      if (Console::Pressed(VK_LBUTTON) && cKey == '6') SETINFOTYPE(6);
+      if (Console::Pressed(VK_LBUTTON) && cKey == '7') SETINFOTYPE(7);
+      if (Console::Pressed(VK_LBUTTON) && cKey == '8') SETINFOTYPE(8);
+      if (Console::Pressed(VK_LBUTTON) && cKey == '9') SETINFOTYPE(9);
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'A') SETINFOTYPE(10);
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'B') SETINFOTYPE(11);
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'C') SETINFOTYPE(12);
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'D') SETINFOTYPE(13);
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'E') SETINFOTYPE(14);
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'F') SETINFOTYPE(15);
+  //  if (Console::Pressed(VK_LBUTTON) && cKey  > '0') Global::iTextMode = -999;
 
     if ((cKey <= '9') ? (cKey >= '0') : false) // klawisze cyfrowe
     {
@@ -2151,7 +2163,7 @@ bool TWorld::Render()
       
     if (!Global::bWireFrame)
     { // bez nieba w trybie rysowania linii
-        glDisable(GL_FOG);
+      //  glDisable(GL_FOG);
         Clouds.Render();
         glEnable(GL_FOG);
     }
@@ -2171,6 +2183,8 @@ bool TWorld::Render()
         if (!Ground.RenderAlphaDL(Camera.Pos)) return false;
         if (!Ground.RenderAlpha2DL(Camera.Pos)) return false;
     }
+
+    if (QGlobal::bRENDERSNOW) SNOW.Render();
 
     TSubModel::iInstance = (int)(Train ? Train->Dynamic() : 0);                 //¿eby nie robiæ cudzych animacji
 
@@ -2195,10 +2209,11 @@ bool TWorld::Render()
         if (QGlobal::bWIREFRAMETRACK) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
         if (QGlobal::bEXITQUERY) RenderEXITQUERY(0.50f);
         if (QGlobal::bWATERMARK) RenderWATERMARK(0.30f);
-        if (QGlobal::infotype >= 0) RenderINFOPANEL(QGlobal::infotype, QGlobal::GUITUTOPAC);
-
         if (QGlobal::bscrfilter) RenderFILTER(0.15f);
-        if (QGlobal::bscrnoise) drawNoise(1, QGlobal::fnoisealpha);             // W efects2d.cpp
+        if (QGlobal::bscrnoise) drawNoise(1, QGlobal::fnoisealpha);                             // W efects2d.cpp
+        if (QGlobal::infotype ) RenderINFOPANEL(QGlobal::infotype, QGlobal::GUITUTOPAC);
+
+
 
      }
 

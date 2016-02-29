@@ -1850,8 +1850,8 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
 
     QGlobal::rtim += 1; //(rtim) / 1000 ;
 
-    QGlobal::gtc2 = GetTickCount();
-    QGlobal::lsec = QGlobal::gtc2 - QGlobal::gtc1;
+    //QGlobal::gtc2 = GetTickCount();
+    //QGlobal::lsec = QGlobal::gtc2 - QGlobal::gtc1;
 
 
  if (QGlobal::rtim > QGlobal::LDRREFRESH)

@@ -77,3 +77,5 @@ frm_debugger.~dfm
 McZapkie/_Mover.hpp
 frm_debugger.~dfm
 McZapkie/_Mover.hpp
+*.~dfm
+*.hpp

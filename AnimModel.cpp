@@ -629,26 +629,26 @@ void TAnimModel::RaPrepare()
 
        try  // w instrukcjach poni¿ej mo¿e coœ siê nie udaæ
        {
-        QGlobal::slc[i].blink = ((lsLights[i] == ls_Blink) && (lsLights[i]));
+        QGlobal::slc[i].blink = ((lsLights[i] == ls_Blink) );      // && (lsLights[i])
 
         if (QGlobal::slc[i].blink) LightsOn[i]->iVisible = false;
-        
-        if (LightsOn[i] != NULL)
-         if (LightsOn[i]->bISBLINK) LightsOn[i]->iVisible = false ;   // tu sie syupie
 
-        if (!QGlobal::slc[i].blink) 
-        if (LightsOn[i])
+        if (LightsOn[i] != NULL)
+         if (LightsOn[i]->bISBLINK) LightsOn[i]->iVisible = false;   // tu sie sypie
+
+        if (!QGlobal::slc[i].blink)
+          if (LightsOn[i])
             LightsOn[i]->iVisible = state;
-           
-       // if (LightsOff[i])
-       //     LightsOff[i]->iVisible = !state;
+
+        if (LightsOff[i])
+            LightsOff[i]->iVisible = !state;
 
         }
        catch(std::string obj)
        {
 
        }
-       
+
     }
     TSubModel::iInstance = (int)this; //¿eby nie robiæ cudzych animacji
     TSubModel::pasText = &asText; // przekazanie tekstu do wyœwietlacza (!!!! do przemyœlenia)
@@ -758,7 +758,7 @@ void TAnimModel::RenderAlpha2DL(vector3 *vPosition)
     RaPrepare();
     if (pModel) // renderowanie rekurencyjne submodeli
     {
-        pModel->RenderAlpha2(vPosition, &vAngle, ReplacableSkinId, iTexAlpha);
+      if (bISBLINK) pModel->RenderAlpha2(vPosition, &vAngle, ReplacableSkinId, iTexAlpha);   // RENDEROWANIE TYLKO DLA SWIATEL PULSUJACYCH
     }
 };
 
@@ -929,6 +929,12 @@ void TAnimModel::LightSet(int n, float v)
     if (n >= iMaxNumLights)
         return; // przekroczony zakres
     lsLights[n] = TLightState(int(v));
+
+// examples:
+//event (p1)_sem_ligh3 lights 0.0 (p1)  2 0 0 0 0 endevent
+//event (p1)_sem_ligh4 lights 0.0 (p1)  0 2 0 0 0 endevent
+//event (p1)_sem_ligh5 lights 0.0 (p1)  0 1 0 0 0 endevent
+
     switch (lsLights[n])
     { // interpretacja u³amka zale¿nie od typu
     case 0: // ustalenie czasu migotania, t<1s (f>1Hz), np. 0.1 => t=0.1 (f=10Hz)

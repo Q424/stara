@@ -64,6 +64,10 @@ float cfps = 0;
 float emm1[] = {1, 1, 1, 0};
 float emm2[] = {0, 0, 0, 1};
 
+
+// ***********************************************************************************************************
+// POSWIATA SWIATLA SEMAFORA
+// ***********************************************************************************************************
 void RenderProLight(double size, float h, bool blink, GLuint tid, float r, float g, float b)
 {
   cdrt = Timer::GetDeltaRenderTime();
@@ -94,7 +98,7 @@ void RenderProLight(double size, float h, bool blink, GLuint tid, float r, float
 
    glColor4f(r, g, b, tr);
 
-   // LIGHT
+   // SOCZEWKA KOMORY SEMAFORA
    glBindTexture(GL_TEXTURE_2D, tid);
    //-glPushMatrix();
    //-glTranslatef(0.01, -0.50, -0.01);
@@ -104,6 +108,8 @@ void RenderProLight(double size, float h, bool blink, GLuint tid, float r, float
    //glTexCoord2f(1.0f, 0.0f); glVertex3f( size, -size,  0.01);
    //glTexCoord2f(1.0f, 1.0f); glVertex3f( size,  size,  0.01);
    //glTexCoord2f(0.0f, 1.0f); glVertex3f(-size,  size,  0.01);
+
+
    // Back face
    glNormal3f( 0.0f, 0.0f,-0.5f);
    glTexCoord2f(1.0f, 0.0f); glVertex3f(-size, -size, -0.01);
@@ -121,7 +127,6 @@ void RenderProLight(double size, float h, bool blink, GLuint tid, float r, float
 
 
    // LENS
-
    //-glPushMatrix();
    //if (color == 1)glTranslatef(-1.58, h, 235.76);
    //if (color == 2)glTranslatef(-1.58, h, 235.78);
@@ -133,6 +138,7 @@ void RenderProLight(double size, float h, bool blink, GLuint tid, float r, float
    //glTexCoord2f(1.0f, 0.0f); glVertex3f( (size+0.25), -size+0.25,  0.01);
    //glTexCoord2f(1.0f, 1.0f); glVertex3f( (size+0.25),  size+0.25,  0.01);
    //glTexCoord2f(0.0f, 1.0f); glVertex3f(-(size+0.25),  size+0.25,  0.01);
+
    // Back face
    glNormal3f( 0.0f, 0.0f,-0.5f);
    glTexCoord2f(1.0f, 0.0f); glVertex3f(-(size+0.25), -(size+0.25), -0.01);

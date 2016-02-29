@@ -587,6 +587,8 @@ class QGlobal
  static int iRENDEREDSUBS;
  static int iSWITCHDIRECT;
  static int iSPLASHTIME;
+ static int iSNOWFLAKES;
+ static int iSNOWSQUARE;
 
  static double fscreenfade;
  static double fscreenfade2;
@@ -616,6 +618,12 @@ class QGlobal
  static GLuint bfonttex;
  static GLuint consolebackg;
  static GLuint SCRFILTER;
+ static GLuint sky1tex;
+ static GLuint sky2tex;
+ static GLuint texturetab[16];
+ static GLuint texsun1;
+ static GLuint texsun2;
+ static GLuint texsun3;
  static GLfloat selcolor[4];
  static GLuint semlight;
  static GLuint semlense;
