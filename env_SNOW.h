@@ -5,7 +5,14 @@
 
 #include "MdlMngr.h"
 
-
+enum TSnowType // rodzaj animacji
+{
+    sf_none,
+    sf_tri,
+    sf_poly,
+    sf_line,
+    sf_point
+};
 
 typedef struct{
    bool  active;
@@ -27,6 +34,7 @@ typedef struct{
    float xg,yg,zg;
    float alfa;
    float alfa_inc;
+   float r,g,b,a;
 } snows;
 
 
@@ -35,11 +43,14 @@ class TSnow
 {
 private:
 
-
+int type, blendf;
+bool color, text, light;
+float size;
+float rcf, rct, raf, rat;
 
 public:
- bool __fastcall Init(int snowflakesnum, float size);
- bool __fastcall Render();
+ bool Init(int stype, int sflakesnum, float sarea, float ssize, float srcf, float srct, float sraf, float srat, bool scolor, bool stex, bool slight, int sbf);
+ bool Render();
 };
 
 //---------------------------------------------------------------------------

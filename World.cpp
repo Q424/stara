@@ -63,6 +63,11 @@ TDynamicObject *DO;
 bool FOVSET;
 
 
+// ***********************************************************************************************************
+// DYM SPALIN Z OBIEKTU RUCHOMEGO
+// ***********************************************************************************************************
+
+
 
 
 // ***********************************************************************************************************
@@ -208,6 +213,9 @@ TWorld::TWorld()
 
     BRx = BRy = BRw = BRh = 0;
     QGlobal::gCOLOR4F = Color4(1.0, 1.0, 1.0, 1.0);
+
+
+
 }
 
 
@@ -328,6 +336,10 @@ double timex;
 // ***********************************************************************************************************
 bool TWorld::Init(HWND NhWnd, HDC hDC)
 {
+    if (FileExists("-forcescn.txt")) strcpy(Global::szSceneryFile, "elektrocieplownia_dobre-zima.scn");
+    if (FileExists("-forcescn.txt")) Global::asHumanCtrlVehicle = "sm42-1204";
+    if (FileExists("-forcescn.txt")) DeleteFile("-forcescn.txt");
+
     QGlobal::bISINTERNET = Global::CHECKINTERNET();
 
  //WriteLog("USTAWIANIE KATALOGU DLA ZRZUTOW EKRANU...");
@@ -364,8 +376,6 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     QGlobal::semlight = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlight.bmp").c_str());
     QGlobal::semlense = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlense.bmp").c_str());
     QGlobal::texturetab[2] = TTexturesManager::GetTextureID("../data/", Global::asCurrentTexturePath.c_str(),AnsiString("data/gfxs/snow.bmp").c_str());
-
-    Global::LoadStationsBase(); // Q 030116: Wczytywanie informacji o stacjach ( POWINNO BYC ZALEZNE OD SCENERII )
 
     WriteLog("");
     WriteLog("");
@@ -559,6 +569,8 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     glLineWidth(1.0f);
     WriteLog("glPointSize(2.0f);");
     glPointSize(2.0f);
+    WriteLog("glEnable(GL_ARB_point_sprite);");
+    glEnable(GL_ARB_point_sprite);
 
     // ----------- LIGHTING SETUP -----------
     // Light values and coordinates
@@ -669,7 +681,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
 
     RenderLoader(hDC, 77, "MODELMANAGER INITIALIZATION...");
     WriteLog("Models init");
-    // McZapkie: dodalem sciezke zeby mozna bylo definiowac skad brac modele ale to malo eleganckie
+ // McZapkie: dodalem sciezke zeby mozna bylo definiowac skad brac modele ale to malo eleganckie
  // TModelsManager::LoadModels(asModelsPatch);
     TModelsManager::Init();
     WriteLog("Models init OK");
@@ -679,8 +691,24 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     WriteLog("Ground init");
 
     Ground.Init(Global::szSceneryFile, hDC);
-    SNOW.Init(QGlobal::iSNOWFLAKES, QGlobal::iSNOWSQUARE);                     // 52000, 500
-    //    Global::tSinceStart= 0;
+
+    SNOW.Init(QGlobal::snow_type, QGlobal::snow_flakes, QGlobal::snow_area, QGlobal::snow_size, 0.1, 0.7, QGlobal::snow_sraf, QGlobal::snow_srat, QGlobal::snow_color, QGlobal::snow_tex, QGlobal::snow_light, QGlobal::snow_blend);  // flakes, area, psize, type, randcolor f, randcolor t, randalfa f, randalfa t,  color, tex, blendf
+
+    // z config.txt - QGlobal::iSNOWFLAKES, QGlobal::iSNOWSQUARE
+    
+  //vector3 sem;
+  //sem = vector3(5, 1, 460);
+  //QGlobal::sec[0].setSmoke(sem, 0.40, 1.02, 0.02, 0.06, 0, 0.2, 30.0, 1, 50);
+  //sem = vector3(6, 0, 461);
+  //QGlobal::sec[1].setSmoke(sem, 0.21, 0.60, 0.01, 0.04, 0, 0.2, 10.0, 1, 30);
+  //sem = vector3(-384.5, 100, 994);
+  //QGlobal::sec[2].setSmoke(sem, 1.80, 2.92, 0.07, 0.28, 0, 0.2, 85.0, 4, 50);
+  //sem = vector3(-406.5, 100, 984);
+  //QGlobal::sec[3].setSmoke(sem, 0.80, 2.12, 0.03, 0.10, 0, 0.5, 23.0, 4, 50);
+  //Global::LoadStationsBase(); // Q 030116: Wczytywanie informacji o stacjach ( POWINNO BYC ZALEZNE OD SCENERII )
+
+
+  //Global::tSinceStart= 0;
     WriteLog("Ground init OK");
     WriteLog("");
 
@@ -2131,6 +2159,9 @@ if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
 // *****************************************************************************
 bool TWorld::Render()
 {
+  //updateSmokeC();
+  //  updateFire();
+
   //QGlobal::iRENDEREDTIES = 0;
     glColor3b(255, 255, 255);
     glMatrixMode(GL_PROJECTION);
@@ -2183,6 +2214,32 @@ bool TWorld::Render()
         if (!Ground.RenderAlphaDL(Camera.Pos)) return false;
         if (!Ground.RenderAlpha2DL(Camera.Pos)) return false;
     }
+
+
+    glDisable(GL_LIGHTING);
+    glDisable(GL_LIGHT0);
+    Global::rendersmokeem();
+    Global::renderfireem();
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    
+//    TDynamicObject *DO;
+//    TGroundNode *pdyn;
+//    pdyn = Global::pGround->DynamicFindAny("sm42-284");                       // znajdz wskaznik na pojazd znajac nazwe z tablicy entrypointow
+//    if (pdyn != NULL) DO = pdyn->DynamicObject;
+//    if (DO != NULL)
+//     {
+//      glDisable(GL_LIGHTING);
+//      glDisable(GL_LIGHT0);
+//      DO->pSmokeEmitter1 = vector3(0, 4, -1.3);
+//      vector3 em = DO->GetGlobalElementPositionB(DO->pSmokeEmitter1, DO, 0.001);
+//    //updateSmokeC(em);
+//    //drawSmokeC();
+//      glEnable(GL_LIGHTING);
+//      glEnable(GL_LIGHT0);
+//     }
+
+
 
     if (QGlobal::bRENDERSNOW) SNOW.Render();
 

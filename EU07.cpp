@@ -115,6 +115,9 @@ USEUNIT("effects2d.cpp");
 USEUNIT("submodelsops.cpp");
 USEUNIT("dynamicmodules.cpp");
 USEUNIT("env_SNOW.cpp");
+USEUNIT("pixmap.cpp");
+USEUNIT("rgbtexture.cpp");
+USEUNIT("particlesys1.cpp");
 USEFORM("frm_debugger.cpp", DEBUGGER);
 //---------------------------------------------------------------------------
 #include "World.h"

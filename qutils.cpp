@@ -782,6 +782,19 @@ float getRandomMinMax( float fMin, float fMax )
     return fMin + (fMax - fMin) * fRandNum;
 }
 
+float random(float a, float b)
+{
+	return a + rand()/(float)RAND_MAX * (b-a);
+}
+
+float random(){
+	return rand()/(float)RAND_MAX;
+}
+
+float length(float v[3])
+{
+	return (float)sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+}
 
 //-----------------------------------------------------------------------------
 // Name: getRandomVector()

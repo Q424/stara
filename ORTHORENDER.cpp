@@ -3363,7 +3363,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
     int posy = 60;
     for (int l = 0; l<lc; l++)
     {
-     glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+     glColor4f(0.9f, 0.9f, 0.1f, 0.9f);
      //freetype::print(font16, 10, Global::iWindowHeight-20, AnsiString("INFORMACJE O SKLADZIE POCIAGU " + Controlled->asTrainNumber).c_str());
      freetype::print(font10, 10, Global::iWindowHeight-posy, QGlobal::CONSISTF->Strings[l].c_str());
      posy+= 20;
@@ -3376,7 +3376,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   if (num == 2)  // PANEL 2 - INFORMACJE O STACJI ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
     int posy = 160;
-    glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+    glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
     //freetype::print(font16, 10, Global::iWindowHeight-20, "INFORMACJE O STACJI");
 
     if (QGlobal::iSTATIONPOSINTAB > -1)    // QGlobal::iSTATIONPOSINTAB wyciagane jest w TWorld::Update()
@@ -3503,7 +3503,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
     char nextpoint[75];
     AnsiString np;
 
-    glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+    glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
     //freetype::print(font16, 10, Global::iWindowHeight-20, "INFORMACJE O NASTEPNEJ STACJI");
 
     if( Global::iPause) printf(p, " - paused") ;
@@ -3545,7 +3545,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
     char nextpoint[75];
     AnsiString np;
 
-    glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+    glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
     //freetype::print(font16, 10, Global::iWindowHeight-20, "INFORMACJE O NAJBLIZSZYM POJEZDZIE");
 
 
@@ -3912,7 +3912,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   if (num == 8)  // PANEL 8 - IKLAWISZOLOGIA POJAZDU ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
     int posy = 60;
-    glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+    glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
     //freetype::print(font16, 10, Global::iWindowHeight-20, "KLAWISZOLOGIA POJAZDU");
 
     glColor4f(0.8f, 0.8f, 0.8f, 0.7f);
@@ -3957,7 +3957,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   if (num == 10)  // PANEL 8 - OPIS MISJI ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
     int posy = 60;
-    glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+    glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
     freetype::print(font16, 10, Global::iWindowHeight-20, "OPIS MISJI");
     bool odst;
     glColor4f(0.8f, 0.8f, 0.8f, 0.7f);

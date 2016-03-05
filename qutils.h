@@ -18,7 +18,6 @@
 
 const std::string X2985Z457 =":rdP{s";
 
-
 void drawcube(float size, float r, float g, float b);
 int ParseCommandline1();
 int ParseCommandline2();
@@ -54,6 +53,10 @@ bool LISTGLEXTENSIONS();
 void SelectComPort();
 float getRandomMinMax( float fMin, float fMax );
 vector3 getRandomVector( void );
+float random(float a, float b);
+float random();
+float length(float v[3]);
+
 void Draw_SCENE000(double sx, double sy, double sz);
 bool getalphablendstate();
 bool setalphablendstate();

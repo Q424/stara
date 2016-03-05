@@ -192,6 +192,7 @@ class TDynamicObject
     vector3 elementSHK;
     vector3 elementPOS;
     vector3 elementVEL;
+    vector3 pSmokeEmitter1;
     vector3 GetGlobalElementPositionA(vector3 localpos);
     vector3 GetGlobalElementPositionB(vector3 localpos, TDynamicObject *DO, double dt);
 

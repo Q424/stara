@@ -153,7 +153,7 @@ bool QGlobal::bFADEOFFP = false;
 bool QGlobal::bRENDERSKY1 = true;
 bool QGlobal::bRENDERSKY2 = true;
 bool QGlobal::bRENDERRAIN = true;
-bool QGlobal::bRENDERSNOW = true;
+bool QGlobal::bRENDERSNOW = false;
 bool QGlobal::bRENDERCLDS = true;
 bool QGlobal::bRENDERSUN = true;
 bool QGlobal::bRENDERMOON = true;
@@ -267,7 +267,6 @@ stationscontainer QGlobal::station[MAXSTATIONS];
 pentrypointscontainer QGlobal::PEP[MAXPASSENGERENTYPOINTS];
 semlightcontainer QGlobal::slc[128];
 int QGlobal::currententrypoint = 0;
-backgroundrect QGlobal::BR;
 
 float QGlobal::rekrot3_rot = 0.0;
 float QGlobal::rekrot3_time = 0.0;
@@ -278,6 +277,20 @@ Color4 QGlobal::lfipc;
 TModel3d *QGlobal::mdTIEh = NULL;
 TModel3d *QGlobal::mdTIEl = NULL;
 TTrack *QGlobal::pTrack = NULL;
+
+ // SNOW GLOBAL VARS
+  long QGlobal::snow_type = 1;
+  long QGlobal::snow_flakes = 35000;
+ float QGlobal::snow_area = 150;
+ float QGlobal::snow_size = 0.08f;
+ float QGlobal::snow_srcf = 0.1f;
+ float QGlobal::snow_srct = 0.7f;
+ float QGlobal::snow_sraf = 0.2f;
+ float QGlobal::snow_srat = 0.7f;
+  bool QGlobal::snow_color = true;
+  bool QGlobal::snow_tex = false;
+  bool QGlobal::snow_light = true;
+  long QGlobal::snow_blend = 1;
 
 // parametry do u¿ytku wewnêtrznego
 // double Global::tSinceStart=0;

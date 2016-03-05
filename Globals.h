@@ -15,13 +15,19 @@ http://mozilla.org/MPL/2.0/.
 
 #include <Classes.hpp> // TStringList
 #include <string>
+#include <fstream>
+#include <sstream>
+#include <istream>
+#include <iostream>
+
 #include "system.hpp"
 #include "opengl/glew.h"
 #include "dumb3d.h"
 #include "Logs.h"
 #include "model3d.h"
 #include "ground.h"
-//#include "world.h"
+#include "particlesys1.h"
+
 
 #define PI 3.1415926535897f
 #define DTOR (PI/180.0f)
@@ -30,6 +36,7 @@ http://mozilla.org/MPL/2.0/.
 #define MAXPASSENGERENTYPOINTS 512
 
 using namespace Math3D;
+
 
 typedef struct {
 	GLboolean blendEnabled;
@@ -77,14 +84,6 @@ struct semlightcontainer
   bool blink;
 };
 
-struct backgroundrect
-{
-  int x;
-  int y;
-  int w;
-  int h;
-};
-
 
 struct a
 {
@@ -100,6 +99,7 @@ struct a
 };
 
 int a::sort_by = 1;// default will be to sort by num1
+
 
 
 // DEFINICJE ELEMENTOW KABINY
@@ -634,7 +634,6 @@ class QGlobal
  static pentrypointscontainer PEP[MAXPASSENGERENTYPOINTS];
  static semlightcontainer slc[128];
  static int currententrypoint;
- static backgroundrect BR;
 
  static float rekrot3_rot;
  static float rekrot3_time;
@@ -645,6 +644,21 @@ class QGlobal
  static TModel3d *mdTIEh;
  static TModel3d *mdTIEl;
  static TTrack *pTrack;
+
+ // SNOW GLOBAL VARS
+ static  long snow_type;
+ static  long snow_flakes;
+ static float snow_area;
+ static float snow_size;
+ static float snow_srcf;
+ static float snow_srct;
+ static float snow_sraf;
+ static float snow_srat;
+ static  bool snow_color;
+ static  bool snow_tex;
+ static  bool snow_light;
+ static  long snow_blend;
+
 };
 
 class Global
@@ -818,6 +832,9 @@ class Global
     static bool CHECKINTERNET();
     static void divideline(AnsiString line, TStringList *sl, int ll);
     static void SENDLOGTOFTP(AnsiString DATE);
+
+    static void rendersmokeem();
+    static void renderfireem();
 };
 
 //---------------------------------------------------------------------------

@@ -1783,6 +1783,7 @@ TDynamicObject::TDynamicObject()
         0; // Ra 2F1H: prowizorka, trzeba przechowaæ napiêcie, ¿eby nie wywala³o WS pod izolatorem
     fAdjustment = 0.0; // korekcja odleg³oœci pomiêdzy wózkami (np. na ³ukach)
     iDOORS = 0;
+    pSmokeEmitter1 = vector3(0,5,5);
 }
 
 TDynamicObject::~TDynamicObject()

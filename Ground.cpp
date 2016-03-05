@@ -3030,6 +3030,106 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
                 parser >> token;
             }
         }
+        else if (str == AnsiString("snow"))
+        {
+            WriteLog("Scenery snow definition");
+  
+            QGlobal::bRENDERSNOW = true;
+            parser.getTokens(2);
+            parser >> QGlobal::snow_type >> QGlobal::snow_flakes;
+            parser.getTokens(6);
+            parser >> QGlobal::snow_area >> QGlobal::snow_size >> QGlobal::snow_srcf >> QGlobal::snow_srct >> QGlobal::snow_sraf >> QGlobal::snow_srat;
+            parser.getTokens(3);
+            parser >> QGlobal::snow_color >> QGlobal::snow_tex >> QGlobal::snow_light >> QGlobal::snow_blend;
+
+            if (QGlobal::snow_flakes > 150000) QGlobal::snow_flakes = 150000;
+            if (QGlobal::snow_area > 2000) QGlobal::snow_area = 2000;
+            if (QGlobal::snow_size > 0.2) QGlobal::snow_size = 0.2;
+            if (QGlobal::snow_blend > 2) QGlobal::snow_blend = 1;
+            if (QGlobal::snow_type > 4) QGlobal::snow_type = 1;
+            
+            parser.getTokens();
+            parser >> token;
+            while (token.compare("endsnow") != 0)
+            { // a kolejne parametry s¹ pomijane
+                parser.getTokens();
+                parser >> token;
+            }
+        }
+        else if (str == AnsiString("smokeem-a"))
+        {
+            WriteLog("Scenery smoke definition");
+
+            float rmaxdist, sizemin, sizemax, speedmin, speedmax, spinspeedmin, spinspeedmax, maxdist, rcolorf, rcolort, opacity;
+            int seedingspeed, ts;
+            vector3 sem;
+            parser.getTokens();
+            parser >> sem.x;
+            parser.getTokens();
+            parser >> sem.y;
+            parser.getTokens();
+            parser >> sem.z;
+
+            parser.getTokens(11);
+            parser >> rmaxdist >> sizemin >> sizemax >> speedmin >> speedmax >> spinspeedmin >> spinspeedmax >> maxdist >> rcolorf >> rcolort >> opacity;
+            parser.getTokens(2);
+            parser >> seedingspeed >> ts;
+
+            //if (QGlobal::snow_flakes > 150000) QGlobal::snow_flakes = 150000;
+            //if (QGlobal::snow_area > 2000) QGlobal::snow_area = 2000;
+            //if (QGlobal::snow_size > 0.2) QGlobal::snow_size = 0.2;
+            //if (QGlobal::snow_blend > 2) QGlobal::snow_blend = 1;
+            //if (QGlobal::snow_type > 4) QGlobal::snow_type = 1;
+
+            if (PSYS::smoke_tid < 64)
+            PSYS::sec[PSYS::smoke_tid].setSmoke(sem, rmaxdist, sizemin, sizemax, speedmin, speedmax, spinspeedmin, spinspeedmax, maxdist, rcolorf, rcolort, opacity, seedingspeed, ts);
+
+
+            parser.getTokens();
+            parser >> token;
+            while (token.compare("endemitter") != 0)
+            { // a kolejne parametry s¹ pomijane
+                parser.getTokens();
+                parser >> token;
+            }
+        }
+        else if (str == AnsiString("fireem-a"))
+        {
+            WriteLog("Scenery fire definition");
+
+            float rmaxdist, sizemin, sizemax, speedmin, speedmax, spinspeedmin, spinspeedmax, maxdist, rcolorf, rcolort, opacity;
+            int seedingspeed, ts;
+            vector3 sem;
+            parser.getTokens();
+            parser >> sem.x;
+            parser.getTokens();
+            parser >> sem.y;
+            parser.getTokens();
+            parser >> sem.z;
+
+            parser.getTokens(11);
+            parser >> rmaxdist >> sizemin >> sizemax >> speedmin >> speedmax >> spinspeedmin >> spinspeedmax >> maxdist >> rcolorf >> rcolort >> opacity;
+            parser.getTokens(2);
+            parser >> seedingspeed >> ts;
+
+            if (rmaxdist > 1000.0) rmaxdist = 1000.0f;
+            if (sizemin  >  5.0) sizemin = 5.0f;
+            if (sizemax  >  5.0) sizemax = 5.0f;
+            if (maxdist  > 15.0) maxdist = 15.0f;
+            if (seedingspeed  > 10.0) seedingspeed = 10.0f;
+            if (ts > 100) ts = 100;
+
+            if (PSYS::fire_tid < 32)
+            PSYS::fec[PSYS::fire_tid].setsFire(sem, rmaxdist, sizemin, sizemax, speedmin, speedmax, spinspeedmin, spinspeedmax, maxdist, rcolorf, rcolort, opacity, seedingspeed, ts);
+
+            parser.getTokens();
+            parser >> token;
+            while (token.compare("endemitter") != 0)
+            { // a kolejne parametry s¹ pomijane
+                parser.getTokens();
+                parser >> token;
+            }
+        }
         else if (str == AnsiString("time"))
         {
             WriteLog("Scenery time definition");
