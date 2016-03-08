@@ -17,11 +17,12 @@ class TButton
 { // animacja dwustanowa, w³¹cza jeden z dwóch submodeli (jednego z nich mo¿e nie byæ)
   private:
     TSubModel *pModelOn, *pModelOff; // submodel dla stanu za³¹czonego i wy³¹czonego
-    bool bOn;
+
     int iFeedbackBit; // Ra: bit informacji zwrotnej, do wyprowadzenia na pulpit
     void Update();
 
   public:
+    bool bOn;
     TButton();
     ~TButton();
     void Clear(int i = -1);

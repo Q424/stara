@@ -27,13 +27,14 @@ http://mozilla.org/MPL/2.0/.
 #include "model3d.h"
 #include "ground.h"
 #include "particlesys1.h"
-
+#include "dllmwd/mwdevice.h"
 
 #define PI 3.1415926535897f
 #define DTOR (PI/180.0f)
 #define SQR(x) (x*x)
 #define MAXSTATIONS 64
 #define MAXPASSENGERENTYPOINTS 512
+
 
 using namespace Math3D;
 
@@ -431,6 +432,8 @@ class QModelInfo
 class QGlobal
 {
  public:
+ static HINSTANCE hDLL;
+ static cLib *DLL;
  static HDC glHDC;
  static HGLRC glHGLRC;
  static HWND glHWND;
@@ -659,6 +662,20 @@ class QGlobal
  static  bool snow_light;
  static  long snow_blend;
 
+ // MWD VARS
+ static std::string COM_port;
+ static bool  bLOGIT;
+ static bool  bOPCOM;
+ static float fmaxCH;
+ static float fmaxPG;
+ static float fmaxZG;
+ static float fmaxV1;
+ static float fmaxA1;
+ static float fanalog1min;
+ static float fanalog1max;
+ static float fanalog2min;
+ static float fanalog2max;
+ static float fMWDInEnable;
 };
 
 class Global

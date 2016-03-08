@@ -44,9 +44,9 @@ http://mozilla.org/MPL/2.0/.
 
 //using namespace Math3d
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // Q Globals
-// *****************************************************************************
+// ***********************************************************************************************************
 
 AnsiString QModelInfo::snearestobj       = "";
 AnsiString QModelInfo::sNI_file          = "";
@@ -64,6 +64,8 @@ float QModelInfo::fNI_posy           = 0.0;
 float QModelInfo::fNI_posz           = 0.0;
 bool QModelInfo::bnearestobjengaged = true;
 
+HINSTANCE QGlobal::hDLL = NULL;
+cLib *QGlobal::DLL;
 HDC QGlobal::glHDC=NULL;
 HGLRC QGlobal::glHGLRC=NULL;
 HWND QGlobal::glHWND=NULL;
@@ -278,7 +280,7 @@ TModel3d *QGlobal::mdTIEh = NULL;
 TModel3d *QGlobal::mdTIEl = NULL;
 TTrack *QGlobal::pTrack = NULL;
 
- // SNOW GLOBAL VARS
+// SNOW GLOBAL VARS
   long QGlobal::snow_type = 1;
   long QGlobal::snow_flakes = 35000;
  float QGlobal::snow_area = 150;
@@ -291,6 +293,23 @@ TTrack *QGlobal::pTrack = NULL;
   bool QGlobal::snow_tex = false;
   bool QGlobal::snow_light = true;
   long QGlobal::snow_blend = 1;
+
+// MWD VARS
+std::string QGlobal::COM_port = "none";
+ bool  QGlobal::bLOGIT = false;
+ bool  QGlobal::bOPCOM = false;
+ float QGlobal::fmaxCH = 1.0;
+ float QGlobal::fmaxPG = 1.0;
+ float QGlobal::fmaxZG = 1.6;
+ float QGlobal::fmaxV1 = 3600.0;
+ float QGlobal::fmaxA1 = 800.0;
+ float QGlobal::fanalog1min = 0;
+ float QGlobal::fanalog1max = 255;
+ float QGlobal::fanalog2min = 0;
+ float QGlobal::fanalog2max = 255;
+ float QGlobal::fMWDInEnable = 0;	//zablokowane prze³¹czniki i NEFy na pulpicie - nie blokuj¹ klawiatury
+
+
 
 // parametry do u¿ytku wewnêtrznego
 // double Global::tSinceStart=0;

@@ -31,6 +31,13 @@ class TWorld
     void DistantView();
 
   public:
+    bool manipinit(bool test);
+    bool manipgetv(bool get);
+    bool manipsetv(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, int n, int o, int p, int r, int s, int t, int u);
+    bool maniptest(bool checkit);
+    bool manipopen(char* commname, bool log);
+    bool manipsend(int id);
+    
     bool Init(HWND NhWnd, HDC hDC);
     bool Load(HWND NhWnd, HDC hDC);
     HWND hWnd;
@@ -50,6 +57,7 @@ class TWorld
     TWorld();
     ~TWorld();
     TSCREEN *SCR;
+  //cLib *DLL;
     static GLuint loaderbackg;
     static GLuint loaderbrief;
     static GLuint loaderlogo;

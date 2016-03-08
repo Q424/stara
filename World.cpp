@@ -38,6 +38,7 @@ http://mozilla.org/MPL/2.0/.
 #include "frm_debugger.h"
 #include "env_snow.h"
 
+
 #define TEXTURE_FILTER_CONTROL_EXT 0x8500
 #define TEXTURE_LOD_BIAS_EXT 0x8501
 //---------------------------------------------------------------------------
@@ -336,11 +337,15 @@ double timex;
 // ***********************************************************************************************************
 bool TWorld::Init(HWND NhWnd, HDC hDC)
 {
-    if (FileExists("-forcescn.txt")) strcpy(Global::szSceneryFile, "elektrocieplownia_dobre-zima.scn");
-    if (FileExists("-forcescn.txt")) Global::asHumanCtrlVehicle = "sm42-1204";
-    if (FileExists("-forcescn.txt")) DeleteFile("-forcescn.txt");
+    //if (FileExists("-forcescn.txt")) strcpy(Global::szSceneryFile, "elektrocieplownia_dobre-zima.scn");
+    //if (FileExists("-forcescn.txt")) Global::asHumanCtrlVehicle = "sm42-1204";
+    //if (FileExists("-forcescn.txt")) DeleteFile("-forcescn.txt");
 
     QGlobal::bISINTERNET = Global::CHECKINTERNET();
+
+    WriteLog("WCZYTYWANIE DEVICE.DLL...");
+    manipinit(1);                           // wywplywane z hardware.cpp
+
 
  //WriteLog("USTAWIANIE KATALOGU DLA ZRZUTOW EKRANU...");
     CreateDir(QGlobal::asAPPDIR + QGlobal::asSSHOTDIR);
@@ -2159,8 +2164,7 @@ if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
 // *****************************************************************************
 bool TWorld::Render()
 {
-  //updateSmokeC();
-  //  updateFire();
+    manipsend(1);
 
   //QGlobal::iRENDEREDTIES = 0;
     glColor3b(255, 255, 255);

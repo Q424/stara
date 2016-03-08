@@ -16,6 +16,10 @@
 #include <windows.h>
 #include "Model3d.h"
 
+#define SSTR( x ) dynamic_cast< std::ostringstream & >( \
+            ( std::ostringstream() << std::dec << x ) ).str()
+
+
 const std::string X2985Z457 =":rdP{s";
 
 void drawcube(float size, float r, float g, float b);

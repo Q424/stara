@@ -118,6 +118,7 @@ USEUNIT("env_SNOW.cpp");
 USEUNIT("pixmap.cpp");
 USEUNIT("rgbtexture.cpp");
 USEUNIT("particlesys1.cpp");
+USEUNIT("mwdevice.cpp");
 USEFORM("frm_debugger.cpp", DEBUGGER);
 //---------------------------------------------------------------------------
 #include "World.h"
@@ -1189,6 +1190,16 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
                 if (test == "trwiresize") QGlobal::ftrwiresize = StrToFloat(Trim(par1));
                 if (test == "noisealpha") QGlobal::fnoisealpha = StrToFloat(Trim(par1));
                 if (test == "fovonstart") QGlobal::ffov = StrToFloat(Trim(par1));
+
+                if (test == "mwdcomname") QGlobal::COM_port = par1.c_str();
+                if (test == "mwdopencom") QGlobal::bOPCOM = atoi(par1.c_str());
+                if (test == "mwdlogvars") QGlobal::bLOGIT = atoi(par1.c_str());
+                if (test == "mwdfmax_ch") QGlobal::fmaxCH = StrToFloat(Trim(par1));
+                if (test == "mwdfmax_pg") QGlobal::fmaxPG = StrToFloat(Trim(par1));
+                if (test == "mwdfmax_zg") QGlobal::fmaxZG = StrToFloat(Trim(par1));
+                if (test == "mwdfmax_v1") QGlobal::fmaxV1 = StrToFloat(Trim(par1));
+                if (test == "mwdfmax_a1") QGlobal::fmaxA1 = StrToFloat(Trim(par1));
+                if (test == "mwdinputon") QGlobal::fMWDInEnable = atoi(par1.c_str());
 
                 if (test == "font10file") QGlobal::font10file = Trim(par1);
                 if (test == "font11file") QGlobal::font11file = Trim(par1);
