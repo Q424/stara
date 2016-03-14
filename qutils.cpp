@@ -24,6 +24,36 @@
 //float emm2[] = {0, 0, 0, 1};
 char **argv = NULL;  // zmienna trzymajaca mocne argumenty
 
+double VECTORLEN2(vector3 P1, vector3 P2)
+{
+  float xDist = P1.x - P2.x;
+  float yDist = P1.y - P2.y;
+  float zDist = P1.z - P2.z;
+  float CamDistToEmitter = sqrt(SQR(zDist)+SQR(yDist)+SQR(xDist));
+  return CamDistToEmitter;
+}
+
+double VECTORLEN1(vector3 P1, vector3 P2)
+{
+ double vlen;
+ double vec1, vec2, vec3, paX, paY, paZ, pbX, pbY, pbZ;
+
+ if ((P1.x !=0) && (P1.y !=0) && (P2.x !=0) && (P2.y !=0))
+  {
+
+   vec1 = (P2.x-P1.x)*(P2.x-P1.x);  //1
+   vec2 = (P2.y-P1.y)*(P2.y-P1.y);  //3
+   vec3 = (P2.z-P1.z)*(P2.z-P1.z);
+
+   vlen  = sqrt(vec1 + vec2 + vec3);        // wynik powinien byc 3,16227766
+   return vlen;
+  }
+  else
+  {
+  return  0;
+  }
+}
+
 void drawcube(float size, float r, float g, float b)
 {
 //glBindTexture(GL_TEXTURE_2D, QGlobal::semlight);

@@ -28,6 +28,7 @@ http://mozilla.org/MPL/2.0/.
 #include "ground.h"
 #include "particlesys1.h"
 #include "dllmwd/mwdevice.h"
+#include "addons.h"
 
 #define PI 3.1415926535897f
 #define DTOR (PI/180.0f)
@@ -610,6 +611,8 @@ class QGlobal
  static float consistlen;
  static float fnoisealpha;
  static float fTIEMAXDIST;
+ static float emm1[];
+ static float emm2[];
 
  static GLuint reflecttex;
  static GLuint mousesymbol;
@@ -631,6 +634,8 @@ class QGlobal
  static GLuint semlight;
  static GLuint semlense;
  static Color4 gCOLOR4F;
+ static GLint blendSrc;
+ static GLint blendDst;
 
  static a array[MAXPASSENGERENTYPOINTS];
  static stationscontainer station[MAXSTATIONS];     // POWODUJE KRZACZENIE PODCZAS WYCHODZENIA???
@@ -652,6 +657,7 @@ class QGlobal
  static  long snow_type;
  static  long snow_flakes;
  static float snow_area;
+ static float snow_base;
  static float snow_size;
  static float snow_srcf;
  static float snow_srct;
@@ -852,6 +858,9 @@ class Global
 
     static void rendersmokeem();
     static void renderfireem();
+    static void renderfountainem(vector3 camera);
+    static void renderobstructlights(vector3 camera, double dt);
+  //static bool pobstructlightscontainer::setsObstructLights(char* scriptfile);
 };
 
 //---------------------------------------------------------------------------

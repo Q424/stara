@@ -239,7 +239,8 @@ float QGlobal::ftrwiresize = 1.2f;
 float QGlobal::consistlen = 0.0;
 float QGlobal::fnoisealpha = 0.06f;
 float QGlobal::fTIEMAXDIST = 100;
-
+float QGlobal::emm1[] = {1, 1, 1, 0};
+float QGlobal::emm2[] = {0, 0, 0, 1};
 
 GLuint QGlobal::reflecttex;
 GLuint QGlobal::mousesymbol;
@@ -261,6 +262,8 @@ GLfloat QGlobal::selcolor[4];
 GLuint QGlobal::semlight;
 GLuint QGlobal::semlense;
 Color4 QGlobal::gCOLOR4F;
+GLint QGlobal::blendSrc;
+GLint QGlobal::blendDst;
 
 char **QGlobal::argv = NULL;
 
@@ -284,6 +287,7 @@ TTrack *QGlobal::pTrack = NULL;
   long QGlobal::snow_type = 1;
   long QGlobal::snow_flakes = 35000;
  float QGlobal::snow_area = 150;
+ float QGlobal::snow_base = 150.0;
  float QGlobal::snow_size = 0.08f;
  float QGlobal::snow_srcf = 0.1f;
  float QGlobal::snow_srct = 0.7f;

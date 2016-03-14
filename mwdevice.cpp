@@ -121,7 +121,7 @@ byte SETBYTE1(bool b1, bool b2, bool b3, bool b4, bool b5, bool b6, bool b7, boo
 
 bool TWorld::manipopen(char* commname, bool log)
 {
- QGlobal::DLL->opencommp(commname, log);
+ if (QGlobal::bOPCOM) QGlobal::DLL->opencommp(commname, log);
 }
 
 

@@ -120,6 +120,10 @@ USEUNIT("rgbtexture.cpp");
 USEUNIT("particlesys1.cpp");
 USEUNIT("mwdevice.cpp");
 USEFORM("frm_debugger.cpp", DEBUGGER);
+
+USEUNIT("addons/fountain1/AirFountain.cpp");
+USEUNIT("addons/fountain1/poolvectors.cpp");
+USEUNIT("addons/fountain1/pool.cpp");
 //---------------------------------------------------------------------------
 #include "World.h"
 

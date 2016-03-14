@@ -16,7 +16,9 @@
       Console\PoKeys55.obj Forth.obj Console\LPT.obj qutils.obj modelpreview.obj 
       freetype.obj screen.obj menu\bitmap_Font.obj orthorender.obj effects2d.obj 
       submodelsops.obj dynamicmodules.obj env_SNOW.obj pixmap.obj rgbtexture.obj 
-      particlesys1.obj mwdevice.obj frm_debugger.obj"/>
+      particlesys1.obj mwdevice.obj frm_debugger.obj 
+      addons\fountain1\AirFountain.obj addons\fountain1\poolvectors.obj 
+      addons\fountain1\pool.obj"/>
     <RESFILES value="EU07.res"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
@@ -26,7 +28,7 @@
     <LIBRARIES value="dclocx50.bpi bcbsmp50.bpi VCLX50.lib bcbsmp50.lib Vcl50.lib"/>
     <SPARELIBS value="Vcl50.lib bcbsmp50.lib VCLX50.lib bcbsmp50.bpi dclocx50.bpi"/>
     <PACKAGES value="Vcl50.bpi Vclx50.bpi"/>
-    <PATHCPP value=".;opengl;Console;menu"/>
+    <PATHCPP value=".;opengl;Console;menu;addons\fountain1"/>
     <PATHPAS value=".;McZapkie"/>
     <PATHRC value=".;"/>
     <PATHASM value=".;"/>
@@ -36,8 +38,8 @@
     <USERDEFINES value="GLEW_STATIC;_DEBUG"/>
     <SYSDEFINES value="NO_STRICT;_RTLDLL"/>
     <MAINSOURCE value="EU07.cpp"/>
-    <INCLUDEPATH value="dll;menu;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl"/>
-    <LIBPATH value="dll;menu;$(BCB)\Projects\Lib;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="addons\fountain1;addons;dll;menu;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl"/>
+    <LIBPATH value="addons\fountain1;addons;dll;menu;$(BCB)\Projects\Lib;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
   </MACROS>
   <OPTIONS>
@@ -84,16 +86,20 @@ ProductVersion=15.4
 Comments=
 
 [HistoryLists\hlIncludePath]
-Count=3
-Item0=menu;C:\Program Files (x86)\Borland\CBuilder5\Projects\;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl
-Item1=menu;C:\Program Files (x86)\Borland\CBuilder5\Projects;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl
-Item2=Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl
+Count=5
+Item0=addons\fountain1;addons;dll;menu;C:\Program Files (x86)\Borland\CBuilder5\Projects\;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl
+Item1=dll;menu;C:\Program Files (x86)\Borland\CBuilder5\Projects\;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl
+Item2=menu;C:\Program Files (x86)\Borland\CBuilder5\Projects\;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl
+Item3=menu;C:\Program Files (x86)\Borland\CBuilder5\Projects;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl
+Item4=Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl
 
 [HistoryLists\hlLibraryPath]
-Count=3
-Item0=menu;$(BCB)\Projects\Lib;C:\Program Files (x86)\Borland\CBuilder5\Projects\;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib
-Item1=menu;$(BCB)\Projects\Lib;C:\Program Files (x86)\Borland\CBuilder5\Projects;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib
-Item2=Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib
+Count=5
+Item0=addons\fountain1;addons;dll;menu;$(BCB)\Projects\Lib;C:\Program Files (x86)\Borland\CBuilder5\Projects\;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib
+Item1=dll;menu;$(BCB)\Projects\Lib;C:\Program Files (x86)\Borland\CBuilder5\Projects\;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib
+Item2=menu;$(BCB)\Projects\Lib;C:\Program Files (x86)\Borland\CBuilder5\Projects\;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib
+Item3=menu;$(BCB)\Projects\Lib;C:\Program Files (x86)\Borland\CBuilder5\Projects;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib
+Item4=Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib
 
 [HistoryLists\hlDebugSourcePath]
 Count=2
@@ -117,6 +123,11 @@ Item0=E:\Gry\MaSzyna_15_04\
 Item1=E:\Gry\MaSzyna_15_04
 Item2=D:\EU07\
 Item3=E:\EU07\
+
+[HistoryLists\hIBPIOutputDir]
+Count=2
+Item0=C:\Users\q\Documents\GitHub\temp\
+Item1=C:\Users\q\Documents\GitHub\temp
 
 [Debugging]
 DebugSourceDirs=McZapkie\

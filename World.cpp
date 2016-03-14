@@ -37,6 +37,7 @@ http://mozilla.org/MPL/2.0/.
 #include "effects2d.h"
 #include "frm_debugger.h"
 #include "env_snow.h"
+#include "addons.h"
 
 
 #define TEXTURE_FILTER_CONTROL_EXT 0x8500
@@ -381,7 +382,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     QGlobal::semlight = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlight.bmp").c_str());
     QGlobal::semlense = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlense.bmp").c_str());
     QGlobal::texturetab[2] = TTexturesManager::GetTextureID("../data/", Global::asCurrentTexturePath.c_str(),AnsiString("data/gfxs/snow.bmp").c_str());
-
+    QGlobal::texturetab[3] = TTexturesManager::GetTextureID("../data/", Global::asCurrentTexturePath.c_str(),AnsiString("data/gfxs/waterc.tga").c_str());
     WriteLog("");
     WriteLog("");
 
@@ -697,7 +698,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
 
     Ground.Init(Global::szSceneryFile, hDC);
 
-    SNOW.Init(QGlobal::snow_type, QGlobal::snow_flakes, QGlobal::snow_area, QGlobal::snow_size, 0.1, 0.7, QGlobal::snow_sraf, QGlobal::snow_srat, QGlobal::snow_color, QGlobal::snow_tex, QGlobal::snow_light, QGlobal::snow_blend);  // flakes, area, psize, type, randcolor f, randcolor t, randalfa f, randalfa t,  color, tex, blendf
+    SNOW.Init(QGlobal::snow_type, QGlobal::snow_flakes, QGlobal::snow_area, QGlobal::snow_base, QGlobal::snow_size, 0.1, 0.7, QGlobal::snow_sraf, QGlobal::snow_srat, QGlobal::snow_color, QGlobal::snow_tex, QGlobal::snow_light, QGlobal::snow_blend);  // flakes, area, psize, type, randcolor f, randcolor t, randalfa f, randalfa t,  color, tex, blendf
 
     // z config.txt - QGlobal::iSNOWFLAKES, QGlobal::iSNOWSQUARE
     
@@ -710,7 +711,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
   //QGlobal::sec[2].setSmoke(sem, 1.80, 2.92, 0.07, 0.28, 0, 0.2, 85.0, 4, 50);
   //sem = vector3(-406.5, 100, 984);
   //QGlobal::sec[3].setSmoke(sem, 0.80, 2.12, 0.03, 0.10, 0, 0.5, 23.0, 4, 50);
-  //Global::LoadStationsBase(); // Q 030116: Wczytywanie informacji o stacjach ( POWINNO BYC ZALEZNE OD SCENERII )
+    Global::LoadStationsBase(); // Q 030116: Wczytywanie informacji o stacjach ( POWINNO BYC ZALEZNE OD SCENERII )
 
 
   //Global::tSinceStart= 0;
@@ -871,6 +872,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     RenderLoader(hDC, 77, "Done.");
     SetForegroundWindow(NhWnd);
     SetFocus(NhWnd);
+
     return true;
 };
 
@@ -2159,12 +2161,98 @@ if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
 };
 
 
+float a = 1.0;
+bool cd = false;
+float upt = 0.0;
+float dpt = 0.0;
+
+circleXY(vector3 center, float radius, int dots, vector3 cp, int levels, int clevel)
+{
+  float emm1[] = {1, 1, 1, 0};
+  float emm2[] = {0, 0, 0, 1};
+
+  GLint blendSrc;
+  GLint blendDst;
+  glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrc);
+  glGetIntegerv(GL_BLEND_DST_ALPHA, &blendDst);
+  glDepthMask(0);
+
+  glDisable(GL_TEXTURE_2D);
+  glEnable(GL_ARB_point_sprite);
+
+
+
+  if (!cd)
+   {
+
+    if (a > 0.10)a-=0.005;
+    if (a < 0.10)
+     {
+      double dt = Timer::GetDeltaTime();
+      dpt += (dt);
+      if (dpt > 40.0) {cd = true; dpt=0.0;}     // trzymanie w zgaszeniu
+     }
+   }
+   else
+   {
+    if (a < 0.91) a+=0.015;
+    if (a > 0.91)
+     {
+      double dt = Timer::GetDeltaTime();
+      upt += (dt);
+      if (upt > 20.0) {cd = false; upt = 0.0;}   // trzymanie w zapaleniu do 30.0
+     }
+   }
+  //for (float l = 1.0; l >0.0; l--)
+
+  glColor4f(1.0, 0.1, 0.0, a);
+  if (clevel ==  8) glColor4f(1.0, 0.15, 0.0, 0.8);
+  if (clevel == 10) glColor4f(1.0, 0.10, 0.0, 0.9);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+  glAlphaFunc(GL_NOTEQUAL, 0);
+  glEnable(GL_POINT_SMOOTH);
+  glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+  glColorMaterial(GL_FRONT, GL_EMISSION);
+
+  float stepSize = ((2*PI)/dots);
+  float pointsize = 223.0f;
+
+
+  for (float d = 0; d <= (2*PI)-stepSize; d += stepSize)
+   {
+     // addPoint(((sin(d) * radius) + center.x),
+     //           (cos(d) * radius) + center.y));
+
+      float xDist = cp.x -  center.x;
+      float yDist = cp.y -  center.y;
+      float zDist = cp.z -  center.z;
+      float CamDistToEmitter = sqrt(SQR(zDist)+SQR(yDist)+SQR(xDist));
+      if (CamDistToEmitter < 0.1f) //avoid too big particles
+      CamDistToEmitter = 0.1f;
+      glPointSize(pointsize / CamDistToEmitter);
+
+      glBegin(GL_POINTS);
+      glVertex3f((sin(d) * radius) + center.x, center.y, (cos(d) * radius) + center.z);
+      glEnd();
+
+    }
+  glDisable(GL_BLEND);
+  glBlendFunc(blendSrc, blendDst);
+  glEnable(GL_TEXTURE_2D);
+  glEnable(GL_LIGHTING);
+  glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+  glMaterialfv(GL_FRONT, GL_EMISSION, emm2);
+}
+
 // *****************************************************************************
 // PIERWSZA FUNKCJA NA DRODZE RENDERINGU SCENY - Wywolywana z TWorld::Update()
 // *****************************************************************************
 bool TWorld::Render()
 {
     manipsend(1);
+
 
   //QGlobal::iRENDEREDTIES = 0;
     glColor3b(255, 255, 255);
@@ -2219,13 +2307,26 @@ bool TWorld::Render()
         if (!Ground.RenderAlpha2DL(Camera.Pos)) return false;
     }
 
+    double dt = Timer::GetDeltaTime();
+    Global::renderfountainem(Camera.Pos);
+    Global::renderobstructlights(Camera.Pos, dt);
+
+//    float py = 1;
+//    int levels = 10;
+//    for (int i = 1; i<= levels; i++)
+//    {
+//      circleXY(vector3(10, py, 0), 1.7, 11, Camera.Pos, levels, i);
+//      py+=5.0f;
+//    }
 
     glDisable(GL_LIGHTING);
-    glDisable(GL_LIGHT0);
+  //glDisable(GL_LIGHT0);
     Global::rendersmokeem();
     Global::renderfireem();
     glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
+  //glEnable(GL_LIGHT0);
+
+
     
 //    TDynamicObject *DO;
 //    TGroundNode *pdyn;

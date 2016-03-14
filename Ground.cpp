@@ -3037,12 +3037,12 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
             QGlobal::bRENDERSNOW = true;
             parser.getTokens(2);
             parser >> QGlobal::snow_type >> QGlobal::snow_flakes;
-            parser.getTokens(6);
-            parser >> QGlobal::snow_area >> QGlobal::snow_size >> QGlobal::snow_srcf >> QGlobal::snow_srct >> QGlobal::snow_sraf >> QGlobal::snow_srat;
+            parser.getTokens(7);
+            parser >> QGlobal::snow_area >> QGlobal::snow_base >> QGlobal::snow_size >> QGlobal::snow_srcf >> QGlobal::snow_srct >> QGlobal::snow_sraf >> QGlobal::snow_srat;
             parser.getTokens(3);
             parser >> QGlobal::snow_color >> QGlobal::snow_tex >> QGlobal::snow_light >> QGlobal::snow_blend;
 
-            if (QGlobal::snow_flakes > 150000) QGlobal::snow_flakes = 150000;
+            if (QGlobal::snow_flakes > 250000) QGlobal::snow_flakes = 250000;
             if (QGlobal::snow_area > 2000) QGlobal::snow_area = 2000;
             if (QGlobal::snow_size > 0.2) QGlobal::snow_size = 0.2;
             if (QGlobal::snow_blend > 2) QGlobal::snow_blend = 1;
@@ -3093,6 +3093,39 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
                 parser >> token;
             }
         }
+        else if (str == AnsiString("fountain-a"))
+        {
+            WriteLog("Scenery fountain definition");
+            vector3 pos;
+            color4 color;
+            float rmaxd, oscdist, oscweight, damp, seedingspeed, angleofDstep, angleofHststep, rangleadd, accf, psize;
+            int oscilators, steps, raysperstep, dropsperray;
+
+            parser.getTokens(4);
+            parser >> pos.x >> pos.y >> pos.z >> rmaxd;              // x y z maxdist
+            parser.getTokens();
+            parser >> oscilators;                                    // oscilator
+            parser.getTokens(4);
+            parser >> oscdist >> oscweight >> damp >> seedingspeed;  // oscilator dist, oscilator weight, damping, seeding speed
+            parser.getTokens();
+            parser >> token;                                         // separator
+            parser.getTokens(4);
+            parser >> color.r >> color.g >> color.b >> color.a;      // color rgba
+            parser.getTokens(3);
+            parser >> steps >> raysperstep >> dropsperray;           // steps, rays per step, drops per ray
+            parser.getTokens(5);
+            parser >> angleofDstep >> angleofHststep >> rangleadd >> accf >> psize;
+
+            PSYS::fountainec[PSYS::fountain_tid].setsFountain(pos, rmaxd, oscilators, oscdist, oscweight, damp, seedingspeed, "|", color, steps, raysperstep, dropsperray, angleofDstep, angleofHststep, rangleadd, accf, psize);
+
+            parser.getTokens();
+            parser >> token;
+            while (token.compare("endemitter") != 0)
+            { // a kolejne parametry s¹ pomijane
+                parser.getTokens();
+                parser >> token;
+            }
+         }
         else if (str == AnsiString("fireem-a"))
         {
             WriteLog("Scenery fire definition");
@@ -3129,6 +3162,22 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
                 parser.getTokens();
                 parser >> token;
             }
+        }
+        else if (str == AnsiString("obstructlights"))
+        { // youBy - niebo z pliku
+            if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "SKY...");
+            WriteLog("Obstruct lights definition");
+            parser.getTokens();
+            parser >> token;
+            AnsiString olfile;
+            olfile = AnsiString(token.c_str());
+            PSYS::obstructlightsc[PSYS::obstructl_tid].setsObstructLights(AnsiString(olfile).c_str());
+            do
+            { // po¿arcie dodatkowych parametrów
+                parser.getTokens();
+                parser >> token;
+            } while (token.compare("end") != 0);
+            WriteLog(Global::asSky.c_str());
         }
         else if (str == AnsiString("time"))
         {

@@ -125,6 +125,27 @@ class vector3
   private:
 };
 
+class color4
+{
+  public:
+    color4(void)
+    {
+    }
+    color4(scalar_t aa, scalar_t bb, scalar_t cc, scalar_t dd)
+    {
+        r = aa;
+        g = bb;
+        b = cc;
+        a = dd;
+    }
+
+
+    double r, g, b, a;
+
+
+  private:
+};
+
 // 4 element matrix
 class matrix4x4
 {

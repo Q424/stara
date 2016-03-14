@@ -8,7 +8,7 @@
 
 
 int triangle_list, sphere_list, polygon_list;
-int ini_snow = 151000;
+int ini_snow = 251000;
 int size;
 GLfloat fog_density;
 GLint fog_mode;
@@ -69,7 +69,7 @@ void Polygon(void)
 // - czy odbiera swiatlo:       true/false
 // - rodzaj blendowania:        1,2
 // ***********************************************************************************************************
-bool TSnow::Init(int stype, int sflakesnum, float sarea, float ssize, float srcf, float srct, float sraf, float srat, bool scolor, bool stex, bool slight, int sbf)
+bool TSnow::Init(int stype, int sflakesnum, float sarea, float sbaseh, float ssize, float srcf, float srct, float sraf, float srat, bool scolor, bool stex, bool slight, int sbf)
 {
  type = stype;
  blendf = sbf;
@@ -83,6 +83,7 @@ bool TSnow::Init(int stype, int sflakesnum, float sarea, float ssize, float srcf
  rct = srct;
  raf = sraf;
  rat = srat;
+ baseh = sbaseh;
 
    for (int i=0;i<nofSnow;i++){
       snow[i].active   = true;
@@ -131,7 +132,6 @@ bool TSnow::Render()
    if (type == sf_point) glPointSize(2.5);
    if (type == sf_line ) glLineWidth(5);
 
-
    if (type == sf_tri) glDisable(GL_CULL_FACE);                       // wylaczenie automatycznego usuwania niewidocznych scian obiektu
    if (type == sf_tri) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);      // wlaczenie rysowania tlnych i przednich scian
 
@@ -142,7 +142,7 @@ bool TSnow::Render()
    if (!text) glDisable(GL_TEXTURE_2D);                                   // Bez tego czastepczki zaczynaly sie zbyt daleko od kamery
    if ( text) glBindTexture(GL_TEXTURE_2D, QGlobal::texturetab[2]);
    if (!light) glDisable(GL_LIGHTING);
-   glShadeModel(GL_SMOOTH); 
+   //glShadeModel(GL_SMOOTH);
 
    for (int i=0; i<nofSnow; i++)
      {
@@ -153,6 +153,16 @@ bool TSnow::Render()
 
       float alfa = snow[i].alfa += snow[i].alfa_inc;
 
+    //float pointsize = 33.0f;
+    //float xDist = Global::pCamera->Pos.x - x;
+    //float yDist = Global::pCamera->Pos.y - y;
+    //float zDist = Global::pCamera->Pos.z - z;
+    //float CamDistToEmitter = sqrt(SQR(zDist)+SQR(yDist)+SQR(xDist));
+    //if (CamDistToEmitter < 0.1f) //avoid too big particles
+    //CamDistToEmitter = 0.1f;
+    //glPointSize(pointsize / CamDistToEmitter);
+
+
       //glPushMatrix();
       //glTranslatef(x,y,z);
       //glRotatef(alfa,0.0f,1.0f,0.0f);
@@ -160,7 +170,7 @@ bool TSnow::Render()
       //glCallList(polygon_list);
     
 
-      if (snow[i].y < -5.0f) snow[i].active = false;
+      if (snow[i].y < Global::pCamera->Pos.y -10.0f) snow[i].active = false;
       if (snow[i].active == false)
       {
           if (!color) glColor4f(0.7f, 0.7f, 0.7f, snow[i].a);
@@ -168,7 +178,7 @@ bool TSnow::Render()
 
           snow[i].active   = true;
           snow[i].x        = gridalign.x + getRandomMinMax( -sqrsize, sqrsize ); //(float)(rand()%size);
-          snow[i].y        = 40.0f;
+          snow[i].y        = Global::pCamera->Pos.y + baseh;
           snow[i].z        = gridalign.z + getRandomMinMax( -sqrsize, sqrsize ); //(float)(rand()%size)-200;
           snow[i].xg       =-0.05f + float(rand()%5)/15.0f;
           snow[i].yg       = 0.10f + float(rand()%5)/15.0f;
@@ -210,67 +220,21 @@ bool TSnow::Render()
     //glPopMatrix();
    }
   glShadeModel(GL_SMOOTH);
-  glDisable( GL_POINT_SPRITE_ARB );
+//glDisable( GL_POINT_SPRITE_ARB );
   glEnable( GL_TEXTURE_2D );
   glEnable( GL_CULL_FACE );
   glEnable( GL_LIGHTING );
   glEnable( GL_BLEND );
   glDepthMask(1);
   glBlendFunc(blendSrc, blendDst);
+  glPolygonMode(GL_FRONT, GL_FILL);
 
-
-/*
-  vector3 gridalign = togridalign(); // AKTUALNA POZYCJA KAMERY WYROWNANA DO KOMORKI
-  float x, y, z;
-  if (m == 1) glColor4f(0.2f + lightning[0], 0.2f + lightning[1], 0.2f + lightning[2], 0.3f);
-
-  GLboolean blendEnabled;
-  GLboolean lightEnabled;
-  GLint blendSrc;
-  GLint blendDst;
-  glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrc);
-  glGetIntegerv(GL_BLEND_DST_ALPHA, &blendDst);
-  glGetBooleanv(GL_BLEND, &blendEnabled);
-  glGetBooleanv(GL_LIGHTING, &lightEnabled);
-
-//glShadeModel(GL_FLAT);
-  glEnable(GL_BLEND);
-//glDisable(GL_LIGHTING);
-  glLineWidth(rf);
-  glEnable(GL_TEXTURE_2D);
-  glColor4f(0.9, 0.9, 1.0, 0.6);
-//glBlendFunc(GL_ONE, GL_ONE_MINUS_DST_COLOR);
-  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
-  glBindTexture(GL_TEXTURE_2D, Global::texturetab[7]);
-    Randomize();
-	//rand()%1000;
-	for (int i=0; i<d; i++)
-	{
-		x= gridalign.x + (random_float[rand()%31]*50);
-		y=               (random_float[rand()%31]*50);
-		z= gridalign.z + (random_float[rand()%31]*50);
-
-glBegin(GL_TRIANGLES);                      // Drawing Using Triangles
-    glVertex3f(x+0.0f,  y+0.1f, z+0.0f);              // Top
-    glVertex3f(x+-0.1f, y+-0.2f, z+0.0f);              // Bottom Left
-    glVertex3f(x+0.1f,  y+-0.2f, z+0.0f);              // Bottom Right
-glEnd();
-		glBegin(GL_LINES);
-			glVertex3f(x, y, z);
-			glVertex3f(x+s, y+s, z+s); 
-		glEnd();
-	}
-	glEnable(GL_FOG);
-	glDisable(GL_BLEND);
-	glEnable(GL_TEXTURE_2D);
-        glEnable(GL_DEPTH_TEST);
-        glBlendFunc(blendSrc, blendDst);
-        if (!blendEnabled) glDisable(GL_BLEND); else glEnable(GL_BLEND);
-        if (!lightEnabled) glDisable(GL_LIGHTING); else glEnable(GL_LIGHTING);
-
- */
  return true;
 }
+
+
+
+
 
 
 

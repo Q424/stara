@@ -12,11 +12,12 @@ http://mozilla.org/MPL/2.0/.
 #include <system.hpp>
 #include "vector.h"
 #include "pixmap.h"
+#include "addons.h"
+
 
 // ***********************************************************************************************************
 // System czasteczek 1 - dla efektu ognia i dymu (orginal sources at http://www.cs.utah.edu/~cxiong/)
 // ***********************************************************************************************************
-
 
 class Particle{
 public:
@@ -100,6 +101,9 @@ public:
 };
 
 
+// ***********************************************************************************************************
+// SMOKE EMITTER CONTAINER
+// ***********************************************************************************************************
 struct psmokeemitercontainer
 {
  xvector vWorldUp;
@@ -128,6 +132,10 @@ struct psmokeemitercontainer
  bool exist;
 };
 
+
+// ***********************************************************************************************************
+// FIRE EMITTER CONTAINER
+// ***********************************************************************************************************
 struct pfireemitercontainer
 {
  GLuint FireTex;
@@ -152,18 +160,62 @@ struct pfireemitercontainer
  void loadtexture(int ts);
 };
 
+
+// ***********************************************************************************************************
+// OBSTRUCT LIGHTS SYSTEM
+// ***********************************************************************************************************
+struct pchimneylevel
+{
+   long lights;
+  float radius;
+  float height;
+  float rotate;
+   bool isOn;
+   bool isBlink;
+  float sdelay; 
+  float fadeoff;
+  float fadeoffspd;
+  float fadein;
+  float fadeinspd;
+  float pauseOn;
+  float pauseOff;
+  float a, dpt, upt;
+   bool cd;
+  float colorr, colorg, colorb, colora; 
+ color4 color;
+};
+
+struct pobstructlightscontainer
+{
+ pchimneylevel level[15];
+ vector3 CH_POSITION;
+ float CH_MAXDIST;
+  long CH_LEVELS;
+ float CH_STARTY;
+ bool setsObstructLights(char* scriptfile);
+ void drawObstructLights(vector3 CP, double dt);
+ void circleXYZ(vector3 center, vector3 cp, pobstructlightscontainer *CHL, int dots, int clevel);
+ bool exist;
+};
+
+
+// KLASA KONTENEROW ******************************************************************************************
 class PSYS
 {
  public:
-
  static long smoke_tid;
  static long fire_tid;
+ static long fountain_tid;
+ static long obstructl_tid;
  static psmokeemitercontainer sec[64];
  static pfireemitercontainer fec[32];
+ static pfountainemitercontainer fountainec[32];
+ static pobstructlightscontainer obstructlightsc[32];
 };
 
 long PSYS::smoke_tid = 0;
 long PSYS::fire_tid = 0;
-
-//---------------------------------------------------------------------------
+long PSYS::fountain_tid = 0;
+long PSYS::obstructl_tid = 0;
+//------------------------------------------------------------------------------------------------------------
 #endif
