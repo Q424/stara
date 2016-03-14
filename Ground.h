@@ -334,6 +334,7 @@ class TGround
     bool Update(double dt, int iter); // aktualizacja przesuniêæ zgodna z FPS
     bool AddToQuery(TEvent *Event, TDynamicObject *Node);
     bool GetTraction(TDynamicObject *model);
+    bool Render(vector3 pPosition);
     bool RenderDL(vector3 pPosition);
     bool RenderAlphaDL(vector3 pPosition);
     bool RenderAlpha2DL(vector3 pPosition);

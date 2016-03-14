@@ -193,6 +193,8 @@ bool QGlobal::bISINTERNET = false;
 double QGlobal::fdestfogend = 0;
 double QGlobal::fdestfogstart = 0;
 double QGlobal::fogchangef = 0;
+double QGlobal::SUNROTX = 0.0f;
+double QGlobal::SUNROTY = 0.0f;
 
 int QGlobal::objectid = 0;
 int QGlobal::cabelementid = 0;

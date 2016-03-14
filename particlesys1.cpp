@@ -455,13 +455,13 @@ void psmokeemitercontainer::drawSmoke(vector3 cp)
 
 void Global::rendersmokeem()
 {
-
+ glDisable(GL_LIGHTING);
  for (int i = 0; i < PSYS::smoke_tid; i++)
   {
    PSYS::sec[i].updateSmoke();
    PSYS::sec[i].drawSmoke(vector3(0, 0, 0));
   }
-
+ glEnable(GL_LIGHTING);
 }
 
 
@@ -620,11 +620,13 @@ xvector FireOrigin(FIRE_POSITION.x, FIRE_POSITION.y, FIRE_POSITION.z);//fire ori
 
 void Global::renderfireem()
 {
+ glDisable(GL_LIGHTING);
  for (int i = 0; i < PSYS::fire_tid; i++)
   {
    PSYS::fec[i].updateFire();
    PSYS::fec[i].drawFire(vector3(0, 0, 0));
   }
+ glEnable(GL_LIGHTING);
 }
 
 

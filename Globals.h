@@ -613,7 +613,9 @@ class QGlobal
  static float fTIEMAXDIST;
  static float emm1[];
  static float emm2[];
-
+ static double SUNROTX;
+ static double SUNROTY;
+ 
  static GLuint reflecttex;
  static GLuint mousesymbol;
  static GLuint mousepoint;

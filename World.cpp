@@ -37,8 +37,12 @@ http://mozilla.org/MPL/2.0/.
 #include "effects2d.h"
 #include "frm_debugger.h"
 #include "env_snow.h"
+#include "env_sun.h"
+#include "env_fog.h"
 #include "addons.h"
-
+#include "shadow/VECTOR3D.h"
+#include "shadow/VECTOR4D.h"
+#include "shadow/MATRIX4X4.h"
 
 #define TEXTURE_FILTER_CONTROL_EXT 0x8500
 #define TEXTURE_LOD_BIAS_EXT 0x8501
@@ -64,6 +68,10 @@ TGroundNode *tmp;
 TDynamicObject *DO;
 bool FOVSET;
 
+const int shadowMapSize=512;
+GLuint shadowMapTexture;
+MATRIX4X4 lightProjectionMatrix, lightViewMatrix;
+MATRIX4X4 cameraProjectionMatrix, cameraViewMatrix;
 
 // ***********************************************************************************************************
 // DYM SPALIN Z OBIEKTU RUCHOMEGO
@@ -578,6 +586,16 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     WriteLog("glEnable(GL_ARB_point_sprite);");
     glEnable(GL_ARB_point_sprite);
 
+    //Create the shadow map texture
+    glGenTextures(1, &shadowMapTexture);
+    glBindTexture(GL_TEXTURE_2D, shadowMapTexture);
+    glTexImage2D(	GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapSize, shadowMapSize, 0,
+					GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
     // ----------- LIGHTING SETUP -----------
     // Light values and coordinates
 
@@ -724,11 +742,22 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     Ground.AddGroundNodeQ("podklad", "SLP", "-", "1435mm/sleepers/podklad-hd-1l.t3d", "1435mm/sleepers/" + QGlobal::asDEFAULTSLEEPER, 140, 0, 10.0, -0.2, 90.0, 90, 0.0, QGlobal::bCALCNORMALS);
     Ground.AddGroundNodeQ("lacznik", "JNT", "-", "1435mm/elements/lacznikszyn-1.t3d", "none", 100, 0, 10.0, -0.2, 90.0, 90, 0.0, QGlobal::bCALCNORMALS);
 
+    RenderLoader(hDC, 77, "FOG INITIALIZATION...");
+    WriteLog("Fog init");
+    FOG.Init();
+    WriteLog("Fog init OK");
+    WriteLog("");
 
     RenderLoader(hDC, 77, "SKY INITIALIZATION...");
     WriteLog("Sky init");
-    Clouds.Init();
+    SKY.Init();
     WriteLog("Sky init OK");
+    WriteLog("");
+
+    RenderLoader(hDC, 77, "SUN INITIALIZATION...");
+    WriteLog("Sky init");
+    SUN.Init();
+    WriteLog("Sun init OK");
     WriteLog("");
 
     AnsiString asRAILJOINT;
@@ -872,6 +901,28 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     RenderLoader(hDC, 77, "Done.");
     SetForegroundWindow(NhWnd);
     SetFocus(NhWnd);
+
+
+	//Calculate & save matrices
+	glPushMatrix();
+	
+	glLoadIdentity();
+      //	gluPerspective(45.0f, (float)windowWidth/(float)windowHeight, 1.0f, 100.0f);
+	glGetFloatv(GL_MODELVIEW_MATRIX, cameraProjectionMatrix);
+	
+	glLoadIdentity();
+	gluLookAt(Camera.Pos.x, Camera.Pos.y, Camera.Pos.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	glGetFloatv(GL_MODELVIEW_MATRIX, cameraViewMatrix);
+	
+	glLoadIdentity();
+	gluPerspective(45.0f, 1.0f, 2.0f, 8.0f);
+	glGetFloatv(GL_MODELVIEW_MATRIX, lightProjectionMatrix);
+	
+	glLoadIdentity();
+	gluLookAt(200, 300, 500, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	glGetFloatv(GL_MODELVIEW_MATRIX, lightViewMatrix);
+	
+	glPopMatrix();
 
     return true;
 };
@@ -1860,6 +1911,10 @@ bool TWorld::Update()
         Global::bSmudge =
           FreeFlyModeFlag ? false : ((Train->Dynamic()->fShade <= 0.0) ? (Global::fLuminance <= 0.25) : (Train->Dynamic()->fShade * Global::fLuminance <= 0.25));
 
+    manipsend(1);
+
+    glColor3b(255, 255, 255);
+          
     if (!Render())
         return false;
 
@@ -2246,147 +2301,73 @@ circleXY(vector3 center, float radius, int dots, vector3 cp, int levels, int cle
   glMaterialfv(GL_FRONT, GL_EMISSION, emm2);
 }
 
+
+bool TWorld::Render2D()
+{
+    if (!FreeFlyModeFlag)
+    if (!QGlobal::bSIMSTARTED) RenderLoader(QGlobal::glHDC, 77, "Zakonczono wczytywanie, nacisnij spacje");
+
+    bool R2D = (QGlobal::bscrnoise || QGlobal::bTUTORIAL || QGlobal::bKEYBOARD || QGlobal::bscrfilter || QGlobal::bEXITQUERY || QGlobal::bWATERMARK ||
+                QGlobal::infotype > -1 || QGlobal::mousemode);
+
+    if (R2D)
+     {
+        switch2dRender();
+        if (QGlobal::bWIREFRAMETRACK) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+        if (QGlobal::bEXITQUERY) RenderEXITQUERY(0.50f);
+        if (QGlobal::bWATERMARK) RenderWATERMARK(0.30f);
+        if (QGlobal::bscrfilter) RenderFILTER(0.15f);
+        if (QGlobal::bscrnoise) drawNoise(1, QGlobal::fnoisealpha);                                           // W efects2d.cpp
+        if (QGlobal::infotype ) RenderINFOPANEL(QGlobal::infotype, QGlobal::GUITUTOPAC);
+     }
+
+}
+
+
 // *****************************************************************************
 // PIERWSZA FUNKCJA NA DRODZE RENDERINGU SCENY - Wywolywana z TWorld::Update()
 // *****************************************************************************
 bool TWorld::Render()
 {
-    manipsend(1);
-
-
   //QGlobal::iRENDEREDTIES = 0;
-    glColor3b(255, 255, 255);
     glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();                                                                                    //19961
+    glLoadIdentity();                                                                                 //19961
     gluPerspective(TSCREEN::CFOV, (GLdouble)Global::iWindowWidth/(GLdouble)Global::iWindowHeight, 0.1f, 2500.012f);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glViewport(0, 0, Global::iWindowWidth, Global::iWindowHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    glClearColor(Global::AtmoColor[0], Global::AtmoColor[1], Global::AtmoColor[2], 0.0); // Background Color
+    glClearColor(Global::AtmoColor[0], Global::AtmoColor[1], Global::AtmoColor[2], 0.0);                      
 
-    Camera.SetMatrix(); // ustawienie macierzy kamery wzglêdem pocz¹tku scenerii
-    glLightfv(GL_LIGHT0, GL_POSITION, Global::lightPos);
+    Camera.SetMatrix();                                                                                       // ustawienie macierzy kamery wzglêdem pocz¹tku scenerii
 
-    // przypadek A: gdy aktualny koniec mgly mniejszy niz docelowy
-    if (QGlobal::bchangingfoga) { if (Global::fFogEnd < QGlobal::fdestfogend) Global::fFogEnd = Global::fFogEnd + QGlobal::fogchangef; else QGlobal::bchangingfoga = false; }
-    // przypadek B: gdy koniec wiekszy niz docelowy
-    if (QGlobal::bchangingfogb) { if (Global::fFogEnd > QGlobal::fdestfogend) Global::fFogEnd = Global::fFogEnd - QGlobal::fogchangef; else QGlobal::bchangingfogb = false; }
+    SUN.Render(0.001);
 
-    if (QGlobal::bchangingfogsa) { if (Global::fFogStart < QGlobal::fdestfogstart) Global::fFogStart += QGlobal::fogchangef; else QGlobal::bchangingfogsa = false; }
-    // przypadek B: gdy koniec wiekszy niz docelowy
-    if (QGlobal::bchangingfogsb) { if (Global::fFogStart > QGlobal::fdestfogstart) Global::fFogStart -= QGlobal::fogchangef; else QGlobal::bchangingfogsb = false; }
+    FOG.Render();
 
-    if (QGlobal::bchangingfoga || QGlobal::bchangingfogb || QGlobal::bchangingfogsa || QGlobal::bchangingfogsb)
-      {
-        glFogf(GL_FOG_START, Global::fFogStart);
-        glFogf(GL_FOG_END, Global::fFogEnd);
-      }
-      
-    if (!Global::bWireFrame)
-    { // bez nieba w trybie rysowania linii
-      //  glDisable(GL_FOG);
-        Clouds.Render();
-        glEnable(GL_FOG);
-    }
+    SKY.Render(1);
 
-    if (QGlobal::bmodelpreview) DRAW_XYGRID();
-    if (QGlobal::bmodelpreview) Draw_SCENE000(0, 0, 0);
+    Ground.Render(Camera.Pos);
 
-    //bool TGround::RenderDl() -> void TSubRect::RenderDL() -> void TGroundNode::RenderDL()
-    if (Global::bUseVBO)                                                        // renderowanie przez VBO
-    {
-        if (!Ground.RenderVBO(Camera.Pos)) return false;
-        if (!Ground.RenderAlphaVBO(Camera.Pos)) return false;
-    }
-    else                                                                        // renderowanie przez DL
-    {
-        if (!Ground.RenderDL(Camera.Pos)) return false;
-        if (!Ground.RenderAlphaDL(Camera.Pos)) return false;
-        if (!Ground.RenderAlpha2DL(Camera.Pos)) return false;
-    }
-
-    double dt = Timer::GetDeltaTime();
     Global::renderfountainem(Camera.Pos);
-    Global::renderobstructlights(Camera.Pos, dt);
-
-//    float py = 1;
-//    int levels = 10;
-//    for (int i = 1; i<= levels; i++)
-//    {
-//      circleXY(vector3(10, py, 0), 1.7, 11, Camera.Pos, levels, i);
-//      py+=5.0f;
-//    }
-
-    glDisable(GL_LIGHTING);
-  //glDisable(GL_LIGHT0);
+    Global::renderobstructlights(Camera.Pos, 0.001);
     Global::rendersmokeem();
     Global::renderfireem();
-    glEnable(GL_LIGHTING);
-  //glEnable(GL_LIGHT0);
 
+    SNOW.Render();
 
-    
-//    TDynamicObject *DO;
-//    TGroundNode *pdyn;
-//    pdyn = Global::pGround->DynamicFindAny("sm42-284");                       // znajdz wskaznik na pojazd znajac nazwe z tablicy entrypointow
-//    if (pdyn != NULL) DO = pdyn->DynamicObject;
-//    if (DO != NULL)
-//     {
-//      glDisable(GL_LIGHTING);
-//      glDisable(GL_LIGHT0);
-//      DO->pSmokeEmitter1 = vector3(0, 4, -1.3);
-//      vector3 em = DO->GetGlobalElementPositionB(DO->pSmokeEmitter1, DO, 0.001);
-//    //updateSmokeC(em);
-//    //drawSmokeC();
-//      glEnable(GL_LIGHTING);
-//      glEnable(GL_LIGHT0);
-//     }
-
-
-
-    if (QGlobal::bRENDERSNOW) SNOW.Render();
-
-    TSubModel::iInstance = (int)(Train ? Train->Dynamic() : 0);                 //¿eby nie robiæ cudzych animacji
+    TSubModel::iInstance = (int)(Train ? Train->Dynamic() : 0);                                               //¿eby nie robiæ cudzych animacji
 
     if (Train) Train->Update();
 
-    if (!FreeFlyModeFlag) RenderCab(false);  // RENDEROWANIE KABINY GDY W KABINIE, RENDEROWANIE W TRYBIE FREEFLY REALIZOWANE JEST W DYNOBJ.CPP
+    if (!FreeFlyModeFlag) RenderCab(false);                           // RENDEROWANIE KABINY GDY W KABINIE, RENDEROWANIE W TRYBIE FREEFLY  W DYNOBJ.CPP
 
-    if (!FreeFlyModeFlag)
-    if (!QGlobal::bSIMSTARTED) RenderLoader(QGlobal::glHDC, 77, "Zakonczono wczytywanie, nacisnij spacje");
+    Render2D();
 
-    if (QGlobal::bscrnoise ||
-        QGlobal::bTUTORIAL ||
-        QGlobal::bKEYBOARD ||
-        QGlobal::bscrfilter ||
-        QGlobal::bEXITQUERY ||
-        QGlobal::bWATERMARK ||
-        QGlobal::infotype >= 0 ||
-        QGlobal::mousemode){
+    if ((Console::Pressed(VK_DELETE)) || (Console::Pressed(VK_INSERT)) && mvControlled) Controlled->GetConsist_f(1, Controlled);  // Q 040116: Tworzenie listy pojazdow w skladzie, liczenie masy brutto i dlugosci
 
-
-        switch2dRender();
-        if (QGlobal::bWIREFRAMETRACK) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-        if (QGlobal::bEXITQUERY) RenderEXITQUERY(0.50f);
-        if (QGlobal::bWATERMARK) RenderWATERMARK(0.30f);
-        if (QGlobal::bscrfilter) RenderFILTER(0.15f);
-        if (QGlobal::bscrnoise) drawNoise(1, QGlobal::fnoisealpha);                             // W efects2d.cpp
-        if (QGlobal::infotype ) RenderINFOPANEL(QGlobal::infotype, QGlobal::GUITUTOPAC);
-
-
-
-     }
-
-    if ((Console::Pressed(VK_DELETE)) || (Console::Pressed(VK_INSERT)))
-     if (mvControlled) Controlled->GetConsist_f(1, Controlled);                 // Q 040116: Tworzenie listy pojazdow w skladzie, liczenie masy brutto i dlugosci
-
-
-    // Global::bReCompile=false; //Ra: ju¿ zrobiona rekompilacja
     ResourceManager::Sweep(Timer::GetSimulationTime());
-
-    glFlush();
 
     return true;
 };

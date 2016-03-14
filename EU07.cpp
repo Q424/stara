@@ -85,7 +85,7 @@ USEUNIT("FadeSound.cpp");
 USEUNIT("Traction.cpp");
 USEUNIT("TractionPower.cpp");
 USEUNIT("parser.cpp");
-USEUNIT("sky.cpp");
+USEUNIT("env_sky.cpp");
 USEUNIT("AirCoupler.cpp");
 USEUNIT("opengl\glew.c");
 USEUNIT("ResourceManager.cpp");
@@ -114,7 +114,9 @@ USEUNIT("orthorender.cpp");
 USEUNIT("effects2d.cpp");
 USEUNIT("submodelsops.cpp");
 USEUNIT("dynamicmodules.cpp");
-USEUNIT("env_SNOW.cpp");
+USEUNIT("env_snow.cpp");
+USEUNIT("env_sun.cpp");
+USEUNIT("env_fog.cpp");
 USEUNIT("pixmap.cpp");
 USEUNIT("rgbtexture.cpp");
 USEUNIT("particlesys1.cpp");
@@ -124,6 +126,10 @@ USEFORM("frm_debugger.cpp", DEBUGGER);
 USEUNIT("addons/fountain1/AirFountain.cpp");
 USEUNIT("addons/fountain1/poolvectors.cpp");
 USEUNIT("addons/fountain1/pool.cpp");
+USEUNIT("shadow/matrix4x4.cpp");
+USEUNIT("shadow/vector2d.cpp");
+USEUNIT("shadow/vector3d.cpp");
+USEUNIT("shadow/vector4d.cpp");
 //---------------------------------------------------------------------------
 #include "World.h"
 

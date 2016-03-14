@@ -17,8 +17,10 @@ http://mozilla.org/MPL/2.0/.
 #include "Ground.h"
 #include "MdlMngr.h"
 #include "Globals.h"
-#include "sky.h"
+#include "env_sky.h"
 #include "env_snow.h"
+#include "env_sun.h"
+#include "env_fog.h"
 #include "screen.h"
 #include "freetype.h"
 
@@ -80,6 +82,7 @@ class TWorld
     bool __fastcall LOADLOADERCONFIG();
     bool __fastcall LOADLOADERTEXTURES();
     bool __fastcall LOADQCONFIG();
+
     bool __fastcall RenderFPS(double alpha);
     bool __fastcall RenderFILTER(double alpha);
     bool __fastcall RenderMOUSE(double alpha);
@@ -175,6 +178,7 @@ AnsiString LDR_STR_FRST;
  
     void ShowHints();
     bool Render();
+    bool Render2D();
     bool RenderCab(bool colormode);
     TCamera Camera;
     TGround Ground;
@@ -183,7 +187,9 @@ AnsiString LDR_STR_FRST;
     bool Paused;
     GLuint base; // numer DL dla znaków w napisach
     GLuint light; // numer tekstury dla smugi
-    TSky Clouds;
+    TSky SKY;
+    TSun SUN;
+    TFog FOG;
     TSnow SNOW;
     TEvent *KeyEvents[10]; // eventy wyzwalane z klawiaury
     TMoverParameters *mvControlled; // wskaŸnik na cz³on silnikowy, do wyœwietlania jego parametrów

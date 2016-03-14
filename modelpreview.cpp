@@ -12,7 +12,7 @@ http://mozilla.org/MPL/2.0/.
 #include <vcl.h>
 #pragma hdrstop
 
-#include "sky.h"
+#include "env_sky.h"
 #include "Globals.h"
 #include "Console.h"
 #include "Logs.h"

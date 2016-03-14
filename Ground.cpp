@@ -5107,6 +5107,28 @@ bool TGround::GetTraction(TDynamicObject *model)
     return true;
 };
 
+bool TGround::Render(vector3 CP)
+{
+    
+    //bool TGround::RenderDl() -> void TSubRect::RenderDL() -> void TGroundNode::RenderDL()
+
+    if (QGlobal::bmodelpreview) DRAW_XYGRID();
+    if (QGlobal::bmodelpreview) Draw_SCENE000(0, 0, 0);
+
+    if (Global::bUseVBO)                                                        // renderowanie przez VBO
+    {
+        if (!RenderVBO(CP)) return false;
+        if (!RenderAlphaVBO(CP)) return false;
+    }
+    else                                                                        // renderowanie przez DL
+    {
+        if (!RenderDL(CP)) return false;
+        if (!RenderAlphaDL(CP)) return false;
+        if (!RenderAlpha2DL(CP)) return false;
+    }
+
+}
+
 bool TGround::RenderDL(vector3 pPosition)
 { // renderowanie scenerii z Display List - faza nieprzezroczystych
     glDisable(GL_BLEND);

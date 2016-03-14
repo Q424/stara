@@ -111,6 +111,8 @@ bool TSnow::Init(int stype, int sflakesnum, float sarea, float sbaseh, float ssi
 // ***********************************************************************************************************
 bool TSnow::Render()
 {
+ if (QGlobal::bRENDERSNOW)
+  {
    vector3 gridalign = togridalign(); // AKTUALNA POZYCJA KAMERY WYROWNANA DO KOMORKI
    GLfloat sizes[2];
    GLboolean blendEnabled;
@@ -229,7 +231,8 @@ bool TSnow::Render()
   glBlendFunc(blendSrc, blendDst);
   glPolygonMode(GL_FRONT, GL_FILL);
 
- return true;
+  return true;
+ }
 }
 
 
