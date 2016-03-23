@@ -3126,6 +3126,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   if (num ==  8)  setBR(0, 40, 300, Global::iWindowHeight);
   if (num ==  9)  setBR(0, 40, 300, Global::iWindowHeight);
   if (num == 10)  setBR(0, 40, Global::iWindowWidth, 450);
+  if (num == 11)  setBR(0, 40, 300, Global::iWindowHeight);
   if (num ==  9)  RenderINFOPANELB( 0,  0, Global::iWindowWidth, 100, 2.0, alpha, "INFORMACJE O WERSJI I OpenGL");
   if (num ==  1)  RenderINFOPANELB( 0,  0, 300, sh, 2.0, alpha, AnsiString("INFORMACJE O SKLADZIE POCIAGU " + asTrainNumber));
   if (num ==  2)  RenderINFOPANELB( 0,  0, 300, sh, 2.0, alpha, AnsiString("INFORMACJE O STACJI"));
@@ -3135,6 +3136,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   if (num ==  6)  RenderINFOPANELB(10, 10, 500, 400, 2.0, alpha, AnsiString("TABELA SKANOWANIA AI"));
   if (num ==  7)  RenderINFOPANELB(10, 10, 500, 400, 2.0, alpha, AnsiString("SLUZBOWY ROZKLAD JAZDY"));
   if (num ==  8)  RenderINFOPANELB( 0,  0, 300, sh, 2.0, alpha, AnsiString("KLAWISZOLOGIA POJAZDU"));
+  if (num == 11)  RenderINFOPANELB( 0,  0, 300, sh, 2.0, alpha, AnsiString("MWD - STANY PORTOW I/O"));
 
   if (num > 0 && !QGlobal::bEXITQUERY && QGlobal::bSIMSTARTED && !QGlobal::bmodelpreview)  // PANEL 0 - INFORMACJE W DEBUGMODE ^^
    {
@@ -3974,6 +3976,71 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
 
          }
    }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  if (num == 11)  // PANEL 11 - STANY PORTOW MWD ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   {
+    int posy = 60;
+
+        AnsiString BD="";
+
+        glColor4f(0.9f, 0.7f, 0.1f, 0.8f);
+        glColor4f(0.6f, 0.6f, 0.65f, 0.9f);
+        posy= 40;
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P1B1: " + BoolToStr(QGlobal::portstate[1][1])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P1B1: " + BoolToStr(QGlobal::portstate[1][2])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P1B1: " + BoolToStr(QGlobal::portstate[1][3])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P1B1: " + BoolToStr(QGlobal::portstate[1][4])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P1B1: " + BoolToStr(QGlobal::portstate[1][5])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P1B1: " + BoolToStr(QGlobal::portstate[1][6])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P1B1: " + BoolToStr(QGlobal::portstate[1][7])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P1B1: " + BoolToStr(QGlobal::portstate[1][8])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("----- ").c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P2B1: " + BoolToStr(QGlobal::portstate[2][1])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P2B1: " + BoolToStr(QGlobal::portstate[2][2])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P2B1: " + BoolToStr(QGlobal::portstate[2][3])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P2B1: " + BoolToStr(QGlobal::portstate[2][4])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P2B1: " + BoolToStr(QGlobal::portstate[2][5])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P2B1: " + BoolToStr(QGlobal::portstate[2][6])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P2B1: " + BoolToStr(QGlobal::portstate[2][7])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P2B1: " + BoolToStr(QGlobal::portstate[2][8])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("----- ").c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P3B1: " + BoolToStr(QGlobal::portstate[3][1])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P3B1: " + BoolToStr(QGlobal::portstate[3][2])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P3B1: " + BoolToStr(QGlobal::portstate[3][3])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P3B1: " + BoolToStr(QGlobal::portstate[3][4])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P3B1: " + BoolToStr(QGlobal::portstate[3][5])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P3B1: " + BoolToStr(QGlobal::portstate[3][6])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P3B1: " + BoolToStr(QGlobal::portstate[3][7])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P3B1: " + BoolToStr(QGlobal::portstate[3][8])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("----- ").c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P4B1: " + BoolToStr(QGlobal::portstate[4][1])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P4B1: " + BoolToStr(QGlobal::portstate[4][2])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P4B1: " + BoolToStr(QGlobal::portstate[4][3])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P4B1: " + BoolToStr(QGlobal::portstate[4][4])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P4B1: " + BoolToStr(QGlobal::portstate[4][5])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P4B1: " + BoolToStr(QGlobal::portstate[4][6])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P4B1: " + BoolToStr(QGlobal::portstate[4][7])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P4B1: " + BoolToStr(QGlobal::portstate[4][8])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("----- ").c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P5B1: " + BoolToStr(QGlobal::portstate[5][1])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P5B1: " + BoolToStr(QGlobal::portstate[5][2])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P5B1: " + BoolToStr(QGlobal::portstate[5][3])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P5B1: " + BoolToStr(QGlobal::portstate[5][4])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P5B1: " + BoolToStr(QGlobal::portstate[5][5])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P5B1: " + BoolToStr(QGlobal::portstate[5][6])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P5B1: " + BoolToStr(QGlobal::portstate[5][7])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P5B1: " + BoolToStr(QGlobal::portstate[5][8])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("----- ").c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P6B1: " + BoolToStr(QGlobal::portstate[6][1])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P6B1: " + BoolToStr(QGlobal::portstate[6][2])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P6B1: " + BoolToStr(QGlobal::portstate[6][3])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P6B1: " + BoolToStr(QGlobal::portstate[6][4])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P6B1: " + BoolToStr(QGlobal::portstate[6][5])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P6B1: " + BoolToStr(QGlobal::portstate[6][6])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P6B1: " + BoolToStr(QGlobal::portstate[6][7])).c_str() );
+        freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P6B1: " + BoolToStr(QGlobal::portstate[6][8])).c_str() );
+    }
  // } // if !modelprev
   
   glEnable( GL_TEXTURE_2D );

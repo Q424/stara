@@ -22,13 +22,15 @@ http://mozilla.org/MPL/2.0/.
 #include "Button.h"
 #include "AirCoupler.h"
 #include "globals.h"
+#include "addons.h"
+
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 const ANIM_TYPES = 7; // Ra: iloœæ typów animacji
 const ANIM_WHEELS = 0; // ko³a
 const ANIM_DOORS = 1; // drzwi
-const ANIM_LEVERS = 2; // elementy obracane (wycieraczki, ko³a skrêtne, przestawiacze, klocki ham.)
+const ANIM_LEVERS = 2; // elemeenty obracane (wycieraczki, ko³a skrêtne, przestawiacze, klocki ham.)
 const ANIM_BUFFERS = 3; // elementy przesuwane (zderzaki)
 const ANIM_BOOGIES = 4; // wózki (s¹ skrêcane w dwóch osiach)
 const ANIM_PANTS = 5; // pantografy
@@ -175,11 +177,21 @@ class TDynamicObject
     int NextConnectedNo; // numer sprzêgu pod³¹czonego z ty³u
     int PrevConnectedNo; // numer sprzêgu pod³¹czonego z przodu
     double fScanDist; // odleg³oœæ skanowania torów na obecnoœæ innych pojazdów
+    CCCParticleSystem *g_DSMOKE1;
+    CCCParticleSystem *g_DSMOKE2;
+    CCCParticleSystem *g_VAPOR1;
+    CCCParticleSystem *g_VAPOR2;
+    RGBApixmap SmokePix;
+    GLuint SmokeTex;
 
     bool bISLOCO;
     bool bBogieA;
     bool bBogieB;
     bool bBogieC;
+    bool bSmokeEm1;
+    bool bSmokeEm2;
+    bool bVaporEm1;
+    bool bVaporEm2;
     vector3 pDoorFA;
     vector3 pDoorFB;
     vector3 pDoorRA;
@@ -187,6 +199,10 @@ class TDynamicObject
     vector3 pBogieA;
     vector3 pBogieC;
     vector3 pBogieB;
+    vector3 pSmokeEm1;
+    vector3 pSmokeEm2;
+    vector3 pVaporEm1;
+    vector3 pVaporEm2;
     vector3 elementOFF;
     vector3 elementMOV;
     vector3 elementSHK;
@@ -493,8 +509,10 @@ class TDynamicObject
     ~TDynamicObject();
     double TDynamicObject::Init( // zwraca d³ugoœæ pojazdu albo 0, jeœli b³¹d
         AnsiString Name, AnsiString BaseDir, AnsiString asReplacableSkin, AnsiString Type_Name,
-        TTrack *Track, double fDist, AnsiString DriverType, double fVel, AnsiString TrainName,
-        float Load, AnsiString LoadType, bool Reversed, AnsiString);
+        TTrack *Track, double fDist, AnsiString DriverType, double fVel, AnsiString TrainName, float Load, AnsiString LoadType, bool Reversed, AnsiString);
+    void CreateSmokeEmitters();
+    void UpdateSmokeEmitters();
+    void RenderSmokeEmitters();
     void AttachPrev(TDynamicObject *Object, int iType = 1);
     bool UpdateForce(double dt, double dt1, bool FullVer);
     void LoadUpdate();

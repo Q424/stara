@@ -1738,6 +1738,11 @@ TDynamicObject::TDynamicObject()
     mdClock2=NULL;             //Q
     mdFotel1=NULL;             //Q
     mdFotel2=NULL;             //Q
+    
+    bSmokeEm1 = false;
+    bSmokeEm2 = false;
+    bVaporEm1 = false;
+    bVaporEm2 = false;
 
     smMechanik0 = smMechanik1 = NULL;
     smBuforLewy[0] = smBuforLewy[1] = NULL;
@@ -2083,6 +2088,8 @@ double TDynamicObject::Init(
     LoadUniqueSpecs(asName);
     LoadAdditionals("", this, Mechanik);  // WCZYTUJE TABLICE TYLKO GDY NIE headdriver LUB reardriver, czemu?
 
+    CreateSmokeEmitters(); //Q: 220316 - Utworzenie emiterow dymu, pary
+
     // McZapkie-100402: wyszukiwanie submodeli sprzegów
     btCoupler1.Init("coupler1", mdModel, false); // false - ma byæ wy³¹czony
     btCoupler2.Init("coupler2", mdModel, false);
@@ -2235,6 +2242,107 @@ double TDynamicObject::Init(
     if (LA.Pos("passengers") > 0) iLOADACCEPTED = 1; // Q 100116: Coby odsiac wagony towarowe przy wrzucaniu do listy entrypointow
 
     return MoverParameters->Dim.L; // d³ugoœæ wiêksza od zera oznacza OK; 2mm docisku?
+}
+
+void TDynamicObject::CreateSmokeEmitters()
+{
+ if (bSmokeEm1) g_DSMOKE1 = new CCCParticleSystem;
+ if (bSmokeEm2) g_DSMOKE2 = new CCCParticleSystem;
+ if (bVaporEm1) g_VAPOR1 = new CCCParticleSystem;
+ if (bVaporEm2) g_VAPOR2 = new CCCParticleSystem;
+
+ if (bSmokeEm1)
+   {
+    g_DSMOKE1->Initialize(750);
+    g_DSMOKE1->m_iParticlesCreatedPerSec = 700;
+    g_DSMOKE1->m_fCreationVariance = 0.16f;
+    g_DSMOKE1->m_fMinDieAge = 4.1f;
+    g_DSMOKE1->m_fMaxDieAge = 12.5f;
+    g_DSMOKE1->m_bRecreateWhenDied = true;
+    g_DSMOKE1->m_bParticlesLeaveSystem = true;
+    g_DSMOKE1->SetCreationColor(0.5f,0.5f,0.51f,	0.7f,0.7f,0.7f);
+    g_DSMOKE1->SetDieColor(0.8f,0.8f,0.8f,  1.0f,1.0f,1.0f);
+    g_DSMOKE1->SetAlphaValues(0.3f, 0.4f, 0.02f, 0.00f);
+    g_DSMOKE1->SetEmitter(10.0f, 0.0f, -120.0f,	0.3f, 0.0f, 0.3f);
+    g_DSMOKE1->SetAcceleration(F3dVector(0.4f,1.0f,0.0f),-0.25f,0.4f);
+    g_DSMOKE1->SetSizeValues(0.52f, 0.72f, 0.42f, 0.52f);
+    g_DSMOKE1->m_fMaxEmitSpeed = 0.50f;
+    g_DSMOKE1->m_fMinEmitSpeed = 0.21f;
+    g_DSMOKE1->SetEmissionDirection(0.0f,1.0f,0.0f,  0.08f,0.5f,0.08f);
+    g_DSMOKE1->m_iBillboarding = BILLBOARDING_PERPTOVIEWDIR;
+    g_DSMOKE1->LoadTextureFromFile("data/particles/particle3.tga");
+   }
+ if (bSmokeEm2)
+   {
+    g_DSMOKE2->Initialize(650);
+    g_DSMOKE2->m_iParticlesCreatedPerSec = 600;
+    g_DSMOKE2->m_fCreationVariance = 0.4f;
+    g_DSMOKE2->m_fMinDieAge = 3.1f;
+    g_DSMOKE2->m_fMaxDieAge = 10.5f;
+    g_DSMOKE2->m_bRecreateWhenDied = true;
+    g_DSMOKE2->m_bParticlesLeaveSystem = true;
+    g_DSMOKE2->SetCreationColor(0.5f,0.5f,0.5f,	0.2f,0.2f,0.2f);
+    g_DSMOKE2->SetDieColor(0.9f,0.9f,0.9f,  0.2f,0.3f,0.2f);
+    g_DSMOKE2->SetAlphaValues(0.0f, 0.1f, 0.01f, 0.1f);
+    g_DSMOKE2->SetEmitter(10.0f, 0.0f, -120.0f,	0.2f, 0.0f, 0.3f);
+    g_DSMOKE2->SetAcceleration(F3dVector(0.0f,1.0f,0.0f),0.15f,0.2f);
+    g_DSMOKE2->SetSizeValues(0.54f, 0.7f, 1.72f, 2.32f);
+    g_DSMOKE2->m_fMaxEmitSpeed = 0.09f;
+    g_DSMOKE2->m_fMinEmitSpeed = 0.03f;
+    g_DSMOKE2->SetEmissionDirection(0.0f,1.0f,0.0f,  0.08f, 0.52f, 0.08f);
+    g_DSMOKE2->m_iBillboarding = BILLBOARDING_PERPTOVIEWDIR;
+    g_DSMOKE2->LoadTextureFromFile("data/particles/particle3.tga");
+   }
+    glGenTextures(1, &SmokeTex);
+    SmokePix.readBMPFile(".\\data\\gfxs\\smoke.bmp", 80, 0);
+    SmokePix.setTexture(SmokeTex);
+}
+
+void TDynamicObject::UpdateSmokeEmitters()
+{
+ if (bSmokeEm1)
+   {
+    vector3 ep = GetGlobalElementPositionB(vector3(0.0f, 4.4f, -1.9f), this, 0.01);
+    g_DSMOKE1->m_EmitterPosition.x = ep.x; //vPosition.x;
+    g_DSMOKE1->m_EmitterPosition.y = ep.y; //vPosition.y+4.4f;
+    g_DSMOKE1->m_EmitterPosition.z = ep.z; //vPosition.z-1.9;
+    g_DSMOKE1->UpdateSystem(0.01);
+   }
+ if (bSmokeEm2)
+   {
+    vector3 ep = GetGlobalElementPositionB(vector3(0.0, 4.4, 1.9), this, 0.01);
+    g_DSMOKE2->m_EmitterPosition.x = ep.x; //vPosition.x;
+    g_DSMOKE2->m_EmitterPosition.y = ep.y; //vPosition.y+4.4f;
+    g_DSMOKE2->m_EmitterPosition.z = ep.z; //vPosition.z+1.9;
+    g_DSMOKE2->UpdateSystem(0.01);
+   }
+}
+
+void TDynamicObject::RenderSmokeEmitters()
+{
+ if (bSmokeEm1 || bSmokeEm2)
+   {
+    glGetIntegerv(GL_BLEND_SRC_ALPHA, &QGlobal::blendSrc);
+    glGetIntegerv(GL_BLEND_DST_ALPHA, &QGlobal::blendDst);
+  //glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glAlphaFunc(GL_NOTEQUAL, 0);
+  //glDisable(GL_LIGHTING);
+   glDepthMask(0);
+
+    if (bSmokeEm1) g_DSMOKE1->Render(1, SmokeTex);
+    if (bSmokeEm2) g_DSMOKE2->Render(1, SmokeTex);
+
+    glBlendFunc(QGlobal::blendSrc, QGlobal::blendDst);
+    glPolygonMode(GL_FRONT, GL_FILL);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_LIGHTING);
+    glDepthMask(GL_TRUE);
+  }
 }
 
 void TDynamicObject::FastMove(double fDistance)
@@ -2617,6 +2725,8 @@ bool TDynamicObject::Update(double dt, double dt1)
        QGlobal::PEP[QGlobal::currententrypoint].dyndestination = this->asDestination;
        QGlobal::currententrypoint++;
       }
+
+      UpdateSmokeEmitters();
 
     // Ra: przenios³em - no ju¿ lepiej tu, ni¿ w wyœwietlaniu!
     // if ((MoverParameters->ConverterFlag==false) && (MoverParameters->TrainType!=dt_ET22))
@@ -3671,6 +3781,9 @@ void TDynamicObject::Render()
             glLightfv(GL_LIGHT0, GL_SPECULAR, Global::specularDayLight);
         }
         glPopMatrix();
+
+        RenderSmokeEmitters();
+
         if (btnOn)
             TurnOff(); // przywrócenie domyœlnych pozycji submodeli
     } // yB - koniec mieszania z grafika
@@ -5271,6 +5384,35 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
                     asBogieCModel = BaseDir + asBogieCModel;
                   //WriteLog("bogie-c-model: " + asBogieCModel);
                     mdBogieC = TModelsManager::GetModel(asBogieCModel.c_str(), true);
+                }
+                // Emitery
+                else if (str == "smokeemitter1:")     // Q 230316: Pozycja emitera dymu 1
+                {
+                    pSmokeEm1.x = Parser->GetNextSymbol().ToDouble();
+                    pSmokeEm1.y = Parser->GetNextSymbol().ToDouble();
+                    pSmokeEm1.z = Parser->GetNextSymbol().ToDouble();
+                    bSmokeEm1 = true;
+                }
+                else if (str == "smokeemitter2:")     // Q 230316 Pozycja emitera dymu 2
+                {
+                    pSmokeEm2.x = Parser->GetNextSymbol().ToDouble();
+                    pSmokeEm2.y = Parser->GetNextSymbol().ToDouble();
+                    pSmokeEm2.z = Parser->GetNextSymbol().ToDouble();
+                    bSmokeEm2 = true;
+                }
+                else if (str == "vaporemitter1:")     // Q 230316: Pozycja emitera pary 1
+                {
+                    pVaporEm1.x = Parser->GetNextSymbol().ToDouble();
+                    pVaporEm1.y = Parser->GetNextSymbol().ToDouble();
+                    pVaporEm1.z = Parser->GetNextSymbol().ToDouble();
+                    bVaporEm1 = true;
+                }
+                else if (str == "vaporemitter2:")     // Q 230316: Pozycja emitera pary 2
+                {
+                    pVaporEm2.x = Parser->GetNextSymbol().ToDouble();
+                    pVaporEm2.y = Parser->GetNextSymbol().ToDouble();
+                    pVaporEm2.z = Parser->GetNextSymbol().ToDouble();
+                    bVaporEm2 = true;
                 }
             }
             Stop_InternalData = true;

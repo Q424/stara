@@ -54,59 +54,65 @@ double VECTORLEN1(vector3 P1, vector3 P2)
   }
 }
 
-void drawcube(float size, float r, float g, float b)
+void drawcube(float sf, float r, float g, float b, bool translate, vector3 trans, GLuint tex)
 {
-//glBindTexture(GL_TEXTURE_2D, QGlobal::semlight);
-   glDisable(GL_LIGHTING);
-   //glBindTexture(GL_TEXTURE_2D, 0);
-   //glDisable(GL_TEXTURE_2D);
-   //   glColorMaterial(GL_FRONT, GL_EMISSION);
+
+//glDisable(GL_LIGHTING);
+//glBindTexture(GL_TEXTURE_2D, 0);
+//glDisable(GL_TEXTURE_2D);
+//   glColorMaterial(GL_FRONT, GL_EMISSION);
+
+glEnable(GL_TEXTURE_2D);
+glBindTexture(GL_TEXTURE_2D, tex);
+
+if (translate) glPushMatrix();
+if (translate) glTranslatef(trans.x, trans.y, trans.z);
  // White side - BACK
-glBegin(GL_POLYGON);
+
 glColor4f(   r,  g, b, 1.0 );
-glVertex3f(  size, -size, size );
-glVertex3f(  size,  size, size );
-glVertex3f( -size,  size, size );
-glVertex3f( -size, -size, size );
-glEnd();
- 
-// Purple side - RIGHT
-glBegin(GL_POLYGON);
-glColor4f(  r,  g,  b, 1.0 );
-glVertex3f( size, -size, -size );
-glVertex3f( size,  size, -size );
-glVertex3f( size,  size,  size );
-glVertex3f( size, -size,  size );
-glEnd();
- 
-// Green side - LEFT
-glBegin(GL_POLYGON);
-glColor4f(   r,  g,  b, 1.0 );
-glVertex3f( -size, -size,  size );
-glVertex3f( -size,  size,  size );
-glVertex3f( -size,  size, -size );
-glVertex3f( -size, -size, -size );
-glEnd();
- 
-// Blue side - TOP
-glBegin(GL_POLYGON);
-glColor4f(   255.0,  g,  b, 1.0 );
-glVertex3f(  size,  size,  size );
-glVertex3f(  size,  size, -size );
-glVertex3f( -size,  size, -size );
-glVertex3f( -size,  size,  size );
-glEnd();
- 
-// Red side - BOTTOM
-glBegin(GL_POLYGON);
-glColor4f(   r,  g,  b, 1.0 );
-glVertex3f(  size, -size, -size );
-glVertex3f(  size, -size,  size );
-glVertex3f( -size, -size,  size );
-glVertex3f( -size, -size, -size );
-glEnd();
-   glEnable(GL_TEXTURE_2D);
-   glEnable(GL_LIGHTING);
+glBegin(GL_QUADS);
+      /* Front Face */
+      glTexCoord2f( 0.0f, 1.0f ); glVertex3f( -sf, -sf, sf );
+      glTexCoord2f( 1.0f, 1.0f ); glVertex3f(  sf, -sf, sf );
+      glTexCoord2f( 1.0f, 0.0f ); glVertex3f(  sf,  sf, sf );
+      glTexCoord2f( 0.0f, 0.0f ); glVertex3f( -sf,  sf, sf );
+
+      /* Back Face */
+      glTexCoord2f( 0.0f, 0.0f ); glVertex3f( -sf, -sf, -sf );
+      glTexCoord2f( 0.0f, 1.0f ); glVertex3f( -sf,  sf, -sf );
+      glTexCoord2f( 1.0f, 1.0f ); glVertex3f(  sf,  sf, -sf );
+      glTexCoord2f( 1.0f, 0.0f ); glVertex3f(  sf, -sf, -sf );
+
+      /* Top Face */
+      glTexCoord2f( 1.0f, 1.0f ); glVertex3f( -sf,  sf, -sf );
+      glTexCoord2f( 1.0f, 0.0f ); glVertex3f( -sf,  sf,  sf );
+      glTexCoord2f( 0.0f, 0.0f ); glVertex3f(  sf,  sf,  sf );
+      glTexCoord2f( 0.0f, 1.0f ); glVertex3f(  sf,  sf, -sf );
+
+      /* Bottom Face */
+      /* Top Right Of The Texture and Quad */
+      glTexCoord2f( 0.0f, 1.0f ); glVertex3f( -sf, -sf, -sf );
+      glTexCoord2f( 1.0f, 1.0f ); glVertex3f(  sf, -sf, -sf );
+      glTexCoord2f( 1.0f, 0.0f ); glVertex3f(  sf, -sf,  sf );
+      glTexCoord2f( 0.0f, 0.0f ); glVertex3f( -sf, -sf,  sf );
+
+      /* Right face */
+      glTexCoord2f( 0.0f, 0.0f ); glVertex3f( sf, -sf, -sf );
+      glTexCoord2f( 0.0f, 1.0f ); glVertex3f( sf,  sf, -sf );
+      glTexCoord2f( 1.0f, 1.0f ); glVertex3f( sf,  sf,  sf );
+      glTexCoord2f( 1.0f, 0.0f ); glVertex3f( sf, -sf,  sf );
+
+      /* Left Face */
+      glTexCoord2f( 1.0f, 0.0f ); glVertex3f( -sf, -sf, -sf );
+      glTexCoord2f( 0.0f, 0.0f ); glVertex3f( -sf, -sf,  sf );
+      glTexCoord2f( 0.0f, 1.0f ); glVertex3f( -sf,  sf,  sf );
+      glTexCoord2f( 1.0f, 1.0f ); glVertex3f( -sf,  sf, -sf );
+    glEnd( );
+
+if (translate) glPopMatrix();
+
+glEnable(GL_TEXTURE_2D);
+glEnable(GL_LIGHTING);
 //   glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
  //  glMaterialfv(GL_FRONT, GL_EMISSION, emm2);
 }

@@ -14,6 +14,16 @@ http://mozilla.org/MPL/2.0/.
 #include "pixmap.h"
 #include "addons.h"
 
+//Particle variables:
+
+//CCCParticleSystem g_ParticleSystem2;
+//CCCParticleSystem g_ParticleSystem3;
+//CCCParticleSystem g_ParticleSystem4;
+//CCCParticleSystem g_ParticleSystem5;
+//CCCParticleSystem g_ParticleSystem6;
+
+//void InitParticles();
+
 
 // ***********************************************************************************************************
 // System czasteczek 1 - dla efektu ognia i dymu (orginal sources at http://www.cs.utah.edu/~cxiong/)
@@ -162,6 +172,59 @@ struct pfireemitercontainer
 
 
 // ***********************************************************************************************************
+// PARTICLE EFFECTS EMITTER CONTAINER
+// ***********************************************************************************************************
+struct pparteffectscontainer
+{
+ CCCParticleSystem g_ParticleSystem1;
+ GLuint EffectTex;
+ vector3 PE_POSITION;
+ float PE_MAXDIST;
+ int   PE_SEEDING_SPEED;
+ long  PE_TYPE;
+ void setsPE(long  type,
+             float rmaxdist,
+             int  initialnum,
+             int  createpersec,
+             float mindieage,
+             float maxdieage,
+             float creationvar,
+             bool  recreateondie,
+             bool  particleleavesys,
+             long  billboardtype,
+        std::string  blendtype,
+             vector3 empos,
+             vector3 emarea,
+             vector3 emdir,
+             vector3 emdeviation,
+             vector3 accdir,
+             color4 borncolor1,
+             color4 borncolor2,
+             color4 diecolor1,
+             color4 diecolor2,
+             color4 alpha,
+
+             float accmin,
+             float accmax,
+             float ssizemin,
+             float ssizemax,
+             float esizemin,
+             float esizemax,
+             float emspdmin,
+             float emspdmax,
+             float spinspdmin,
+             float spinspdmax,
+       std::string texture);
+
+ void drawPE(vector3 cp);
+ void createPE();
+ void updatePE();
+ void setposPE(float x, float y, float z);
+ void loadtexture(int ts);
+};
+
+
+// ***********************************************************************************************************
 // OBSTRUCT LIGHTS SYSTEM
 // ***********************************************************************************************************
 struct pchimneylevel
@@ -207,15 +270,18 @@ class PSYS
  static long fire_tid;
  static long fountain_tid;
  static long obstructl_tid;
+ static long parteffects_tid;
  static psmokeemitercontainer sec[64];
  static pfireemitercontainer fec[32];
  static pfountainemitercontainer fountainec[32];
  static pobstructlightscontainer obstructlightsc[32];
+ static pparteffectscontainer parteffects[32];
 };
 
 long PSYS::smoke_tid = 0;
 long PSYS::fire_tid = 0;
 long PSYS::fountain_tid = 0;
 long PSYS::obstructl_tid = 0;
+long PSYS::parteffects_tid = 0;
 //------------------------------------------------------------------------------------------------------------
 #endif

@@ -3035,8 +3035,8 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
             WriteLog("Scenery snow definition");
   
             QGlobal::bRENDERSNOW = true;
-            parser.getTokens(2);
-            parser >> QGlobal::snow_type >> QGlobal::snow_flakes;
+            parser.getTokens(3);
+            parser >> QGlobal::snow_type >> QGlobal::snow_objt >> QGlobal::snow_flakes;
             parser.getTokens(7);
             parser >> QGlobal::snow_area >> QGlobal::snow_base >> QGlobal::snow_size >> QGlobal::snow_srcf >> QGlobal::snow_srct >> QGlobal::snow_sraf >> QGlobal::snow_srat;
             parser.getTokens(3);
@@ -3046,7 +3046,7 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
             if (QGlobal::snow_area > 2000) QGlobal::snow_area = 2000;
             if (QGlobal::snow_size > 0.2) QGlobal::snow_size = 0.2;
             if (QGlobal::snow_blend > 2) QGlobal::snow_blend = 1;
-            if (QGlobal::snow_type > 4) QGlobal::snow_type = 1;
+            if (QGlobal::snow_objt > 4) QGlobal::snow_objt = 1;
             
             parser.getTokens();
             parser >> token;
@@ -3084,6 +3084,51 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
             if (PSYS::smoke_tid < 64)
             PSYS::sec[PSYS::smoke_tid].setSmoke(sem, rmaxdist, sizemin, sizemax, speedmin, speedmax, spinspeedmin, spinspeedmax, maxdist, rcolorf, rcolort, opacity, seedingspeed, ts);
 
+
+            parser.getTokens();
+            parser >> token;
+            while (token.compare("endemitter") != 0)
+            { // a kolejne parametry s¹ pomijane
+                parser.getTokens();
+                parser >> token;
+            }
+        }
+
+        else if (str == AnsiString("particleem-a"))
+        {
+            WriteLog("Scenery particleem definition");
+            vector3 empos, emarea, emdir, emdeviation, accdir;                                                        // 15    ..............
+            color4 borncolor1, borncolor2, diecolor1, diecolor2, alpha;                                               // 17    ................
+            long  type, initialnum, createpersec, billboardtype, blendtype;                                           //  4    ....
+            bool recreateondie, leavesys;                                                                             //  2    ..
+            float rmaxdist, mindieage, maxdieage, creationvar;                                                        //  4    ....
+            float accmin, accmax, ssizemin, ssizemax, esizemin, esizemax, minemspd, maxemspd, spinspdmin, spinspdmax; // 10    .........
+            std::string bt;                                                                                           //  1    .
+
+            parser.getTokens(2);
+            parser >> type >> rmaxdist;
+            parser.getTokens(6);
+            parser >> empos.x >> empos.y >> empos.z >> emarea.x >> emarea.y >> emarea.z;                      // maxdist px py pz ax ay az
+            parser.getTokens(6);
+            parser >> emdir.x >> emdir.y >> emdir.z >> emdeviation.x >> emdeviation.y >> emdeviation.z;
+            parser.getTokens(5);
+            parser >> accdir.x >> accdir.y >> accdir.z >> accmin >> accmax;
+            parser.getTokens(9);
+            parser >> initialnum >> createpersec >> mindieage >> maxdieage >> creationvar >> recreateondie >> leavesys >> billboardtype >> bt;
+            parser.getTokens(6);
+            parser >> borncolor1.r >> borncolor1.g >> borncolor1.b >> borncolor2.r >> borncolor2.g >> borncolor2.b;
+            parser.getTokens(6);
+            parser >> diecolor1.r >> diecolor1.g >> diecolor1.b >> diecolor2.r >> diecolor2.g >> diecolor2.b;
+            parser.getTokens(4);
+            parser >> alpha.r >> alpha.g >> alpha.b >> alpha.a;
+            parser.getTokens(8);
+            parser >> ssizemin >> ssizemax >> esizemin >> esizemax >> minemspd >> maxemspd >> spinspdmin >> spinspdmax;
+            parser.getTokens(1);
+            parser >> token;  
+
+            PSYS::parteffects[PSYS::parteffects_tid].setsPE(type, rmaxdist, initialnum, createpersec, mindieage, maxdieage, creationvar, recreateondie,
+            leavesys, billboardtype, bt, empos, emarea, emdir, emdeviation, accdir, borncolor1, borncolor2, diecolor1, diecolor2, alpha, accmin, accmax,
+            ssizemin, ssizemax, esizemin, esizemax, minemspd, maxemspd, spinspdmin, spinspdmax, token);
 
             parser.getTokens();
             parser >> token;

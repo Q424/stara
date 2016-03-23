@@ -221,8 +221,8 @@ int QGlobal::iRENDEREDTRIS = 0;
 int QGlobal::iRENDEREDSUBS = 0;
 int QGlobal::iSWITCHDIRECT = 0;
 int QGlobal::iSPLASHTIME = 0;
-int QGlobal::iSNOWFLAKES = 52000;
-int QGlobal::iSNOWSQUARE = 500;
+int QGlobal::iSNOWFLAKES = 40000;
+int QGlobal::iSNOWSQUARE = 300;
 
 double QGlobal::fMoveLightS = -1.0f;
 double QGlobal::fps = 1.0f;
@@ -286,6 +286,7 @@ TModel3d *QGlobal::mdTIEl = NULL;
 TTrack *QGlobal::pTrack = NULL;
 
 // SNOW GLOBAL VARS
+  long QGlobal::snow_objt = 1;
   long QGlobal::snow_type = 1;
   long QGlobal::snow_flakes = 35000;
  float QGlobal::snow_area = 150;
@@ -304,6 +305,7 @@ TTrack *QGlobal::pTrack = NULL;
 std::string QGlobal::COM_port = "none";
  bool  QGlobal::bLOGIT = false;
  bool  QGlobal::bOPCOM = false;
+ float QGlobal::fRXSPD = 0.2;
  float QGlobal::fmaxCH = 1.0;
  float QGlobal::fmaxPG = 1.0;
  float QGlobal::fmaxZG = 1.6;
@@ -315,7 +317,23 @@ std::string QGlobal::COM_port = "none";
  float QGlobal::fanalog2max = 255;
  float QGlobal::fMWDInEnable = 0;	//zablokowane prze³¹czniki i NEFy na pulpicie - nie blokuj¹ klawiatury
 
-
+ bool QGlobal::DEV_P01[9];
+ bool QGlobal::DEV_P02[9];
+ bool QGlobal::DEV_P03[9];
+ bool QGlobal::DEV_P04[9];
+ bool QGlobal::DEV_P05[9];
+ bool QGlobal::DEV_P06[9];	   // wejœcia: NEFy, hebelki
+ bool QGlobal::DEV_P07[9];
+ byte QGlobal::DEV_P08;		   // nastawnik
+ byte QGlobal::DEV_P09;		   // bocznik
+ byte QGlobal::DEV_P10;		   // analog1
+ byte QGlobal::DEV_P11;		   // analog2
+ byte QGlobal::DEV_P12;	       	   // analog3
+ byte QGlobal::DEV_P13;		   // analog4
+ long QGlobal::iobindsnum = 0;     // iobinds
+ iosets QGlobal::IOSET[KEYBINDINGS];
+ std::string QGlobal::IOCOMMAND = "";
+ bool QGlobal::portstate[5][64];
 
 // parametry do u¿ytku wewnêtrznego
 // double Global::tSinceStart=0;

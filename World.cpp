@@ -14,6 +14,8 @@ http://mozilla.org/MPL/2.0/.
 
 #include "system.hpp"
 #include "classes.hpp"
+#include "graphics.hpp"
+#include <jpeg.hpp>
 
 #include "opengl/glew.h"
 #include "opengl/glut.h"
@@ -40,9 +42,8 @@ http://mozilla.org/MPL/2.0/.
 #include "env_sun.h"
 #include "env_fog.h"
 #include "addons.h"
-#include "shadow/VECTOR3D.h"
-#include "shadow/VECTOR4D.h"
-#include "shadow/MATRIX4X4.h"
+
+
 
 #define TEXTURE_FILTER_CONTROL_EXT 0x8500
 #define TEXTURE_LOD_BIAS_EXT 0x8501
@@ -68,15 +69,12 @@ TGroundNode *tmp;
 TDynamicObject *DO;
 bool FOVSET;
 
-const int shadowMapSize=512;
-GLuint shadowMapTexture;
-MATRIX4X4 lightProjectionMatrix, lightViewMatrix;
-MATRIX4X4 cameraProjectionMatrix, cameraViewMatrix;
+glTexture aaa, bbb, ccc, ddd, eee, fff, ggg, hhh, iii, jjj, kkk, lll, mmm, nnn, ooo, ppp, qqq, rrr, sss, ttt, uuu, vvv, www, xxx, yyy, zzz;
+CCCParticleSystem *g_DSMOKE;
 
 // ***********************************************************************************************************
 // DYM SPALIN Z OBIEKTU RUCHOMEGO
 // ***********************************************************************************************************
-
 
 
 
@@ -391,6 +389,7 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     QGlobal::semlense = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlense.bmp").c_str());
     QGlobal::texturetab[2] = TTexturesManager::GetTextureID("../data/", Global::asCurrentTexturePath.c_str(),AnsiString("data/gfxs/snow.bmp").c_str());
     QGlobal::texturetab[3] = TTexturesManager::GetTextureID("../data/", Global::asCurrentTexturePath.c_str(),AnsiString("data/gfxs/waterc.tga").c_str());
+  //QGlobal::texturetab[4] = TTexturesManager::LoadJPG4("c:\\MaSzyna_15_04\\aaa.jpg");
     WriteLog("");
     WriteLog("");
 
@@ -586,15 +585,6 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     WriteLog("glEnable(GL_ARB_point_sprite);");
     glEnable(GL_ARB_point_sprite);
 
-    //Create the shadow map texture
-    glGenTextures(1, &shadowMapTexture);
-    glBindTexture(GL_TEXTURE_2D, shadowMapTexture);
-    glTexImage2D(	GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapSize, shadowMapSize, 0,
-					GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
     // ----------- LIGHTING SETUP -----------
     // Light values and coordinates
@@ -687,6 +677,39 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
 
     SetFocus(NhWnd);
 
+/*
+    TextureLoader *TL = new TextureLoader;
+    TL->SetMipMapping(true);
+    TL->SetAlphaMatch(false, 1,1,1);
+    TL->SetTextureFilter(txTrilinear);
+    TL->LoadTextureFromDisk("http://eu07.es/textures/ip/jpegtest9.jpg", &xxx);
+    TL->LoadTextureFromDisk("http://cdn.quotesgram.com/img/82/56/1378593687-bob_marley_r.jpg", &aaa);
+    TL->LoadTextureFromDisk("http://s3.flog.pl/media/foto/5293534_4e004_1.jpg", &bbb);
+    TL->LoadTextureFromDisk("http://www.polskakolej.info/data/media/56/21.04_375.JPG", &ccc);
+    TL->LoadTextureFromDisk("http://img3.garnek.pl/a.garnek.pl/011/044/11044473_800.0.jpg/4e-004.jpg", &ddd);
+    TL->LoadTextureFromDisk("http://s10.flog.pl/media/foto/wojmarek_eb9927cd022824513c8c61a5164c4d74.jpg", &eee);
+    TL->LoadTextureFromDisk("http://q.matinf.pl/@sitedata/img/EP08-006.jpg", &fff);
+    TL->LoadTextureFromDisk("http://s8.flog.pl/media/foto/6819565_eu07304.jpg", &ggg);
+    TL->LoadTextureFromDisk("http://rail.phototrans.eu//images/photos/big/26/35814.jpg", &hhh);
+    TL->LoadTextureFromDisk("http://s9.flog.pl/media/foto/6285164_ep07424.jpg", &iii);
+    TL->LoadTextureFromDisk("http://www.kpinfo.pl/images/photoalbum/album_123/koso_ep07_424_t2_1.jpg", &jjj);
+    TL->LoadTextureFromDisk("http://rail.phototrans.eu/images/photos/big/26/70498.jpg", &kkk);
+    TL->LoadTextureFromDisk("http://rail.phototrans.eu/images/photos/big/43/10531.jpg", &lll);
+    TL->LoadTextureFromDisk("http://s10.flog.pl/media/foto/wojmarek_eb9927cd022824513c8c61a5164c4d74.jpg", &mmm);
+    TL->LoadTextureFromDisk("http://www.railphoto.info/galeria/albums/userpics/10270/IMG_8540.jpg", &nnn);
+    TL->LoadTextureFromDisk("http://www.eu06.pl/elektryczne/eu07/EP07-541-1.jpg", &ooo);
+    TL->LoadTextureFromDisk("http://img1.garnek.pl/a.garnek.pl/006/324/6324764_800.0.jpg/eu07-429-ct-poznan.jpg", &ppp);
+    TL->LoadTextureFromDisk("http://woziarze.cal.pl/albums/userpics/10001/EU07-418_2004_11_04.jpg", &qqq);
+    TL->LoadTextureFromDisk("http://cdn.quotesgram.com/img/82/56/1378593687-bob_marley_r.jpg", &rrr);
+    TL->LoadTextureFromDisk("http://cdn.quotesgram.com/img/82/56/1378593687-bob_marley_r.jpg", &sss);
+    TL->LoadTextureFromDisk("http://cdn.quotesgram.com/img/82/56/1378593687-bob_marley_r.jpg", &ttt);
+    TL->LoadTextureFromDisk("http://cdn.quotesgram.com/img/82/56/1378593687-bob_marley_r.jpg", &uuu);
+    TL->LoadTextureFromDisk("http://cdn.quotesgram.com/img/82/56/1378593687-bob_marley_r.jpg", &vvv);
+    TL->LoadTextureFromDisk("http://cdn.quotesgram.com/img/82/56/1378593687-bob_marley_r.jpg", &www);
+    TL->LoadTextureFromDisk("http://cdn.quotesgram.com/img/82/56/1378593687-bob_marley_r.jpg", &yyy);
+    TL->LoadTextureFromDisk("http://cdn.quotesgram.com/img/82/56/1378593687-bob_marley_r.jpg", &zzz);
+*/
+
     //--SetCurrentDirectory(QGlobal::asAPPDIR.c_str());
     RenderLoader(hDC, 77, "SOUND INITIALIZATION...");
     WriteLog("Sound Init");
@@ -716,19 +739,10 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
 
     Ground.Init(Global::szSceneryFile, hDC);
 
-    SNOW.Init(QGlobal::snow_type, QGlobal::snow_flakes, QGlobal::snow_area, QGlobal::snow_base, QGlobal::snow_size, 0.1, 0.7, QGlobal::snow_sraf, QGlobal::snow_srat, QGlobal::snow_color, QGlobal::snow_tex, QGlobal::snow_light, QGlobal::snow_blend);  // flakes, area, psize, type, randcolor f, randcolor t, randalfa f, randalfa t,  color, tex, blendf
+    SNOW.Init(QGlobal::snow_type, QGlobal::snow_objt, QGlobal::snow_flakes, QGlobal::snow_area, QGlobal::snow_base, QGlobal::snow_size, 0.1, 0.7, QGlobal::snow_sraf, QGlobal::snow_srat, QGlobal::snow_color, QGlobal::snow_tex, QGlobal::snow_light, QGlobal::snow_blend);  // flakes, area, psize, type, randcolor f, randcolor t, randalfa f, randalfa t,  color, tex, blendf
 
     // z config.txt - QGlobal::iSNOWFLAKES, QGlobal::iSNOWSQUARE
-    
-  //vector3 sem;
-  //sem = vector3(5, 1, 460);
-  //QGlobal::sec[0].setSmoke(sem, 0.40, 1.02, 0.02, 0.06, 0, 0.2, 30.0, 1, 50);
-  //sem = vector3(6, 0, 461);
-  //QGlobal::sec[1].setSmoke(sem, 0.21, 0.60, 0.01, 0.04, 0, 0.2, 10.0, 1, 30);
-  //sem = vector3(-384.5, 100, 994);
-  //QGlobal::sec[2].setSmoke(sem, 1.80, 2.92, 0.07, 0.28, 0, 0.2, 85.0, 4, 50);
-  //sem = vector3(-406.5, 100, 984);
-  //QGlobal::sec[3].setSmoke(sem, 0.80, 2.12, 0.03, 0.10, 0, 0.5, 23.0, 4, 50);
+
     Global::LoadStationsBase(); // Q 030116: Wczytywanie informacji o stacjach ( POWINNO BYC ZALEZNE OD SCENERII )
 
 
@@ -902,28 +916,27 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     SetForegroundWindow(NhWnd);
     SetFocus(NhWnd);
 
+    g_DSMOKE = new CCCParticleSystem;
 
-	//Calculate & save matrices
-	glPushMatrix();
-	
-	glLoadIdentity();
-      //	gluPerspective(45.0f, (float)windowWidth/(float)windowHeight, 1.0f, 100.0f);
-	glGetFloatv(GL_MODELVIEW_MATRIX, cameraProjectionMatrix);
-	
-	glLoadIdentity();
-	gluLookAt(Camera.Pos.x, Camera.Pos.y, Camera.Pos.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-	glGetFloatv(GL_MODELVIEW_MATRIX, cameraViewMatrix);
-	
-	glLoadIdentity();
-	gluPerspective(45.0f, 1.0f, 2.0f, 8.0f);
-	glGetFloatv(GL_MODELVIEW_MATRIX, lightProjectionMatrix);
-	
-	glLoadIdentity();
-	gluLookAt(200, 300, 500, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-	glGetFloatv(GL_MODELVIEW_MATRIX, lightViewMatrix);
-	
-	glPopMatrix();
+    g_DSMOKE->Initialize(1150);
+    g_DSMOKE->m_iParticlesCreatedPerSec = 1450;
+    g_DSMOKE->m_fCreationVariance = 0.1f;
+    g_DSMOKE->m_fMinDieAge = 3.1f;
+    g_DSMOKE->m_fMaxDieAge = 10.5f;
+    g_DSMOKE->m_bRecreateWhenDied = true;
+    g_DSMOKE->m_bParticlesLeaveSystem = true;
 
+    g_DSMOKE->SetCreationColor(0.2f,0.2f,0.21f,	0.2f,0.2f,0.2f);
+    g_DSMOKE->SetDieColor(0.0f,0.0f,0.0f,  0.0f,0.0f,0.0f);
+    g_DSMOKE->SetAlphaValues(0.9f, 0.9f, 0.6f, 0.0f);
+    g_DSMOKE->SetEmitter(10.0f, 0.0f, -120.0f,	0.5f, 0.0f, 0.5f);
+    g_DSMOKE->SetAcceleration(F3dVector(0.0f,1.0f,0.0f),0.1f,0.2f);
+    g_DSMOKE->SetSizeValues(0.0f, 0.0f, 0.72f, 0.82f);
+    g_DSMOKE->m_fMaxEmitSpeed = 0.03f;
+    g_DSMOKE->m_fMinEmitSpeed = 0.07f;
+    g_DSMOKE->SetEmissionDirection(0.0f,1.0f,0.0f,  0.08f,0.5f,0.08f);
+    g_DSMOKE->m_iBillboarding = BILLBOARDING_PERPTOVIEWDIR;
+    g_DSMOKE->LoadTextureFromFile("data/particles/particle3.tga");
     return true;
 };
 
@@ -1919,7 +1932,7 @@ bool TWorld::Update()
         return false;
 
 //**********************************************************************************************************
-// Q: TU BYLO RENDEROWANIE KABINY, PRZENIOSLEM DO OSOBNEJ FUNKCJI I WOLAM Z TWorld::Render()
+// Q: TU BYLO RENDEROWANIE KABINY, PRZENIOSLEM DO OSOBNEJ FUNKCJI I WOLAM Z TWorld :Render()
 
 
     /*if (Console::Pressed(VK_F5))
@@ -2216,92 +2229,6 @@ if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
 };
 
 
-float a = 1.0;
-bool cd = false;
-float upt = 0.0;
-float dpt = 0.0;
-
-circleXY(vector3 center, float radius, int dots, vector3 cp, int levels, int clevel)
-{
-  float emm1[] = {1, 1, 1, 0};
-  float emm2[] = {0, 0, 0, 1};
-
-  GLint blendSrc;
-  GLint blendDst;
-  glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrc);
-  glGetIntegerv(GL_BLEND_DST_ALPHA, &blendDst);
-  glDepthMask(0);
-
-  glDisable(GL_TEXTURE_2D);
-  glEnable(GL_ARB_point_sprite);
-
-
-
-  if (!cd)
-   {
-
-    if (a > 0.10)a-=0.005;
-    if (a < 0.10)
-     {
-      double dt = Timer::GetDeltaTime();
-      dpt += (dt);
-      if (dpt > 40.0) {cd = true; dpt=0.0;}     // trzymanie w zgaszeniu
-     }
-   }
-   else
-   {
-    if (a < 0.91) a+=0.015;
-    if (a > 0.91)
-     {
-      double dt = Timer::GetDeltaTime();
-      upt += (dt);
-      if (upt > 20.0) {cd = false; upt = 0.0;}   // trzymanie w zapaleniu do 30.0
-     }
-   }
-  //for (float l = 1.0; l >0.0; l--)
-
-  glColor4f(1.0, 0.1, 0.0, a);
-  if (clevel ==  8) glColor4f(1.0, 0.15, 0.0, 0.8);
-  if (clevel == 10) glColor4f(1.0, 0.10, 0.0, 0.9);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-  glAlphaFunc(GL_NOTEQUAL, 0);
-  glEnable(GL_POINT_SMOOTH);
-  glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-  glColorMaterial(GL_FRONT, GL_EMISSION);
-
-  float stepSize = ((2*PI)/dots);
-  float pointsize = 223.0f;
-
-
-  for (float d = 0; d <= (2*PI)-stepSize; d += stepSize)
-   {
-     // addPoint(((sin(d) * radius) + center.x),
-     //           (cos(d) * radius) + center.y));
-
-      float xDist = cp.x -  center.x;
-      float yDist = cp.y -  center.y;
-      float zDist = cp.z -  center.z;
-      float CamDistToEmitter = sqrt(SQR(zDist)+SQR(yDist)+SQR(xDist));
-      if (CamDistToEmitter < 0.1f) //avoid too big particles
-      CamDistToEmitter = 0.1f;
-      glPointSize(pointsize / CamDistToEmitter);
-
-      glBegin(GL_POINTS);
-      glVertex3f((sin(d) * radius) + center.x, center.y, (cos(d) * radius) + center.z);
-      glEnd();
-
-    }
-  glDisable(GL_BLEND);
-  glBlendFunc(blendSrc, blendDst);
-  glEnable(GL_TEXTURE_2D);
-  glEnable(GL_LIGHTING);
-  glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-  glMaterialfv(GL_FRONT, GL_EMISSION, emm2);
-}
-
-
 bool TWorld::Render2D()
 {
     if (!FreeFlyModeFlag)
@@ -2323,7 +2250,6 @@ bool TWorld::Render2D()
 
 }
 
-
 // *****************************************************************************
 // PIERWSZA FUNKCJA NA DRODZE RENDERINGU SCENY - Wywolywana z TWorld::Update()
 // *****************************************************************************
@@ -2338,7 +2264,7 @@ bool TWorld::Render()
     glViewport(0, 0, Global::iWindowWidth, Global::iWindowHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    glClearColor(Global::AtmoColor[0], Global::AtmoColor[1], Global::AtmoColor[2], 0.0);                      
+    glClearColor(Global::AtmoColor[0], Global::AtmoColor[1], Global::AtmoColor[2], 0.0);
 
     Camera.SetMatrix();                                                                                       // ustawienie macierzy kamery wzglêdem pocz¹tku scenerii
 
@@ -2347,13 +2273,46 @@ bool TWorld::Render()
     FOG.Render();
 
     SKY.Render(1);
-
+    /*
+    float yp = 0.2;
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=0.0f, 0), xxx.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), xxx.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), mmm.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), aaa.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), bbb.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), ccc.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), ddd.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), eee.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), fff.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), ggg.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), hhh.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), iii.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), jjj.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), kkk.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), lll.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), mmm.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), nnn.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), ooo.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), ppp.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), qqq.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), rrr.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), sss.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), ttt.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), uuu.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), vvv.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), www.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), xxx.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), yyy.TextureID);
+    drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=2.0f, 0), zzz.TextureID);
+    */
+    glPointSize(2.0);
     Ground.Render(Camera.Pos);
 
     Global::renderfountainem(Camera.Pos);
     Global::renderobstructlights(Camera.Pos, 0.001);
     Global::rendersmokeem();
     Global::renderfireem();
+    Global::renderparticleeffect(Camera.Pos);
 
     SNOW.Render();
 
@@ -2373,9 +2332,9 @@ bool TWorld::Render()
 };
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // RenderCab()
-// *****************************************************************************
+// ***********************************************************************************************************
 
 bool TWorld::RenderCab(bool colormode)
 {

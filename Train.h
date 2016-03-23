@@ -80,6 +80,7 @@ class TTrain
     bool Init(TDynamicObject *NewDynamicObject, bool e3d = false);
     void OnKeyDown(int cKey);
     void OnKeyUp(int cKey);
+    void OnMWDCommand();
 
     //    bool SHP() { fShpTimer= 0; };
 

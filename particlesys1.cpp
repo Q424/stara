@@ -24,6 +24,7 @@ psmokeemitercontainer PSYS::sec[64];
 pfireemitercontainer PSYS::fec[32];
 pfountainemitercontainer PSYS::fountainec[32];
 pobstructlightscontainer PSYS::obstructlightsc[32];
+pparteffectscontainer PSYS::parteffects[32];
 std::string currentline;
 
 void removeSpaces(std::string& str)
@@ -262,6 +263,9 @@ void pfountainemitercontainer::setsFountain(vector3 pos, float rmaxdist, int osc
 
 void pfountainemitercontainer::drawFountain(vector3 camera)
 {
+ float CamDistToEmitter = VECTORLEN2(EM_POSITION, Global::GetCameraPosition());
+  if (CamDistToEmitter < EM_MAXDIST)
+  {
     GLfloat psize;
     glGetIntegerv(GL_BLEND_SRC_ALPHA, &QGlobal::blendSrc);
     glGetIntegerv(GL_BLEND_DST_ALPHA, &QGlobal::blendDst);
@@ -274,6 +278,7 @@ void pfountainemitercontainer::drawFountain(vector3 camera)
     AirFountainW.Render(camera);
     glBlendFunc(QGlobal::blendSrc, QGlobal::blendDst);
     glPointSize(psize);               // aby freespoty semaforow sie nie powiekszaly
+  }  
 }
 
 void Global::renderfountainem(vector3 camera)
@@ -545,9 +550,13 @@ void pfireemitercontainer::updateFire(){
 
 void pfireemitercontainer::drawFire(vector3 cp)
 {
-xvector vWorldUp(0,1,0);
-xvector FLAME(0,0,0.1);
-xvector FireOrigin(FIRE_POSITION.x, FIRE_POSITION.y, FIRE_POSITION.z);//fire origin
+  float CamDistToEmitter = VECTORLEN2(FIRE_POSITION, Global::GetCameraPosition());
+
+  if (CamDistToEmitter < FIRE_MAXDIST)
+  {
+  xvector vWorldUp(0,1,0);
+  xvector FLAME(0,0,0.1);
+  xvector FireOrigin(FIRE_POSITION.x, FIRE_POSITION.y, FIRE_POSITION.z);//fire origin
 
   GLboolean blendEnabled;
   glGetIntegerv(GL_BLEND_SRC_ALPHA, &QGlobal::blendSrc);
@@ -615,6 +624,7 @@ xvector FireOrigin(FIRE_POSITION.x, FIRE_POSITION.y, FIRE_POSITION.z);//fire ori
       //glEnable(GL_DEPTH_TEST);
         glBlendFunc(QGlobal::blendSrc, QGlobal::blendDst);
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, value);
+  }     
 }
 
 
@@ -630,6 +640,132 @@ void Global::renderfireem()
 }
 
 
-//---------------------------------------------------------------------------
+// ***********************************************************************************************************
+//
+// ***********************************************************************************************************
+
+void pparteffectscontainer::setsPE
+            (long type,
+             float rmaxdist,
+             int   initialnum,
+             int   createpersec,
+             float mindieage,
+             float maxdieage,
+             float creationvar,
+             bool  recreateondie,
+             bool  particleleavesys,
+             long  billboardtype,
+        std::string  blendtype,
+             vector3 empos,
+             vector3 emarea,
+             vector3 emdir,
+             vector3 emdeviation,
+             vector3 accdir,
+             color4 borncolor1,
+             color4 borncolor2,
+             color4 diecolor1,
+             color4 diecolor2,
+             color4 alpha,
+             float accmin,
+             float accmax,
+             float ssizemin,
+             float ssizemax,
+             float esizemin,
+             float esizemax,
+             float emspdmin,
+             float emspdmax,
+             float spinspdmin,
+             float spinspdmax,
+       std::string texture)
+{
+  PE_MAXDIST = rmaxdist;
+  PE_POSITION = empos;
+  PE_TYPE = type;
+
+  texture = "data/particles/" + texture;
+
+  bool nt = false;
+  if (texture.find("none") != string::npos) nt = true;
+
+//INIT SYSTEM 1 (FIRE1) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+// if (PE_TYPE == 1)
+//   {
+	g_ParticleSystem1.Initialize(initialnum);
+	g_ParticleSystem1.m_iParticlesCreatedPerSec = createpersec;
+	g_ParticleSystem1.m_fMinDieAge = mindieage;
+	g_ParticleSystem1.m_fMaxDieAge = maxdieage;
+	g_ParticleSystem1.m_fCreationVariance = creationvar;
+	g_ParticleSystem1.m_bRecreateWhenDied = recreateondie;
+	g_ParticleSystem1.m_bParticlesLeaveSystem = particleleavesys;
+        g_ParticleSystem1.m_iBillboarding = billboardtype;                                                    // 1=BILLBOARDING_PERPTOVIEWDIR, 2=;
+
+	g_ParticleSystem1.SetEmitter(empos.x, empos.y, empos.z, emarea.x, emarea.y, emarea.z);
+        g_ParticleSystem1.SetEmissionDirection(emdir.x, emdir.y, emdir.z, emdeviation.x, emdeviation.y, emdeviation.z);
+        g_ParticleSystem1.SetAcceleration(F3dVector(accdir.x, accdir.y, accdir.z), accmin, accmax);
+	g_ParticleSystem1.SetCreationColor(borncolor1.r, borncolor1.g, borncolor1.b, borncolor2.r, borncolor2.g, borncolor2.b);
+	g_ParticleSystem1.SetDieColor(diecolor1.r, diecolor1.g, diecolor1.b, diecolor2.r, diecolor2.g, diecolor2.b);
+	g_ParticleSystem1.SetAlphaValues(alpha.r, alpha.g, alpha.b, alpha.a);
+	g_ParticleSystem1.SetSizeValues(ssizemin, ssizemax, esizemin, esizemax);
+        g_ParticleSystem1.m_fMinEmitSpeed = emspdmin;
+	g_ParticleSystem1.m_fMaxEmitSpeed = emspdmax;
+	g_ParticleSystem1.SetSpinSpeed(spinspdmin*PI, spinspdmax*PI);
+if(!nt)	g_ParticleSystem1.LoadTextureFromFile(stdstrtochar(texture));                                         // "data/particles/particle1.tga"
+//   }
+
+ PSYS::parteffects_tid++;
+}
+
+void pparteffectscontainer::drawPE(vector3 cp)
+{
+  float CamDistToEmitter = VECTORLEN2(PE_POSITION, Global::GetCameraPosition());
+
+  if (CamDistToEmitter < PE_MAXDIST)
+  {
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+//glBlendFunc(GL_SRC_ALPHA, GL_DST_COLOR);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    if (!g_ParticleSystem1.m_bUseTexture) glPointSize(5.0);
+    if (!g_ParticleSystem1.m_bUseTexture) glDisable(GL_TEXTURE_2D);
+
+    //if (PE_TYPE == 1)
+    g_ParticleSystem1.UpdateSystem(0.08f);
+    //if (PE_TYPE == 1)
+    g_ParticleSystem1.Render(0, 0);
+
+    glEnable(GL_CULL_FACE);
+  }  
+}
+
+void pparteffectscontainer::setposPE(float x, float y, float z)
+{
+  g_ParticleSystem1.m_EmitterPosition.x+=x;
+  g_ParticleSystem1.m_EmitterPosition.y+=y;
+  g_ParticleSystem1.m_EmitterPosition.z+=z;
+}
+
+void Global::renderparticleeffect(vector3 camera)
+{
+  glGetIntegerv(GL_BLEND_SRC_ALPHA, &QGlobal::blendSrc);
+  glGetIntegerv(GL_BLEND_DST_ALPHA, &QGlobal::blendDst);
+  glDepthMask(GL_FALSE);
+//glEnable(GL_DEPTH_TEST);
+
+  glDisable(GL_LIGHTING);
+  for (int i = 0; i < PSYS::parteffects_tid; i++)
+   {
+    PSYS::parteffects[i].drawPE(vector3(0, 0, 0));
+    PSYS::parteffects[i].setposPE(0.05, 0.0, 0.02);
+   }
+  glEnable(GL_LIGHTING);
+  glBlendFunc(QGlobal::blendSrc, QGlobal::blendDst);
+  glDepthMask(GL_TRUE);
+}
+
+
+//------------------------------------------------------------------------------------------------------------
 
 #pragma package(smart_init)

@@ -102,6 +102,13 @@ struct a
 
 int a::sort_by = 1;// default will be to sort by num1
 
+#define KEYBINDINGS 100
+typedef struct {
+	std::string bit;
+	std::string ifbit;
+	std::string bitid;
+        std::string command;
+} iosets;
 
 
 // DEFINICJE ELEMENTOW KABINY
@@ -656,6 +663,7 @@ class QGlobal
  static TTrack *pTrack;
 
  // SNOW GLOBAL VARS
+ static  long snow_objt;
  static  long snow_type;
  static  long snow_flakes;
  static float snow_area;
@@ -674,6 +682,7 @@ class QGlobal
  static std::string COM_port;
  static bool  bLOGIT;
  static bool  bOPCOM;
+ static float fRXSPD;
  static float fmaxCH;
  static float fmaxPG;
  static float fmaxZG;
@@ -684,6 +693,23 @@ class QGlobal
  static float fanalog2min;
  static float fanalog2max;
  static float fMWDInEnable;
+ static bool DEV_P01[9];
+ static bool DEV_P02[9];
+ static bool DEV_P03[9];
+ static bool DEV_P04[9];
+ static bool DEV_P05[9];
+ static bool DEV_P06[9];
+ static bool DEV_P07[9];
+ static byte DEV_P08;	//kierunek
+ static byte DEV_P09;	//bocznik
+ static byte DEV_P10;	//analog1
+ static byte DEV_P11;	//analog2
+ static byte DEV_P12;
+ static byte DEV_P13;
+ static long iobindsnum;
+ static iosets IOSET[KEYBINDINGS];
+ static std::string IOCOMMAND;
+ static bool portstate[5][64];
 };
 
 class Global
@@ -862,6 +888,7 @@ class Global
     static void renderfireem();
     static void renderfountainem(vector3 camera);
     static void renderobstructlights(vector3 camera, double dt);
+    static void renderparticleeffect(vector3 camera);
   //static bool pobstructlightscontainer::setsObstructLights(char* scriptfile);
 };
 

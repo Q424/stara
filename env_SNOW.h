@@ -43,13 +43,13 @@ class TSnow
 {
 private:
 
-int type, blendf;
+int type, objt, blendf;
 bool color, text, light;
 float size;
 float rcf, rct, raf, rat, baseh;
 
 public:
- bool Init(int stype, int sflakesnum, float sarea, float sbaseh, float ssize, float srcf, float srct, float sraf, float srat, bool scolor, bool stex, bool slight, int sbf);
+ bool Init(int stype, int sobjt, int sflakesnum, float sarea, float sbaseh, float ssize, float srcf, float srct, float sraf, float srat, bool scolor, bool stex, bool slight, int sbf);
  bool Render();
 };
 

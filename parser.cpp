@@ -190,6 +190,8 @@ std::string cParser::readToken(bool ToLower, const char *Break)
         (token.compare("attachf") == 0))
     { // obs³uga include typowanego
         std::string includetype = readToken(ToLower); // typ obiektu
+        std::string reservedv01 = readToken(ToLower); // zarezerwowane
+        std::string reservedv02 = readToken(ToLower); // zarezerwowane
         std::string includefile = readToken(ToLower); // nazwa pliku
         inctype = includetype;
         incfile = includefile; // coby bylo globalnie widoczne
@@ -213,7 +215,7 @@ std::string cParser::readToken(bool ToLower, const char *Break)
         if (test == "roadsign") QGlobal::iINCLUDETYPE = 105;         // znaki uliczne
         if (test == "traction") QGlobal::iINCLUDETYPE = 106;         // elementy sieci trakcyjnej, np modele slupow
         if (test == "switch") QGlobal::iINCLUDETYPE = 107;           // zwrotnik rozjazdu
-        if (test == "trees") QGlobal::iINCLUDETYPE = 108;            // drzewa
+        if (test == "trees-a") QGlobal::iINCLUDETYPE = 108;            // drzewa
         if (test == "hmpost-a") QGlobal::iINCLUDETYPE = 109;         // slupek hektometrowy typ 1
         if (test == "hmpost-b") QGlobal::iINCLUDETYPE = 110;         // slupek hektometrowy typ 2
         

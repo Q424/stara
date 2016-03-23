@@ -13,16 +13,9 @@ http://mozilla.org/MPL/2.0/.
 #include "addons/fountain1/poolvectors.h"
 #include "addons/fountain1/pool.h"
 #include "addons/fountain1/AirFountain.h"
+#include "addons/texloader/textureloader.h"
+#include "addons/particle2/particles.h"
 
-//Constants:
-//#define NUM_X_OSCILLATORS	150
-//#define NUM_Z_OSCILLATORS	150
-//#define OSCILLATOR_DISTANCE	0.015
-//#define OSCILLATOR_WEIGHT       0.0003
-//#define MAXX		        (NUM_X_OSCILLATORS*OSCILLATOR_DISTANCE)
-//#define MAXZ			(NUM_Z_OSCILLATORS*OSCILLATOR_DISTANCE)
-
-//#define POOL_HEIGHT		0.3
 
 //The "pool" which represents the water within the fountain bowl
 //CPool AirFountainP;

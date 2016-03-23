@@ -16,7 +16,7 @@ struct SF2dVector
 {
 	GLfloat x,y;
 };
-
+#define NULL_VECTOR F3dVector(0.0f,0.0f,0.0f)
 
 SF3dVector F3dVector ( GLfloat x, GLfloat y, GLfloat z );
 SF3dVector AddF3dVectors ( SF3dVector * u, SF3dVector * v);

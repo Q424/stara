@@ -180,6 +180,7 @@ AnsiString LDR_STR_FRST;
     bool Render();
     bool Render2D();
     bool RenderCab(bool colormode);
+    void PROCESSIOACTION(std::string str, bool state);
     TCamera Camera;
     TGround Ground;
     TTrain *Train;

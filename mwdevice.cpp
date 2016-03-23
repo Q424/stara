@@ -22,6 +22,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstdio>
+#include <cstdlib>
 
 #include "system.hpp"
 #include "classes.hpp"
@@ -40,6 +42,7 @@
 #include "Globals.h"
 #include "Camera.h"
 #include "qutils.h"
+#include "train.h"
 
  bool BL_WYLACZNIKSZYBKI = false;
  bool BL_POSLIZG = false;
@@ -70,8 +73,11 @@
  bool BL_KABINA = false;
  bool BL_SRJ = false;
  bool BL_PRZYZADY = false;
+ bool BL_DEPARTURESIGN = false;
+ bool DOORR = false;
+ bool DOORL = false;
 
- bool czuwak_sw_state = false;	//zmienne do obs³ugi haslera
+ bool czuwak_sw_state = false;	//zmienne do obslugi haslera
  bool shp_sw_state = false;
  bool kabina1 = false;			
  bool kabina2 = false;
@@ -84,8 +90,12 @@
  float Current1 = 0.0f;
  float Current2 = 0.0f;
  float Current3 = 0.0f;
+ recvpacket *rps;
+ std::vector<std::string> skeybind;
 
- 
+ void LOADKEYBINDINGS();
+ void PROCESSIOACTION(std::string str, bool state);
+
 byte SETBYTE0(bool b1, bool b2, bool b3, bool b4, bool b5, bool b6, bool b7, bool b8)
 {
   byte data = 0;
@@ -118,19 +128,34 @@ byte SETBYTE1(bool b1, bool b2, bool b3, bool b4, bool b5, bool b6, bool b7, boo
   return data;
 }
 
+AnsiString str(int i)
+{
+  return IntToStr(i);
+}
 
 bool TWorld::manipopen(char* commname, bool log)
 {
+ if (QGlobal::bOPCOM) rps = new recvpacket;
+ if (QGlobal::bOPCOM) QGlobal::DLL->rp = new recvpacket;
  if (QGlobal::bOPCOM) QGlobal::DLL->opencommp(commname, log);
 }
 
+double sendf = 0;
 
+
+// ***********************************************************************************************************
+// WYWYLANIE/ODBIERANIE
+// ***********************************************************************************************************
 bool TWorld::manipsend(int id)
 {
+double dt = Timer::GetDeltaTime();
+sendf += dt;
 
 if (QGlobal::hDLL)
- if (Controlled && Train)
+ if (sendf > QGlobal::fRXSPD)
+  if (QGlobal::bOPCOM && Controlled && Train)
   {
+   sendf = 0;
    Velocity = Controlled->MoverParameters->Vel;
    BrakePress = Controlled->MoverParameters->BrakePress;
    PipePress = Controlled->MoverParameters->PipePress;
@@ -139,58 +164,43 @@ if (QGlobal::hDLL)
    Current1 = Controlled->MoverParameters->ShowCurrent(1);
    Current2 = Controlled->MoverParameters->ShowCurrent(2);
    Current3 = Controlled->MoverParameters->ShowCurrent(3);
+   /*
+   VoltageBat = Controlled->MoverParameters->VoltageBat		   // zmienic oby dwa na czytanie napiecia baterii
+   CurrentBat = Controlled->MoverParameters->ShowCurrent(1);	   // i pradu baterii
+   */
 
+   // skalowanie mierników analogowych (od 0 do 255)
+   byte bSPEED = (unsigned char)floor(Velocity + 0.5);             // predkosc, BYTE NA INT DLA TESTU CZY JEST OK: int spd =  (int) bSPEED;
 
-   float fspeed = Velocity;                                                             // POBIERANIE PREDKOSCI
-   int speed = (int) floor(fspeed + 0.5);                                               // KONWERSJA FLOAT DO INT
-   byte bSPEED = (unsigned char)speed;                                                  // INT NA BYTE
- //int spd =  (int) bSPEED;                                                             // BYTE NA INT DLA TESTU CZY JEST OK
+   float fbrakepress = BrakePress / (QGlobal::fmaxCH * 10);  	   // ciœnienie w cylindrach hamulcowych // np 0.40/10 = 0.04
+   byte bbrakepress = (unsigned char)floor(fbrakepress + 0.5);	   //zaokr¹glanie zgodnie z prawami matematyki
 
-   float fbrakepressdiv = BrakePress / (QGlobal::fmaxCH * 10);  // np 0.40/10 = 0.04
-   float fbrakepress255 = (fbrakepressdiv * 255);                                          // 0.04 * 255 = 10.2
-   int ibrakepress = (int) floor(fbrakepress255 + 0.5);
-   byte bbrakepress = (unsigned char)ibrakepress;                                          // INT NA BYTE
+   float fpipepress = (PipePress / (QGlobal::fmaxPG * 10))*255;    // ciœnienie w przewodznie g³ównym
+   byte bpipepress = (unsigned char)floor(fpipepress + 0.5);
 
-   float fpipepressdiv = PipePress / (QGlobal::fmaxPG * 10);      // np 0.40/10 = 0.04
-   float fpipepress255 = (fpipepressdiv * 255);                                            // 0.04 * 255 = 10.2
-   int ipipepress = (int) floor(fpipepress255 + 0.5);
-   byte bpipepress = (unsigned char)ipipepress;                                            // INT NA BYTE
+   float fcomppress = (Compressor / (QGlobal::fmaxZG * 10))*255;   // ciœnienie w zbiorniku g³ownym
+   byte bcomppress = (unsigned char) floor(fcomppress + 0.5);
 
-   float fcomppressdiv = Compressor / (QGlobal::fmaxZG * 10);      // np 0.40/10 = 0.04
-   float fcomppress255 = (fcomppressdiv * 255);                                            // 0.04 * 255 = 10.2
-   int icomppress = (int) floor(fcomppress255 + 0.5);
-   byte bcomppress = (unsigned char)icomppress;                                            // INT NA BYTE
+   float fvoltage = (Voltage1 / QGlobal::fmaxV1)*255;              // napiêcie w sieci trakcyjnej
+   byte bvoltagev1 = (unsigned char)floor(fvoltage + 0.5);
 
-   float fvoltagediv = Voltage1 / QGlobal::fmaxV1;
-   float fvoltage255 = (fvoltagediv * 255);
-   int ivoltage = (int) floor(fvoltage255 + 0.5);
-   byte bvoltagev1 = (unsigned char)ivoltage;                                              // INT NA BYTE
+   float fcurrent1 = (Current1 / QGlobal::fmaxA1)*255;             // pr¹d pierwszego uk³¹du
+   byte bcurrentA1 = (unsigned char) floor(fcurrent1 + 0.5);
 
-   float fcurrent1div = Current1 / QGlobal::fmaxA1;
-   float fcurrent1255 = (fcurrent1div * 255);
-   int icurrent1 = (int) floor(fcurrent1255 + 0.5);
-   byte bcurrentA1 = (unsigned char)icurrent1;                                             // INT NA BYTE
+   float fcurrent2 = (Current2 / QGlobal::fmaxA1)*255;             // pr¹d drugiego uk³¹du
+   byte bcurrentA2 = (unsigned char) floor(fcurrent2 + 0.5);
 
-   float fcurrent2div = Current2 / QGlobal::fmaxA1;
-   float fcurrent2255 = (fcurrent2div * 255);
-   int icurrent2 = (int) floor(fcurrent2255 + 0.5);
-   byte bcurrentA2 = (unsigned char)icurrent2;                                             // INT NA BYTE
-
-   float fcurrent3div = Current3 / QGlobal::fmaxA1;
-   float fcurrent3255 = (fcurrent3div * 255);
-   int icurrent3 = (int) floor(fcurrent3255 + 0.5);
-   byte bcurrentA3 = (unsigned char)icurrent3;                                             // INT NA BYTE
-
-
-   BL_WYLACZNIKSZYBKI  = Train->btLampkaWylSzybki.bOn;               // P1
-   BL_POSLIZG          = Train->btLampkaPoslizg.bOn;                 // P1       //
-   BL_STYCZNIKILINIOWE = Train->btLampkaStyczn.bOn;                  // P1       //
-   BL_NADMIARPRZETW    = Train->btLampkaNadmPrzetw.bOn;                          //
-   BL_PROZNICOWY       = Train->btLampkaPrzekRozn.bOn;                           //
-   BL_NADMIARSILNIK    = Train->btLampkaNadmSil.bOn;                             //
-   BL_NADMIARWENTYL    = Train->btLampkaNadmWent.bOn;                // P2       //
-   BL_NADMIARSPREZARKI = Train->btLampkaNadmSpr.bOn;                             //
-   BL_OGRZEWANIESKLADU = Train->btLampkaOgrzewanieSkladu.bOn;                    //
+   float fcurrent3 = (Current3 / QGlobal::fmaxA1)*255;             // pr¹d trzeciego uk³¹du
+   byte bcurrentA3 = (unsigned char) floor(fcurrent3 + 0.5);
+   /*
+   // napiêcie baterii dodaæ odpowiednie rzeczy :)
+   float fvoltagebat = (VoltageBat / QGlobal::fmaxVbat)*255;
+   byte bcurrentA3 = (unsigned char) floor(fvoltagebat + 0.5);
+   // pr¹d ³adowania/roz³adowywania baterii
+   float fcurrentbat = (CurrentBat / QGlobal::fmaxAbat)*255;
+   byte bcurrentbat = (unsigned char) floor(fcurrentbat + 0.5);
+   */
+   
    //                    Train->btLampkaOporyB.bOn;
    //                    Train->btLampkaStycznB.bOn;
    //                    Train->btLampkaWylSzybkiB.bOn;
@@ -198,23 +208,40 @@ if (QGlobal::hDLL)
    //                    Train->btLampkaPrzetwB.bOn;
    //                    btLampkaNapNastHam.bOn;
    //                    btLampkaBoczniki.bOn;
-   BL_OPORYROZRUCHOWE  = Train->btLampkaOpory.bOn;                               //
-   BL_WYSOKIROZRUCH    = Train->btLampkaWysRozr.bOn;                             //
-   BL_SHP              = Train->btLampkaSHP.bOn;                                 //
-   BL_CZUWAK           = Train->btLampkaCzuwaka.bOn;                             //
-   BL_WENTZALUZJE      = Train->btLampkaWentZaluzje.bOn;                         //
-   BL_SPREZARKAA       = Train->btLampkaSprezarka.bOn;                           //
-   BL_SPREZARKAB       = Train->btLampkaSprezarkaB.bOn;                          //
-   BL_HAMOWANIE        = Train->btLampkaHamienie.bOn;                            //
-   BL_JAZDA            = Train->btLampkaJazda.bOn;                               //
-   BL_RADIOTEL         = Train->btLampkaRadiotelefon.bOn;                        //
-   BL_BOCZNIK1         = Train->btLampkaBocznik1.bOn;                            //
-   BL_BOCZNIK2         = Train->btLampkaBocznik2.bOn;                            //
-   BL_DOORL            = Train->btLampkaDoorLeft.bOn;                            //
-   BL_DOORR            = Train->btLampkaDoorRight.bOn;                           //
-   BL_DEPARTURESIG     = Train->btLampkaDepartureSignal.bOn;                     //
-   BL_FORW             = Train->btLampkaForward.bOn;                             //
-   BL_BACK             = Train->btLampkaBackward.bOn;                            //
+
+   BL_WYSOKIROZRUCH    = Train->btLampkaWysRozr.bOn;            //P2.1
+   BL_SPREZARKAA       = Train->btLampkaSprezarka.bOn;          //P2.2
+   BL_SPREZARKAB       = Train->btLampkaSprezarkaB.bOn;         //P2.3
+   BL_FORW             = Train->btLampkaForward.bOn;            //P2.4
+   BL_BACK             = Train->btLampkaBackward.bOn;           //P2.5
+
+   BL_RADIOTEL         = Train->btLampkaRadiotelefon.bOn;       //P3.1
+   BL_JAZDA            = Train->btLampkaJazda.bOn;              //P3.3
+   BL_BOCZNIK1         = Train->btLampkaBocznik1.bOn;           //P3.4
+   BL_BOCZNIK2         = Train->btLampkaBocznik2.bOn;           //P3.5
+   BL_DOORL            = Train->btLampkaDoorLeft.bOn;           //P3.6
+   BL_DOORR            = Train->btLampkaDoorRight.bOn;          //P3.7
+   BL_DEPARTURESIG     = Train->btLampkaDepartureSignal.bOn;    //P3.8
+
+   BL_SHP              = Train->btLampkaSHP.bOn;                //P4.1
+   BL_CZUWAK           = Train->btLampkaCzuwaka.bOn;            //P4.2
+ //BL_BUCZEK1		   = ;					//P4.3
+ //BL_BUCZEK2		   = ;					//P4.4
+   BL_WENTZALUZJE      = Train->btLampkaWentZaluzje.bOn;        //P4.5
+   BL_POSLIZG          = Train->btLampkaPoslizg.bOn;		//P4.6
+   BL_OPORYROZRUCHOWE  = Train->btLampkaOpory.bOn;              //P4.7
+   BL_OGRZEWANIESKLADU = Train->btLampkaOgrzewanieSkladu.bOn;   //P4.8
+
+   BL_NADMIARSPREZARKI = Train->btLampkaNadmSpr.bOn;            //P5.1
+   BL_NADMIARWENTYL = Train->btLampkaNadmWent.bOn;	       	//P5.2
+   BL_WYLACZNIKSZYBKI  = Train->btLampkaWylSzybki.bOn;          //P5.3
+   BL_NADMIARSILNIK    = Train->btLampkaNadmSil.bOn;            //P5.4
+   BL_PROZNICOWY       = Train->btLampkaPrzekRozn.bOn;          //P5.5
+   BL_NADMIARPRZETW    = Train->btLampkaNadmPrzetw.bOn;         //P5.6
+ //BL_PRZEKANIK RÓ¯NICOWY OBWODÓW POMOCNICZYCH = ;	        //P5.7
+
+   BL_HAMOWANIE        = Train->btLampkaHamienie.bOn;           //P6.6
+   BL_STYCZNIKILINIOWE = Train->btLampkaStyczn.bOn;		//P6.8	P5.8
 
    byte dataout0 = 0;
    byte dataout1 = 0;
@@ -223,59 +250,45 @@ if (QGlobal::hDLL)
    byte dataout4 = 0;
    byte dataout5 = 0;
    byte dataout6 = 0;
+   byte datarcv0 = 0;
 
-	if (BL_HAMOWANIE)				//logika rysika 2
-	{
-		czuwak_sw_state = false;
+	if (BL_HAMOWANIE) czuwak_sw_state = false;		//logika rysika 2
+	if (BL_SHP){						//wykrywanie przejazdu nad rezonatorem torowym
+		if (shp_sw_state) shp_sw_state = false;
+		else shp_sw_state = true;
+	}
+	if (BL_FORW){						//logika rysika 3
+		if (shp_sw_state) kabina1 = false;
+		else kabina1 = true;
+	}
+	if (BL_BACK){
+		if (shp_sw_state) kabina2 = false;
+		else kabina2 = true;
 	}
 
-	if (BL_SHP)				        //wykrywanie przejazdu nad rezonatorem torowym
-	{
-		if (shp_sw_state)
-		{
-			shp_sw_state = false;
-		}
-		else
-		{
-			shp_sw_state = true;
-		}
-	}
-		
-	if (BL_FORW)					//logika rysika 3
-	{
-		if (shp_sw_state)
-		{
-			kabina1 = false;
-		}
-		else
-		{
-			kabina1 = true;
-		}
-	}
-	if (BL_BACK)
-	{
-		if (shp_sw_state)
-		{
-			kabina2 = false;
-		}
-		else
-		{
-			kabina2 = true;
-		}
-	}
+
+
+/*############################################################################################################
+Opis kontrolek pulpitów:
+                EU07  - L.przek.nadmiar.sprê¿arek - L.przek.nadmiar.sprê¿arek - L.wy³.szybki - L.przek.nadmiar.sil.trakcyjnych - L.przek.ró¿nic.obw.g³ - L.przek.nadmiar.przetwor.i ogrzew.
+- L.styczniki liniowe - L.poœlizg - L.sygn.wys.rozruch. - L.jazda na oporach - L.ogrzew.poci¹gu
+		ET22  - L.przek.nadmiar.sprê¿arek - L.przek.nadmiar.wentyl. - L.wy³.szybki - L.przek.nadmiar.sil.trakcyjnych - L.przek.ró¿nic.obw.g³ -  L.przek.nadmiar.przetwor.i ogrzew.
+- L.przek.ró¿nic.obw.pomoc. - L.styczniki liniowe - L.poœlizg - L.jazda na oporach - L.ogrzew.poci¹gu
+		EZT   - L.sprê¿arka.g³ - L.napiêcie na nastaw.hamulc. - L.przek.nadmiar.siln.trakc - L.jazda na oporach - L.wy³.przetw.g³ - L.za³.radiotel. - L.gotowoœæ za³.wy³.g³ -
+L.wy³.wy³.szybki
+############################################################################################################*/
 
    dataout0 = SETBYTE0(0, 0, 0, 0, 0, 0, 0, 0);
-   dataout1 = SETBYTE1(BL_WYLACZNIKSZYBKI, BL_STYCZNIKILINIOWE, BL_CZUWAK, BL_NADMIARSILNIK, BL_OGRZEWANIESKLADU, BL_WYSOKIROZRUCH, BL_OPORYROZRUCHOWE, BL_POSLIZG);
-   dataout2 = SETBYTE1(BL_WYLACZNIKSZYBKI, BL_STYCZNIKILINIOWE, BL_CZUWAK, BL_NADMIARSILNIK, BL_OGRZEWANIESKLADU, BL_WYSOKIROZRUCH, BL_OPORYROZRUCHOWE, BL_POSLIZG);
-   dataout3 = SETBYTE1(1, 0, 0, 0, 0, 0, 0, 0);
-//dla ET22
-   dataout4 = SETBYTE1(BL_OGRZEWANIESKLADU, BL_OPORYROZRUCHOWE, BL_POSLIZG, BL_WENTZALUZJE, 0, 0, BL_CZUWAK, BL_SHP);
-   dataout5 = SETBYTE1(BL_STYCZNIKILINIOWE, 0, BL_NADMIARPRZETW, BL_PROZNICOWY, BL_NADMIARSILNIK, BL_WYLACZNIKSZYBKI, 0, BL_NADMIARSPREZARKI); // 7 -> przekaŸnik ró¿nicowy obwodów pomocniczych, 2 -> sygn zaniku pr¹du przy jeŸdzie na oporach
-   dataout6 = SETBYTE1(BL_STYCZNIKILINIOWE, czuwak_sw_state, BL_HAMOWANIE, kabina1, kabina2, 0, 0, 0); //do haslera jazda z pr¹dem, u¿ycie przycisku czujnoœci, hamowanie, kabina(kierunek?), przejazd nad rezonatorem
+   dataout1 = SETBYTE1(0, 0, 0, 0, 0, 0, 0, 0);
+   dataout2 = SETBYTE1(0, 0, 0, BL_BACK, BL_FORW, BL_SPREZARKAB, BL_SPREZARKAA, BL_WYSOKIROZRUCH);
+   dataout3 = SETBYTE1(BL_DEPARTURESIGN, DOORR, DOORL, BL_BOCZNIK2, BL_BOCZNIK1, BL_JAZDA, 0, BL_RADIOTEL);
+   dataout4 = SETBYTE1(BL_OGRZEWANIESKLADU, BL_OPORYROZRUCHOWE, BL_POSLIZG, BL_WENTZALUZJE, 0, 0, BL_CZUWAK, BL_SHP);	//zamiast zer dodaæ buczek 1 i 2
+   dataout5 = SETBYTE1(BL_STYCZNIKILINIOWE, 0, BL_NADMIARPRZETW, BL_PROZNICOWY, BL_NADMIARSILNIK, BL_WYLACZNIKSZYBKI, BL_NADMIARWENTYL, BL_NADMIARSPREZARKI); // 7 -> przekaznik roznicowy obwodow pomocniczych,
+// sterowanie rysikami Hastera: jazda pr¹dowa, u¿ycie przycisku czujnoœci, hamowanie, kierunek(przejazd nad rezonatorem SHP), buczek1, budzek2
+   dataout6 = SETBYTE1(BL_STYCZNIKILINIOWE, czuwak_sw_state, BL_HAMOWANIE, kabina1, kabina2, 0, 0, 0);
    czuwak_sw_state = false;
 
-
-   // BAJT 1 WYJSCIA NISKOPRADOWE PRZY KRAWEDZI
+// BAJT 1 WYJSCIA NISKOPRADOWE PRZY KRAWEDZI
    QGlobal::DLL->sendcommp(dataout1);    // WYJSCIA NISKOPRADOWE PORT 1
    QGlobal::DLL->sendcommp(dataout2);    // WYJSCIA NISKOPRADOWE PORT 2
    QGlobal::DLL->sendcommp(dataout3);    // WYJSCIA NISKOPRADOWE PORT 3
@@ -289,7 +302,6 @@ if (QGlobal::hDLL)
    QGlobal::DLL->sendcommp(bcurrentA1);  // PWM 05		        -> amperomierz silników trakcyjnych 1
    QGlobal::DLL->sendcommp(bcurrentA2);  // PWM 06		        -> amperomierz silników trakcyjnych 2
    QGlobal::DLL->sendcommp(bcurrentA3);  // PWM 07		        -> amperomierz silników trakcyjnych 3
-   QGlobal::DLL->sendcommp(bcurrentA3);  // PWM 07
    QGlobal::DLL->sendcommp(dataout0);    // PWM 08
    QGlobal::DLL->sendcommp(dataout0);    // PWM 09
    QGlobal::DLL->sendcommp(dataout0);    // PWM 10
@@ -300,15 +312,269 @@ if (QGlobal::hDLL)
    QGlobal::DLL->sendcommp(dataout0);    // PWM 15
    QGlobal::DLL->sendcommp(bSPEED);      // VELOCITY
 
-
+   
 //############################################################################################################
 //odbieranie i przetwarzanie danych z MWD *** START ***
 
    if (QGlobal::fMWDInEnable)
     {
 
+     QGlobal::DLL->recvcommp(QGlobal::DLL->rp);    //  , 1, QGlobal::DEV_P01, QGlobal::DEV_P02, QGlobal::DEV_P03, QGlobal::DEV_P04, QGlobal::DEV_P05, QGlobal::DEV_P06, QGlobal::DEV_P07, &QGlobal::DEV_P08, &QGlobal::DEV_P09, &QGlobal::DEV_P10, &QGlobal::DEV_P11, &QGlobal::DEV_P12, &QGlobal::DEV_P13
+
+     rps = QGlobal::DLL->rp;   // coby skrocic odwolanie
+
+     // BORZE (SLASKI), DAJ BY DZIALALO...
+
+     QGlobal::portstate[1][1] = rps->P1B1;
+     QGlobal::portstate[1][2] = rps->P1B2;
+     QGlobal::portstate[1][3] = rps->P1B3;
+     QGlobal::portstate[1][4] = rps->P1B4;
+     QGlobal::portstate[1][5] = rps->P1B5;
+     QGlobal::portstate[1][6] = rps->P1B6;
+     QGlobal::portstate[1][7] = rps->P1B7;
+     QGlobal::portstate[1][8] = rps->P1B8;
+
+     QGlobal::portstate[2][1] = rps->P2B1;
+     QGlobal::portstate[2][2] = rps->P2B2;
+     QGlobal::portstate[2][3] = rps->P2B3;
+     QGlobal::portstate[2][4] = rps->P2B4;
+     QGlobal::portstate[2][5] = rps->P2B5;
+     QGlobal::portstate[2][6] = rps->P2B6;
+     QGlobal::portstate[2][7] = rps->P2B7;
+     QGlobal::portstate[2][8] = rps->P2B8;
+
+     QGlobal::portstate[3][1] = rps->P3B1;
+     QGlobal::portstate[3][2] = rps->P3B2;
+     QGlobal::portstate[3][3] = rps->P3B3;
+     QGlobal::portstate[3][4] = rps->P3B4;
+     QGlobal::portstate[3][5] = rps->P3B5;
+     QGlobal::portstate[3][6] = rps->P3B6;
+     QGlobal::portstate[3][7] = rps->P3B7;
+     QGlobal::portstate[3][8] = rps->P3B8;
+
+     QGlobal::portstate[4][1] = rps->P4B1;
+     QGlobal::portstate[4][2] = rps->P4B2;
+     QGlobal::portstate[4][3] = rps->P4B3;
+     QGlobal::portstate[4][4] = rps->P4B4;
+     QGlobal::portstate[4][5] = rps->P4B5;
+     QGlobal::portstate[4][6] = rps->P4B6;
+     QGlobal::portstate[4][7] = rps->P4B7;
+     QGlobal::portstate[4][8] = rps->P4B8;
+
+     QGlobal::portstate[5][1] = rps->P5B1;
+     QGlobal::portstate[5][2] = rps->P5B2;
+     QGlobal::portstate[5][3] = rps->P5B3;
+     QGlobal::portstate[5][4] = rps->P5B4;
+     QGlobal::portstate[5][5] = rps->P5B5;
+     QGlobal::portstate[5][6] = rps->P5B6;
+     QGlobal::portstate[5][7] = rps->P5B7;
+     QGlobal::portstate[5][8] = rps->P5B8;
+
+     QGlobal::portstate[6][1] = rps->P6B1;
+     QGlobal::portstate[6][2] = rps->P6B2;
+     QGlobal::portstate[6][3] = rps->P6B3;
+     QGlobal::portstate[6][4] = rps->P6B4;
+     QGlobal::portstate[6][5] = rps->P6B5;
+     QGlobal::portstate[6][6] = rps->P6B6;
+     QGlobal::portstate[6][7] = rps->P6B7;
+     QGlobal::portstate[6][8] = rps->P6B8;
+     /*
+//     if (rps->P1B1 == 1)
+      PROCESSIOACTION("P1B1", rps->P1B1);
+//     if (rps->P1B2 == 1)
+      PROCESSIOACTION("P1B2", rps->P1B2);
+//     if (rps->P1B3 == 1)
+      PROCESSIOACTION("P1B3", rps->P1B3);
+//     if (rps->P1B4 == 1)
+      PROCESSIOACTION("P1B4", rps->P1B4);
+//     if (rps->P1B5 == 1)
+      PROCESSIOACTION("P1B5", rps->P1B5);
+//     if (rps->P1B6 == 1)
+      PROCESSIOACTION("P1B6", rps->P1B6);
+//     if (rps->P1B7 == 1)
+      PROCESSIOACTION("P1B7", rps->P1B7);
+//     if (rps->P1B8 == 1)
+      PROCESSIOACTION("P1B8", rps->P1B8);
+
+//     if (rps->P2B1 == 1)
+      PROCESSIOACTION("P2B1", rps->P2B1);
+//     if (rps->P2B2 == 1)
+      PROCESSIOACTION("P2B2", rps->P2B2);
+//     if (rps->P2B3 == 1)
+      PROCESSIOACTION("P2B3", rps->P2B3);
+//     if (rps->P2B4 == 1)
+      PROCESSIOACTION("P2B4", rps->P2B4);
+//     if (rps->P2B5 == 1)
+      PROCESSIOACTION("P2B5", rps->P2B5);
+//     if (rps->P2B6 == 1)
+      PROCESSIOACTION("P2B6", rps->P2B6);
+//     if (rps->P2B7 == 1)
+      PROCESSIOACTION("P2B7", rps->P2B7);
+//     if (rps->P2B8 == 1)
+      PROCESSIOACTION("P2B8", rps->P2B8);
+
+//     if (rps->P3B1 == 1)
+      PROCESSIOACTION("P3B1", rps->P3B1);
+//     if (rps->P3B2 == 1)
+      PROCESSIOACTION("P3B2", rps->P3B2);
+//     if (rps->P3B3 == 1)
+      PROCESSIOACTION("P3B3", rps->P3B3);
+//     if (rps->P3B4 == 1)
+      PROCESSIOACTION("P3B4", rps->P3B4);
+//     if (rps->P3B5 == 1)
+      PROCESSIOACTION("P3B5", rps->P3B5);
+//     if (rps->P3B6 == 1)
+      PROCESSIOACTION("P3B6", rps->P3B6);
+//     if (rps->P3B7 == 1)
+      PROCESSIOACTION("P3B7", rps->P3B7);
+//     if (rps->P3B8 == 1)
+      PROCESSIOACTION("P3B8", rps->P3B8);
+      */
+     /*
+     if (QGlobal::bLOGIT)
+      WriteLog(str(rps->P1B1) + ", " +
+               str(rps->P1B2) + ", " +
+               str(rps->P1B3) + ", " +
+               str(rps->P1B4) + ", " +
+               str(rps->P1B5) + ", " +
+               str(rps->P1B6) + ", " +
+               str(rps->P1B7) + ", " +
+               str(rps->P1B8));
+               */
+
     }
   }
+}
+
+
+// ***********************************************************************************************************
+//
+// ***********************************************************************************************************
+void TTrain::OnMWDCommand()
+{
+ if (QGlobal::IOCOMMAND == "COS-01")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-02")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-03")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-04")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-05")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-06")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-07")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-08")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-09")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-10")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-11")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-12")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-13")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-14")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-15")
+  {
+
+  }
+ if (QGlobal::IOCOMMAND == "COS-16")
+  {
+
+  }
+ QGlobal::IOCOMMAND = "";
+}
+
+
+// ***********************************************************************************************************
+// This procedure compare 'key string' previously generated in keyboard callback witch items collected
+// in io binding table. If it hits in the same string, that happens download command string
+void TWorld::PROCESSIOACTION(std::string str, bool state)
+{
+	std::string test, command;
+
+	for (int i = 0; i < QGlobal::iobindsnum; i++)
+	{
+		test = QGlobal::IOSET[i].bitid; // + ":" + QGlobal::IOSET[i].ifbit + ":" + QGlobal::IOSET[i].command;
+
+		if (test == str)
+		{
+		     if (state == atoi(QGlobal::IOSET[i].ifbit.c_str()))
+                        {
+                          QGlobal::IOCOMMAND = QGlobal::IOSET[i].command;
+                          if (Train) Train->OnMWDCommand();
+                        }
+		     break;
+		}
+
+	}
+        
+}
+
+
+// ***********************************************************************************************************
+// Reading I/O mapping
+// ***********************************************************************************************************
+void LOADKEYBINDINGS()
+{
+ WriteLog("Loading I/O mapping...");
+	int cl = 0;
+	std::ifstream file("data/iomap.txt");
+	std::string str;
+	QGlobal::iobindsnum = 0;
+	while (std::getline(file, str))
+	{ 
+		int ishash;
+		ishash = str.find('#');
+
+		if ((str.length() > 5) && (ishash < 0))
+		{// example line: ? 1 P3B1 "APPEXIT"
+			//MASZYNA_TRACE_WRITELINE(AppMain, Debug, "line %i: %s", cl, str.c_str());
+			skeybind = split(str, ' ');
+			QGlobal::IOSET[cl].bit = skeybind[0];
+			QGlobal::IOSET[cl].ifbit = skeybind[1];
+			QGlobal::IOSET[cl].bitid = skeybind[2];
+			QGlobal::IOSET[cl].command = skeybind[3];
+			QGlobal::iobindsnum++;
+
+			WriteLogSS("IOMAP: ",  QGlobal::IOSET[cl].bitid + ":" + QGlobal::IOSET[cl].ifbit + ":" + QGlobal::IOSET[cl].command );
+			cl++;
+		}
+	}
 }
 
 
@@ -326,12 +592,14 @@ bool TWorld::manipinit(bool test)
    QGlobal::DLL = RegFunkcje();                                           // zmiana typu obiektu z cLib na cImport
    byte data;
 
-   manipsetv(1, 0, 0, 3, 4, 0, 1, 2, 3, 9, 9, 5, 4, 1, 5, 2, 3, 0, 13, 19);
-   maniptest(1);
-   manipsetv(0, 1, 0, 1, 0, 1, 1, 2, 3, 9, 9, 5, 4, 1, 5, 2, 3, 0, 13, 19);
-   maniptest(1);
+   LOADKEYBINDINGS();
+
+ //manipsetv(1, 0, 0, 3, 4, 0, 1, 2, 3, 9, 9, 5, 4, 1, 5, 2, 3, 0, 13, 19);
+ //maniptest(1);
+ //manipsetv(0, 1, 0, 1, 0, 1, 1, 2, 3, 9, 9, 5, 4, 1, 5, 2, 3, 0, 13, 19);
+ //maniptest(1);
    manipopen(stdstrtochar(QGlobal::COM_port), QGlobal::bLOGIT);
-   manipsend(1);
+// manipsend(1);
 
 // FreeLibrary(QGlobal::hDLL);
  }
@@ -404,7 +672,6 @@ bool TWorld::maniptest(bool checkit)
                          IntToStr(QGlobal::DLL->sw_IgnitionKeyGauge) + ", " +
                          IntToStr(QGlobal::DLL->sw_CompressorButtonGauge) + ", " +
                          IntToStr(QGlobal::DLL->sw_ConverterButtonGauge)
-
               ));
        }
 }

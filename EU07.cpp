@@ -126,10 +126,15 @@ USEFORM("frm_debugger.cpp", DEBUGGER);
 USEUNIT("addons/fountain1/AirFountain.cpp");
 USEUNIT("addons/fountain1/poolvectors.cpp");
 USEUNIT("addons/fountain1/pool.cpp");
-USEUNIT("shadow/matrix4x4.cpp");
-USEUNIT("shadow/vector2d.cpp");
-USEUNIT("shadow/vector3d.cpp");
-USEUNIT("shadow/vector4d.cpp");
+USEUNIT("addons/texloader/textureloader.cpp");
+USEUNIT("addons/particle2/particles.cpp");
+USEUNIT("addons/particle2/textures.cpp");
+
+
+//USEUNIT("addons/lensflare/xvector.cpp");
+//USEUNIT("addons/lensflare/texture.cpp");
+//USEUNIT("addons/lensflare/flare.cpp");
+
 //---------------------------------------------------------------------------
 #include "World.h"
 
@@ -1204,6 +1209,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
                 if (test == "mwdcomname") QGlobal::COM_port = par1.c_str();
                 if (test == "mwdopencom") QGlobal::bOPCOM = atoi(par1.c_str());
                 if (test == "mwdlogvars") QGlobal::bLOGIT = atoi(par1.c_str());
+                if (test == "mwdrxspeed") QGlobal::fRXSPD = StrToFloat(Trim(par1));
                 if (test == "mwdfmax_ch") QGlobal::fmaxCH = StrToFloat(Trim(par1));
                 if (test == "mwdfmax_pg") QGlobal::fmaxPG = StrToFloat(Trim(par1));
                 if (test == "mwdfmax_zg") QGlobal::fmaxZG = StrToFloat(Trim(par1));
@@ -1532,6 +1538,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     if (hRC) KillGLWindow(); // kill the window
     return (msg.wParam); // exit the program
 }
+
 
 
 

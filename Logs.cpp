@@ -13,6 +13,7 @@ http://mozilla.org/MPL/2.0/.
 
 #include "Logs.h"
 #include "Globals.h"
+#include "qutils.h"
 
 #include <stdio.h>
 #include <iostream>
@@ -100,6 +101,13 @@ void WriteLog(const AnsiString &str)
 { // Ra: wersja z AnsiString jest zamienna z Error()
     WriteLog(str.c_str());
 };
+
+void WriteLogSS(std::string text, std::string token)
+{
+    char tolog[100];
+    sprintf(tolog,"%s %s", text.c_str(), token.c_str());
+    WriteLog(stdstrtochar(tolog));
+}
 //---------------------------------------------------------------------------
 
 #pragma package(smart_init)

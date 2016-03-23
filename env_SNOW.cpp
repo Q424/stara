@@ -69,8 +69,9 @@ void Polygon(void)
 // - czy odbiera swiatlo:       true/false
 // - rodzaj blendowania:        1,2
 // ***********************************************************************************************************
-bool TSnow::Init(int stype, int sflakesnum, float sarea, float sbaseh, float ssize, float srcf, float srct, float sraf, float srat, bool scolor, bool stex, bool slight, int sbf)
+bool TSnow::Init(int stype, int sobjt, int sflakesnum, float sarea, float sbaseh, float ssize, float srcf, float srct, float sraf, float srat, bool scolor, bool stex, bool slight, int sbf)
 {
+ objt = sobjt;
  type = stype;
  blendf = sbf;
  color = scolor;
@@ -128,18 +129,20 @@ bool TSnow::Render()
  //glPointParameterfvARB( GL_POINT_DISTANCE_ATTENUATION_ARB, quadratic );
  //glPointParameterfARB( GL_POINT_FADE_THRESHOLD_SIZE_ARB, 60.0f );
  //glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, sizes);
-   if (type == sf_point) glEnable( GL_POINT_SPRITE_ARB );
-   if (type == sf_point) glPointParameterfARB( GL_POINT_SIZE_MIN_ARB, 3.0f );
-   if (type == sf_point) glPointParameterfARB( GL_POINT_SIZE_MAX_ARB, 7.0f );
-   if (type == sf_point) glPointSize(2.5);
-   if (type == sf_line ) glLineWidth(5);
+   if (objt == sf_point) glEnable( GL_POINT_SPRITE_ARB );
+   if (objt == sf_point) glPointParameterfARB( GL_POINT_SIZE_MIN_ARB, 3.0f );
+   if (objt == sf_point) glPointParameterfARB( GL_POINT_SIZE_MAX_ARB, 7.0f );
+   if (objt == sf_point) glPointSize(2.5);
+   if (objt == sf_line ) glLineWidth(5);
+   if (objt != sf_tri) text = false;
 
-   if (type == sf_tri) glDisable(GL_CULL_FACE);                       // wylaczenie automatycznego usuwania niewidocznych scian obiektu
-   if (type == sf_tri) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);      // wlaczenie rysowania tlnych i przednich scian
+   if (objt == sf_tri) glDisable(GL_CULL_FACE);                       // wylaczenie automatycznego usuwania niewidocznych scian obiektu
+   if (objt == sf_tri) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);      // wlaczenie rysowania tlnych i przednich scian
 
    if (blendf == 1) glBlendFunc(GL_SRC_ALPHA, GL_ONE);
    if (blendf == 2) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
    if (blendf == 3) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 
    if (!text) glDisable(GL_TEXTURE_2D);                                   // Bez tego czastepczki zaczynaly sie zbyt daleko od kamery
    if ( text) glBindTexture(GL_TEXTURE_2D, QGlobal::texturetab[2]);
@@ -170,22 +173,23 @@ bool TSnow::Render()
       //glRotatef(alfa,0.0f,1.0f,0.0f);
       //glScalef(0.75f,0.75f,1.0f);
       //glCallList(polygon_list);
-    
+
 
       if (snow[i].y < Global::pCamera->Pos.y -10.0f) snow[i].active = false;
       if (snow[i].active == false)
       {
           if (!color) glColor4f(0.7f, 0.7f, 0.7f, snow[i].a);
           if ( color) glColor4f(snow[i].r, snow[i].g, snow[i].b, snow[i].a);
+          if (type==1) glColor4f(0.2f, 0.2f, 0.4f, snow[i].a);
 
           snow[i].active   = true;
           snow[i].x        = gridalign.x + getRandomMinMax( -sqrsize, sqrsize ); //(float)(rand()%size);
           snow[i].y        = Global::pCamera->Pos.y + baseh;
           snow[i].z        = gridalign.z + getRandomMinMax( -sqrsize, sqrsize ); //(float)(rand()%size)-200;
-          snow[i].xg       =-0.05f + float(rand()%5)/15.0f;
-          snow[i].yg       = 0.10f + float(rand()%5)/15.0f;
-          snow[i].zg       = -0.10f + float(rand()%5)/15.0f;
-          snow[i].alfa     = 0.0f;
+          snow[i].xg       =-0.050f + float(rand()%5)/15.0f;
+          snow[i].yg       = 0.100f + float(rand()%10)/11.0f;
+          snow[i].zg       =-0.050f + float(rand()%4)/10.0f;
+          snow[i].alfa     = 0.000f;
           snow[i].alfa_inc = float(rand()%100)/10.0f;
           snow[i].r        = getRandomMinMax( rcf, rct );
           snow[i].g        = getRandomMinMax( rcf, rct );
@@ -193,7 +197,7 @@ bool TSnow::Render()
           snow[i].a        = getRandomMinMax( raf, rat );
       }
       
-      if (type == sf_tri)  //1
+      if (objt == sf_tri)  //1
       {
         glBegin(GL_TRIANGLES);                      // Drawing Using Triangles
       //glVertex3f(x+0.0f,  y+size, z+0.0f);              // Top
@@ -205,14 +209,14 @@ bool TSnow::Render()
         glTexCoord2f(0.5, 1); glVertex3f(x+size,  y+-size, z+0.0f);
         glEnd();
       }
-      if (type == sf_line)  //3
+      if (objt == sf_line)  //3
       {
         glBegin(GL_LINES);
         glVertex3f(x, y, z);
         glVertex3f(x+size, y+size, z+size);
         glEnd();
       }
-      if (type == sf_point) //4
+      if (objt == sf_point) //4
       {
         glBegin(GL_POINTS);
         glVertex3f(x, y, z);
@@ -234,6 +238,9 @@ bool TSnow::Render()
   return true;
  }
 }
+
+
+
 
 
 

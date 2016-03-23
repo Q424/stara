@@ -3,6 +3,17 @@
 //
 #include <windows.h>
 
+struct recvpacket
+{
+ bool P1B1, P1B2, P1B3, P1B4, P1B5, P1B6, P1B7, P1B8;
+ bool P2B1, P2B2, P2B3, P2B4, P2B5, P2B6, P2B7, P2B8;
+ bool P3B1, P3B2, P3B3, P3B4, P3B5, P3B6, P3B7, P3B8;
+ bool P4B1, P4B2, P4B3, P4B4, P4B5, P4B6, P4B7, P4B8;
+ bool P5B1, P5B2, P5B3, P5B4, P5B5, P5B6, P5B7, P5B8;
+ bool P6B1, P6B2, P6B3, P6B4, P6B5, P6B6, P6B7, P6B8;
+ bool P7B1, P7B2, P7B3, P7B4, P7B5, P7B6, P7B7, P7B8;
+};
+
 class cLib
 {
  public:
@@ -81,9 +92,13 @@ class cLib
   bool lt_btLampkaDoorRight;     // EZT
   bool lt_btLampkaDepartureSignal; // EZT
 
+  recvpacket *rp;
+
   virtual void Pokaz1(char* txt) = 0;
   virtual bool opencommp(char* txt, bool log) = 0;
+  virtual bool clearvars(bool mode) = 0;
   virtual bool sendcommp(byte data) = 0;
+  virtual bool recvcommp(recvpacket *rp) = 0;  // , int bn, bool *p1, bool *p2, bool *p3, bool *p4, bool *p5, bool *p6, bool *p7, byte *p8, byte *p9, byte *p10, byte *p11, byte *p12, byte *p13
   virtual long state_patykA();
   virtual long state_patykB();
   virtual bool setstates(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, int n, int o, int p, int r, int s, int t, int u) = 0;

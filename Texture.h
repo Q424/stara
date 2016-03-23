@@ -39,6 +39,7 @@ class TTexturesManager
     static bool GetAlpha(GLuint ID); // McZapkie-141203: czy tekstura ma polprzeroczystosc
     static std::string GetName(GLuint id);
     static GLuint __fastcall LoadJPG3(char* szFileName);                        // QUEUEDZIO 250706
+    static GLuint     LoadJPG4(AnsiString filename);
   private:
     typedef std::pair<GLuint, bool> AlphaValue;
 

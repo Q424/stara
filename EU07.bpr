@@ -18,8 +18,8 @@
       submodelsops.obj dynamicmodules.obj env_snow.obj env_sun.obj env_fog.obj 
       pixmap.obj rgbtexture.obj particlesys1.obj mwdevice.obj frm_debugger.obj 
       addons\fountain1\AirFountain.obj addons\fountain1\poolvectors.obj 
-      addons\fountain1\pool.obj shadow\matrix4x4.obj shadow\vector2d.obj 
-      shadow\vector3d.obj shadow\vector4d.obj"/>
+      addons\fountain1\pool.obj addons\texloader\textureloader.obj 
+      addons\particle2\particles.obj addons\particle2\textures.obj"/>
     <RESFILES value="EU07.res"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
@@ -29,7 +29,7 @@
     <LIBRARIES value="dclocx50.bpi bcbsmp50.bpi VCLX50.lib bcbsmp50.lib Vcl50.lib"/>
     <SPARELIBS value="Vcl50.lib bcbsmp50.lib VCLX50.lib bcbsmp50.bpi dclocx50.bpi"/>
     <PACKAGES value="Vcl50.bpi Vclx50.bpi"/>
-    <PATHCPP value=".;opengl;Console;menu;addons\fountain1;shadow"/>
+    <PATHCPP value=".;opengl;Console;menu;addons\fountain1;addons\texloader;addons\particle2"/>
     <PATHPAS value=".;McZapkie"/>
     <PATHRC value=".;"/>
     <PATHASM value=".;"/>
@@ -39,8 +39,8 @@
     <USERDEFINES value="GLEW_STATIC;_DEBUG"/>
     <SYSDEFINES value="NO_STRICT;_RTLDLL"/>
     <MAINSOURCE value="EU07.cpp"/>
-    <INCLUDEPATH value="shadow;addons\fountain1;addons;dll;menu;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl"/>
-    <LIBPATH value="shadow;addons\fountain1;addons;dll;menu;$(BCB)\Projects\Lib;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="addons\particle3;addons\particle2;addons\particle;addons\particl;addons\partic;addons\parti;addons\part;addons\par;addons\pa;addons\p;addons\texloader;addons\joeforte;addons\joefort;addons\joefor;addons\joefo;addons\joef;addons\joe;addons\jo;addons\j;addons\lensflare;addon;addo;add;ad\;a\;shadow;addons\fountain1;addons;dll;menu;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl"/>
+    <LIBPATH value="addons\particle3;addons\particle2;addons\particle;addons\particl;addons\partic;addons\parti;addons\part;addons\par;addons\pa;addons\p;addons\texloader;addons\joeforte;addons\joefort;addons\joefor;addons\joefo;addons\joef;addons\joe;addons\jo;addons\j;addons\lensflare;addon;addo;add;ad\;a\;shadow;addons\fountain1;addons;dll;menu;$(BCB)\Projects\Lib;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
   </MACROS>
   <OPTIONS>

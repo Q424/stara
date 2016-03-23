@@ -24,7 +24,7 @@ const std::string X2985Z457 =":rdP{s";
 
 double VECTORLEN1(vector3 P1, vector3 P2);
 double VECTORLEN2(vector3 P1, vector3 P2);
-void drawcube(float size, float r, float g, float b);
+void drawcube(float size, float r, float g, float b, bool translate, vector3 trans, GLuint tex);
 int ParseCommandline1();
 int ParseCommandline2();
 std::string encryptDecrypt(std::string toEncrypt);

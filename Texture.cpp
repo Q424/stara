@@ -1492,4 +1492,115 @@ std::string TTexturesManager::GetName(GLuint id)
             return iter->first;
     return "";
 };
+
+
+BYTE* ConvertBMPToRGBBuffer ( BYTE* Buffer, int width, int height )
+{
+	// first make sure the parameters are valid
+	if ( ( NULL == Buffer ) || ( width == 0 ) || ( height == 0 ) )
+		return NULL;
+
+	// find the number of padding bytes
+		
+	int padding = 0;
+	int scanlinebytes = width * 3;
+	while ( ( scanlinebytes + padding ) % 4 != 0 )     // DWORD = 4 bytes
+		padding++;
+	// get the padded scanline width
+	int psw = scanlinebytes + padding;
+
+	// create new buffer
+	BYTE* newbuf = new BYTE[width*height*3];
+	
+	// now we loop trough all bytes of the original buffer, 
+	// swap the R and B bytes and the scanlines
+	long bufpos = 0;   
+	long newpos = 0;
+	for ( int y = 0; y < height; y++ )
+		for ( int x = 0; x < 3 * width; x+=3 )
+		{
+			newpos = y * 3 * width + x;     
+			bufpos = ( height - y - 1 ) * psw + x;
+
+			newbuf[newpos] = Buffer[bufpos + 2];       
+			newbuf[newpos + 1] = Buffer[bufpos+1]; 
+			newbuf[newpos + 2] = Buffer[bufpos];     
+		}
+
+	return newbuf;
+}
+
+
+
+//{------------------------------------------------------------------}
+//{------------------------------------------------------------------}
+GLuint TTexturesManager::LoadJPG4(AnsiString filename)
+{
+
+  GLubyte *Data;
+  int V, Width;
+  int H, Height;
+  Graphics::TBitmap *BMP = new Graphics::TBitmap();      // KONWERSJA NA JPG
+  TJPEGImage *JPG = new TJPEGImage();
+  Pointer Line;
+
+  Word C;
+ const char RConst = 77;
+ const char GConst = 150;
+ const  char BConst = 29;
+ int Index ;
+
+
+  TResourceStream *ResStream;      // used for loading from resource
+
+  try
+    {
+     JPG->LoadFromFile(filename);
+    }
+    catch (int e)
+    {
+      MessageBox(0, AnsiString("Couldn't load JPG - "+ filename).c_str() , "BMP Unit", MB_OK);
+      //return;
+    }
+
+
+  BMP->PixelFormat = pf32bit;
+  BMP->Width = JPG->Width;
+  BMP->Height = JPG->Height;
+  BMP->Canvas->Draw(0,0,JPG);        // Copy the JPEG onto the Bitmap
+  WriteLog("a2");
+  //  BMP.SaveToFile('D:\test.bmp');
+  Width = BMP->Width;
+  Height = BMP->Height;
+ // System::SetLength(Data, Width*Height);
+  Data = new GLubyte[Width*Height];
+  WriteLog("a3");
+  //BYTE* b = ConvertBMPToRGBBuffer ( Data, Width, Height );
+  char* p ;
+ for ( V = 0; V<Height; V++)
+        {
+        p = (char*)BMP->ScanLine[V];  // ustawiam wskaŸnik do char na Linii bitmapy (u¿ywam char, bo zajmuje tylko jeden bajt, a nam wiêcej nie potrzeba)
+        for ( H = 0; H<Width; H++)   //w pentelce przez ca³a szerokoœæ bitmapki robimy....
+        {
+ 
+          Index = (p[H*3+2] * RConst +  // mno¿ymy kana³y BGR przez sta³e
+                 p[H*3+1]* GConst +
+                 p[H*3]* BConst )>>8;  // przesuwamy bity o 8 w prawo
+ 
+          p[H*3]=Index;
+          p[H*3+1]=Index;
+          p[H*3+2]=Index;
+ 
+        }
+       }
+
+  BMP->Free();
+  JPG->Free();
+  GLuint tex;
+//tex = CreateTexture(p, 24 , Width, Height, true, false);
+
+
+   return tex; //std::make_pair(tex, false);
+}
+
 #pragma package(smart_init)
