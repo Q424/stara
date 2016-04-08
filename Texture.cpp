@@ -30,7 +30,7 @@ http://mozilla.org/MPL/2.0/.
 #include "Usefull.h"
 #include "Texture.h"
 #include "TextureDDS.h"
-
+#include "world.h"
 #include "logs.h"
 #include "Globals.h"
 #include "io.h"
@@ -1602,5 +1602,23 @@ GLuint TTexturesManager::LoadJPG4(AnsiString filename)
 
    return tex; //std::make_pair(tex, false);
 }
+
+//------------------------------------------------------------------------------------------------------------
+void TWorld::ModifyTGA(const AnsiString &dir)
+{ // rekurencyjna modyfikacje plików TGA
+    TSearchRec sr;
+    if (FindFirst(dir + "*.*", faDirectory | faArchive, sr) == 0)
+    {
+        do
+        {
+            if (sr.Name[1] != '.')
+                if ((sr.Attr & faDirectory)) // jeœli katalog, to rekurencja
+                    ModifyTGA(dir + sr.Name + "/");
+                else if (sr.Name.LowerCase().SubString(sr.Name.Length() - 3, 4) == ".tga")
+                    TTexturesManager::GetTextureID(NULL, NULL, AnsiString(dir + sr.Name).c_str());
+        } while (FindNext(sr) == 0);
+        FindClose(sr);
+    }
+};
 
 #pragma package(smart_init)

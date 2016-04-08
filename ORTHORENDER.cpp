@@ -141,7 +141,7 @@ using namespace std;
 // LOADING Q FEATURES CONFIG ***************************************************
 // *****************************************************************************
 
-bool __fastcall TWorld::LOADQCONFIG()
+bool TWorld::LOADQCONFIG()
 {
  AnsiString LINE, TEST, PAR;
  QGlobal::CONFIG->LoadFromFile(QGlobal::asAPPDIR + "data\\config.txt");
@@ -1707,9 +1707,9 @@ if (tmp) if (!QGlobal::bSCNLOADED) BFONT->Print_scale(40,60, AnsiString("$.scn -
 
          i++;
          int py = 50;
-         for (int lc=0; lc<QGlobal::LOKKBD->Count; lc++)
+         for (int lc=0; lc<QGlobal::ERRORS->Count; lc++)
               {
-               BFONT->Print_xy_scale(20, (1024-py), AnsiString(QGlobal::LOKKBD->Strings[lc]).c_str(), 1, 0.8, 0.8);
+               BFONT->Print_xy_scale(20, (1024-py), AnsiString(QGlobal::ERRORS->Strings[lc]).c_str(), 1, 0.8, 0.8);
                py = py +15;
               }
          BFONT->End();
@@ -1901,7 +1901,7 @@ bool __fastcall savesettings()
 }
 */
 
-bool __fastcall TWorld::menuinitctrls()
+bool TWorld::menuinitctrls()
 {
 /*
  if (Global::bQueuedAdvLog) WriteLog("bool __fastcall TWorld::menuinitctrls()");
@@ -3067,14 +3067,14 @@ bool __fastcall TWorld::RenderWATERMARK(double alpha)
 }
 
 
-bool __fastcall TWorld::setBR(int x, int y, int w, int h)
-{
-  BRx = x;
-  BRy = y;
-  BRw = w;
-  BRh = h;
-  return true;
-}
+//bool __fastcall TWorld::setBR(int x, int y, int w, int h)
+//{
+//  BRx = x;
+//  BRy = y;
+//  BRw = w;
+//  BRh = h;
+//  return true;
+//}
 
 bool __fastcall TWorld::RenderINFOPANELB(int x, int y, int w, int h, float r, float a, AnsiString title)
 {
@@ -3114,29 +3114,18 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
   glDisable( GL_FOG );
   glDisable( GL_TEXTURE_2D );
 
-
-  if (num ==  0)  setBR(0, 40, 300, Global::iWindowHeight);
-  if (num ==  1)  setBR(0, 40, 300, Global::iWindowHeight);
-  if (num ==  2)  setBR(0, 40, 300, Global::iWindowHeight);
-  if (num ==  3)  setBR(0, 40, 300, Global::iWindowHeight);
-  if (num ==  4)  setBR(0, 40, 300, Global::iWindowHeight);
-  if (num ==  5)  setBR(0, 40, 300, Global::iWindowHeight);
-  if (num ==  6)  setBR(0, 40, 300, Global::iWindowHeight);
-  if (num ==  7)  setBR(0, 40, 300, Global::iWindowHeight);
-  if (num ==  8)  setBR(0, 40, 300, Global::iWindowHeight);
-  if (num ==  9)  setBR(0, 40, 300, Global::iWindowHeight);
-  if (num == 10)  setBR(0, 40, Global::iWindowWidth, 450);
-  if (num == 11)  setBR(0, 40, 300, Global::iWindowHeight);
   if (num ==  9)  RenderINFOPANELB( 0,  0, Global::iWindowWidth, 100, 2.0, alpha, "INFORMACJE O WERSJI I OpenGL");
   if (num ==  1)  RenderINFOPANELB( 0,  0, 300, sh, 2.0, alpha, AnsiString("INFORMACJE O SKLADZIE POCIAGU " + asTrainNumber));
   if (num ==  2)  RenderINFOPANELB( 0,  0, 300, sh, 2.0, alpha, AnsiString("INFORMACJE O STACJI"));
   if (num ==  3)  RenderINFOPANELB( 0,  0, 300, sh, 2.0, alpha, AnsiString("INFORMACJE O LOKOMOTYWIE (" + asVechName + ")"));
   if (num ==  4)  RenderINFOPANELB( 0,  0, 300, sh, 2.0, alpha, AnsiString("INFORMACJE O NASTEPNEJ STACJI"));
   if (num ==  5)  RenderINFOPANELB( 0,  0, 300, sh, 2.0, alpha, AnsiString("INFORMACJE O NAJBLIZSZYM POJEZDZIE"));
-  if (num ==  6)  RenderINFOPANELB(10, 10, 500, 400, 2.0, alpha, AnsiString("TABELA SKANOWANIA AI"));
-  if (num ==  7)  RenderINFOPANELB(10, 10, 500, 400, 2.0, alpha, AnsiString("SLUZBOWY ROZKLAD JAZDY"));
-  if (num ==  8)  RenderINFOPANELB( 0,  0, 300, sh, 2.0, alpha, AnsiString("KLAWISZOLOGIA POJAZDU"));
+  if (num ==  6)  RenderINFOPANELB( 0,  0, 500, sh, 2.0, alpha, AnsiString("TABELA SKANOWANIA AI"));
+  if (num ==  7)  RenderINFOPANELB(10, 10, 500, sh, 2.0, alpha, AnsiString("SLUZBOWY ROZKLAD JAZDY"));
+  if (num ==  8)  RenderINFOPANELB( 0,  0, 400, sh, 2.0, alpha, AnsiString("LISTA BLEDOW I OSTRZEZEN"));
   if (num == 11)  RenderINFOPANELB( 0,  0, 300, sh, 2.0, alpha, AnsiString("MWD - STANY PORTOW I/O"));
+  if (num == 14)  RenderINFOPANELB( 0,  0, iWW, sh, 2.0, alpha, AnsiString("OBSLUGA POJAZDU"));
+  if (num == 15)  RenderINFOPANELB( 0,  0, iWW, sh, 2.0, alpha, AnsiString("KLAWISZOLOGIA POJAZDU"));
 
   if (num > 0 && !QGlobal::bEXITQUERY && QGlobal::bSIMSTARTED && !QGlobal::bmodelpreview)  // PANEL 0 - INFORMACJE W DEBUGMODE ^^
    {
@@ -3444,6 +3433,7 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
          //freetype::print(font16, 10, iWH- 20, AnsiString("INFORMACJE O LOKOMOTYWIE AKTYWNEJ  (" + Controlled->asName + ")").c_str());
          glColor4f(0.5f, 0.5f, 0.55f, 0.8f);
          posy= 40;
+         freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Track        : " + tmp->MyTrack->asName).c_str());
          freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Name         : " + tmp->MoverParameters->Name).c_str());
          freetype::print(font10, 20, iWH-(posy+=20), AnsiString("FName        : " + tmp->MoverParameters->filename).c_str());
          freetype::print(font10, 20, iWH-(posy+=20), AnsiString("Type         : " + tmp->MoverParameters->TypeName).c_str());
@@ -3911,31 +3901,34 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
    }
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  if (num == 8)  // PANEL 8 - IKLAWISZOLOGIA POJAZDU ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  if (num == 8)  // PANEL 8 - LISTA BLEDOW I OSTRZEZEN ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    {
     int posy = 60;
-    glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
-    //freetype::print(font16, 10, Global::iWindowHeight-20, "KLAWISZOLOGIA POJAZDU");
-
     glColor4f(0.8f, 0.8f, 0.8f, 0.7f);
-    for (int j = 0; j < QGlobal::LOKKBD->Count-1; j++)
+    for (int j = QGlobal::iTUTSTARTLINE; j < QGlobal::ERRORS->Count-1; j++)
          {
-          AnsiString LINE = QGlobal::LOKKBD->Strings[j];
+          AnsiString LINE = QGlobal::ERRORS->Strings[j];
+
+          glColor4f(0.8f, 0.8f, 0.8f, 0.7f);
+          if ( LINE.Pos("file")) glColor4f(0.9f, 0.2f, 0.2f, 0.7f);
+          if ( LINE.Pos("include")) glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+          if ( LINE.Pos("texture")) glColor4f(0.2f, 0.8f, 0.1f, 0.7f);
+          if ( LINE.Pos("event")) glColor4f(0.3f, 0.5f, 0.7f, 0.7f);
+          //if (!LINE.Pos("<<")) glColor4f(0.9f, 0.9f, 1.0f, 0.9f);
+         // if ( LINE.Pos("<<")) LINE = LINE.SubString(5, 255);
 
           freetype::print(font10, 10, iWH-posy, AnsiString(LINE).c_str());
-          posy+=15;
-
+          posy+=14;
          }
    }
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  if (num == 9)  // PANEL 5 - INFORMACJE O NAJBLIZSZYM POJEZDZIE ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  if (num == 9)  // PANEL 9 - informacja o wersji, sposobie wyœwietlania i b³êdach OpenGL ^^^^^^^^^^^^^^^^^^^^
    {
     glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
 
     int posy = 20;
 
-         // informacja o wersji, sposobie wyœwietlania i b³êdach OpenGL
             OutText01 = Global::asVersion; // informacja o wersji
             freetype::print(font10, 10, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText01)).c_str());
             OutText02 = AnsiString("Rendering mode: ") + (Global::bUseVBO ? "VBO" : "Display Lists");
@@ -3952,7 +3945,8 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
 
         freetype::print(font10, 10, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText02)).c_str());
         freetype::print(font10, 10, iWH-(posy+=20), AnsiString(Global::Bezogonkow(OutText03)).c_str());
-        freetype::print(font14, iWW-100, iWH-(20), "FPS: %7.2f", QGlobal::fps);
+        freetype::print(font14, iWW-130, iWH-(20), "FPS: %7.2f", QGlobal::fps);
+        freetype::print(font14, iWW-130, iWH-(40), "CFR: %i", QGlobal::iRENDEREDFRAMES);
      }
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -4040,7 +4034,48 @@ bool __fastcall TWorld::RenderINFOPANEL(int num, double alpha)
         freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P6B1: " + BoolToStr(QGlobal::portstate[6][6])).c_str() );
         freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P6B1: " + BoolToStr(QGlobal::portstate[6][7])).c_str() );
         freetype::print(font10, 20, iWH-(posy+=17), AnsiString("P6B1: " + BoolToStr(QGlobal::portstate[6][8])).c_str() );
+
+        freetype::print(font10, 20, iWH-(posy+=27), AnsiString("CMD: " + QGlobal::MWDCOMMAND).c_str() );
     }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  if (num == 14)  // PANEL 14 - OBSLUGA POJAZDU ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   {
+    int posy = 60;
+    glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
+    glColor4f(0.8f, 0.8f, 0.8f, 0.7f);
+    for (int j = QGlobal::iTUTSTARTLINE; j < QGlobal::LOKTUT->Count-1; j++)
+         {
+          AnsiString LINE = QGlobal::LOKTUT->Strings[j];
+
+          if ( LINE.Pos("<<R>")) glColor4f(0.9f, 0.2f, 0.2f, 0.7f);
+          if ( LINE.Pos("<<Y>")) glColor4f(0.9f, 0.7f, 0.1f, 0.7f);
+          if ( LINE.Pos("<<G>")) glColor4f(0.2f, 0.8f, 0.1f, 0.7f);
+          if ( LINE.Pos("<<B>")) glColor4f(0.3f, 0.5f, 0.7f, 0.7f);
+          if (!LINE.Pos("<<")) glColor4f(0.9f, 0.9f, 1.0f, 0.9f);
+          if ( LINE.Pos("<<")) LINE = LINE.SubString(5, 255);
+
+          freetype::print(font10, 10, iWH-posy, AnsiString(LINE).c_str());
+          posy+=14;
+
+         }
+   }
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  if (num == 15)  // PANEL 15 - IKLAWISZOLOGIA POJAZDU ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   {
+    int posy = 60;
+    glColor4f(0.9f, 0.9f, 0.9f, 0.7f);
+    glColor4f(0.8f, 0.8f, 0.8f, 0.7f);
+    for (int j = 0; j < QGlobal::LOKKBD->Count-1; j++)
+         {
+          AnsiString LINE = QGlobal::LOKKBD->Strings[j];
+
+          freetype::print(font10, 10, iWH-posy, AnsiString(LINE).c_str());
+          posy+=15;
+
+         }
+   }
  // } // if !modelprev
   
   glEnable( GL_TEXTURE_2D );
@@ -4571,7 +4606,7 @@ bool getparams(std::string key, int count, int type)
 // ***********************************************************************************************************
 // LOADING LOADER CONFIG
 // ***********************************************************************************************************
-bool __fastcall TWorld::LOADLOADERCONFIG()
+bool TWorld::LOADLOADERCONFIG()
 {
  WriteLog("LOADING LOADER CONFIG...");
  std::string xline;
@@ -4593,7 +4628,7 @@ bool __fastcall TWorld::LOADLOADERCONFIG()
    line[strcspn(line, "\n")] = '\0';  // USUWANIE ZNAKU KONCA LINII
    currentline = line;
    currentline = ToLowerCase(chartostdstr(line));
-   //currentline = trimextras(currentline);
+ //currentline = trimextras(currentline);
    removeSpaces(currentline);
 
    if(strstr(currentline.c_str(), comment.c_str())) commented = true;      // sprawdzamy czy nie zakomentowana
@@ -4628,6 +4663,7 @@ bool __fastcall TWorld::LOADLOADERCONFIG()
     if (getparams("borders:", 1, 2)) QGlobal::LDRBORDER = vi;
    }
   }
+
  return true;
 }
 
@@ -4636,7 +4672,7 @@ bool __fastcall TWorld::LOADLOADERCONFIG()
 // LOADING LOADER FONTS ********************************************************
 // *****************************************************************************
 
-bool __fastcall TWorld::LOADLOADERFONTS()
+bool TWorld::LOADLOADERFONTS()
 {
  WriteLog("LOADING LOADER FONTS...");
  font10.init(AnsiString(QGlobal::asAPPDIR + "data\\fonts\\" + QGlobal::font10file).c_str(), 10);
@@ -4657,7 +4693,7 @@ bool __fastcall TWorld::LOADLOADERFONTS()
 // LOADING LOADER TEXTURES *****************************************************
 // *****************************************************************************
 
-bool __fastcall TWorld::LOADLOADERTEXTURES()
+bool TWorld::LOADLOADERTEXTURES()
 {
     WriteLog("LOADING LOADER TEXTURES...");
 
@@ -4681,12 +4717,16 @@ bool __fastcall TWorld::LOADLOADERTEXTURES()
 
     loaderbrief = TTexturesManager::GetTextureID(NULL, NULL, AnsiString(asBRIEFFILE).c_str());
     QGlobal::bfonttex = TTexturesManager::GetTextureID(NULL, NULL, AnsiString("data\\menu\\menu_xfont.bmp").c_str());
+    //if (QGlobal::bSPLASHSCR)
+    QGlobal::splashscreen = TTexturesManager::GetTextureID("data/lbacks/", Global::asCurrentTexturePath.c_str(), AnsiString("data/lbacks/splashscreen" + QGlobal::asLBACKEXT).c_str());
 
     if (!FEX(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(NULL, Global::asCurrentTexturePath.c_str(), AnsiString("data\\lbacks\\lbackgdef" + QGlobal::asLBACKEXT).c_str());
     if ( FEX(asSCNBACKG)) loaderbackg = TTexturesManager::GetTextureID(NULL, Global::asCurrentTexturePath.c_str(), AnsiString(asSCNBACKG).c_str());
     if ( promodelviewer ) loaderbackg = TTexturesManager::GetTextureID(NULL, Global::asCurrentTexturePath.c_str(), AnsiString("data\\lbacks\\" + modelviewerbackg).c_str());
 
     Global::asCurrentTexturePath = AnsiString(szTexturePath);
+    WriteLog("");
+    WriteLog("");
  return true;
 }
 
@@ -4995,6 +5035,7 @@ void __fastcall TWorld::RenderLoader(HDC hDC, int node, AnsiString text)
      glEnd();
      QGlobal::fscreenfade2 -= 0.16;
     }
+   if (!QGlobal::bSCNLOADED) glFlush();
    if (!QGlobal::bSCNLOADED) SwapBuffers(hDC);
 
    glEnable(GL_TEXTURE_2D); // Enable Texture Mapping
@@ -5463,6 +5504,7 @@ bool __fastcall TWorld::renderpointerx(double sizepx, int sw, int sh)
 
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
+
 
 
 

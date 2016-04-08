@@ -404,6 +404,10 @@ public:
 	Byte BrakeCtrlPosNo;
 	Byte MainCtrlPosNo;
 	Byte ScndCtrlPosNo;
+	Byte LightsPosNo;
+	Byte LightsDefPos;
+	bool LightsWrap;
+	Byte Lights[2][16];
 	bool ScndInMain;
 	bool MBrake;
 	TSecuritySystem SecuritySystem;
@@ -538,6 +542,7 @@ public:
 	double LimPipePress;
 	double ActFlowSpeed;
 	Byte DamageFlag;
+	Byte EngDmgFlag;
 	Byte DerailReason;
 	TCommand CommandIn;
 	AnsiString CommandOut;
@@ -550,6 +555,7 @@ public:
 	bool Mains;
 	Byte MainCtrlPos;
 	Byte ScndCtrlPos;
+	Byte LightsPos;
 	int ActiveDir;
 	int CabNo;
 	int DirAbsolute;
@@ -712,7 +718,7 @@ public:
 	bool __fastcall ChangeOffsetH(double DeltaOffset);
 	__fastcall T_MoverParameters(double VelInitial, AnsiString TypeNameInit, AnsiString NameInit, int LoadInitial
 		, AnsiString LoadTypeInitial, int Cab);
-	bool __fastcall LoadChkFile(AnsiString chkpath);
+	bool __fastcall LoadChkFile(AnsiString chkpath, int unique);
 	bool __fastcall CheckLocomotiveParameters(bool ReadyFlag, int Dir);
 	AnsiString __fastcall EngineDescription(int what);
 	bool __fastcall DoorLeft(bool State);

@@ -478,6 +478,7 @@ void TGroundNode::Compile(bool many)
             glNormalPointer(GL_DOUBLE, sizeof(TGroundVertex), &tri->Vertices[0].Normal.x);
             glTexCoordPointer(2, GL_FLOAT, sizeof(TGroundVertex), &tri->Vertices[0].tu);
 #endif
+            if (Global::bWireFrame) glLineWidth(0.5);
             glColor3ub(tri->Diffuse[0], tri->Diffuse[1], tri->Diffuse[2]);
             glBindTexture(GL_TEXTURE_2D, Global::bWireFrame ? 0 : tri->TextureID);
 #ifdef USE_VERTEX_ARRAYS

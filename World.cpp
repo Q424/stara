@@ -70,7 +70,7 @@ TDynamicObject *DO;
 bool FOVSET;
 
 glTexture aaa, bbb, ccc, ddd, eee, fff, ggg, hhh, iii, jjj, kkk, lll, mmm, nnn, ooo, ppp, qqq, rrr, sss, ttt, uuu, vvv, www, xxx, yyy, zzz;
-CCCParticleSystem *g_DSMOKE;
+//CCCParticleSystem *g_DSMOKE;
 
 // ***********************************************************************************************************
 // DYM SPALIN Z OBIEKTU RUCHOMEGO
@@ -155,7 +155,7 @@ int setprogressfile()
 // ***********************************************************************************************************
 // Wykonywane po wcisnieciu spacji po zaladowaniu scenerii (kasowanie ekranu pauzy po zaladowaniu)
 // ***********************************************************************************************************
-bool __fastcall TWorld::STARTSIMULATION()
+bool TWorld::STARTSIMULATION()
 {
    QGlobal::bSHOWBRIEFING = false;
    glEnable(GL_LIGHTING);
@@ -218,12 +218,11 @@ TWorld::TWorld()
     QGlobal::CONSISTA = new TStringList;
     QGlobal::LOKKBD = new TStringList;
     QGlobal::LOKTUT = new TStringList;
+    QGlobal::ERRORS = new TStringList;
 
-    BRx = BRy = BRw = BRh = 0;
+  //BRx = BRy = BRw = BRh = 0;
     QGlobal::gCOLOR4F = Color4(1.0, 1.0, 1.0, 1.0);
-
-
-
+    QGlobal::iRENDEREDFRAMES = 0;
 }
 
 
@@ -348,7 +347,6 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     //if (FileExists("-forcescn.txt")) Global::asHumanCtrlVehicle = "sm42-1204";
     //if (FileExists("-forcescn.txt")) DeleteFile("-forcescn.txt");
 
-    QGlobal::bISINTERNET = Global::CHECKINTERNET();
 
     WriteLog("WCZYTYWANIE DEVICE.DLL...");
     manipinit(1);                           // wywplywane z hardware.cpp
@@ -360,12 +358,12 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     CreateDir(QGlobal::asAPPDIR + "data\\");
     CreateDir(QGlobal::asAPPDIR + "data\\logs\\");
 
-    QGlobal::bISINTERNET = Global::CHECKINTERNET();
-
     WriteLog("Checking internet connection...");
+    QGlobal::bISINTERNET = Global::CHECKINTERNET();
+    QGlobal::bISINTERNET = Global::CHECKINTERNET();
     WriteLog(BoolToStr(QGlobal::bISINTERNET));
 
-    QGlobal::gtc1 =  GetTickCount();
+    QGlobal::gtc1 = GetTickCount();
     QGlobal::iRANDTABPOS = 0;
     QGlobal::iNODES = 0;
     QGlobal::postep = 0;
@@ -373,25 +371,14 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     QGlobal::bfirstloadingscn = true;
     QGlobal::bKBDREVERSED = false;
     QGlobal::iRENDEREDTIES = 0;
-    ShowWindow(NhWnd,SW_SHOW);
-    SetForegroundWindow(NhWnd);                                                    // slightly higher priority
-    SetFocus(NhWnd);
+
 
     LOADLOADERFONTS();
     LOADLOADERCONFIG();
     LOADLOADERTEXTURES();
-
-    //if (QGlobal::bSPLASHSCR)
-    QGlobal::splashscreen = TTexturesManager::GetTextureID("data/lbacks/", Global::asCurrentTexturePath.c_str(), AnsiString("data/lbacks/splashscreen" + QGlobal::asLBACKEXT).c_str());
-    QGlobal::mousepoint = TTexturesManager::GetTextureID("data/menu/", Global::asCurrentTexturePath.c_str(), AnsiString("data/menu/menu_point.bmp").c_str());
-    QGlobal::mousesymbol = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/ismouse.bmp").c_str());
-    QGlobal::semlight = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlight.bmp").c_str());
-    QGlobal::semlense = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlense.bmp").c_str());
-    QGlobal::texturetab[2] = TTexturesManager::GetTextureID("../data/", Global::asCurrentTexturePath.c_str(),AnsiString("data/gfxs/snow.bmp").c_str());
-    QGlobal::texturetab[3] = TTexturesManager::GetTextureID("../data/", Global::asCurrentTexturePath.c_str(),AnsiString("data/gfxs/waterc.tga").c_str());
-  //QGlobal::texturetab[4] = TTexturesManager::LoadJPG4("c:\\MaSzyna_15_04\\aaa.jpg");
-    WriteLog("");
-    WriteLog("");
+    //ShowWindow(NhWnd,SW_SHOW);
+    //SetForegroundWindow(NhWnd);                                                    // slightly higher priority
+    //SetFocus(NhWnd);
 
     timex = (double)Now();
     Global::hWnd = NhWnd; // do WM_COPYDATA
@@ -669,13 +656,27 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 bool TWorld::Load(HWND NhWnd, HDC hDC)
 {
     Timer::ResetTimers();
-    hWnd = NhWnd;
+    RenderLoader(hDC, 77, "...");
+    ShowWindow(NhWnd, SW_SHOW);
+    SetFocus(NhWnd);
+    SetForegroundWindow(hWnd);
+
     if (QGlobal::bSPLASHSCR) RenderSPLASHSCR(hDC, 77, "SS", 1);  // Pierwsza czesc splasha (7s)
   //if (QGlobal::bSPLASHSCR) RenderLoaderU(hDC, 77, "SS");     // Zaraz po splashu stopniowe wylonienie sie z czerni ekranu wczytywania
 
     RenderLoader(hDC, 77, "...");
+    RenderLoader(hDC, 77, "...");
 
-    SetFocus(NhWnd);
+   // SetFocus(NhWnd);
+
+    QGlobal::mousepoint = TTexturesManager::GetTextureID("data/menu/", Global::asCurrentTexturePath.c_str(), AnsiString("data/menu/menu_point.bmp").c_str());
+    QGlobal::mousesymbol = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/ismouse.bmp").c_str());
+    QGlobal::semlight = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlight.bmp").c_str());
+    QGlobal::semlense = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/semlense.bmp").c_str());
+    QGlobal::texturetab[2] = TTexturesManager::GetTextureID("../data/", Global::asCurrentTexturePath.c_str(),AnsiString("data/gfxs/snow.bmp").c_str());
+    QGlobal::texturetab[3] = TTexturesManager::GetTextureID("../data/", Global::asCurrentTexturePath.c_str(),AnsiString("data/gfxs/waterc.tga").c_str());
+  //QGlobal::texturetab[4] = TTexturesManager::LoadJPG4("c:\\MaSzyna_15_04\\aaa.jpg");
+
 
 /*
     TextureLoader *TL = new TextureLoader;
@@ -741,10 +742,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
 
     SNOW.Init(QGlobal::snow_type, QGlobal::snow_objt, QGlobal::snow_flakes, QGlobal::snow_area, QGlobal::snow_base, QGlobal::snow_size, 0.1, 0.7, QGlobal::snow_sraf, QGlobal::snow_srat, QGlobal::snow_color, QGlobal::snow_tex, QGlobal::snow_light, QGlobal::snow_blend);  // flakes, area, psize, type, randcolor f, randcolor t, randalfa f, randalfa t,  color, tex, blendf
 
-    // z config.txt - QGlobal::iSNOWFLAKES, QGlobal::iSNOWSQUARE
-
     Global::LoadStationsBase(); // Q 030116: Wczytywanie informacji o stacjach ( POWINNO BYC ZALEZNE OD SCENERII )
-
 
   //Global::tSinceStart= 0;
     WriteLog("Ground init OK");
@@ -817,8 +815,10 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
             Sleep(200);
 
             FollowView();
-            QGlobal::asLOKKBDFILE = "tutorials\\" + mvControlled->TypeName + ".txt";
+            QGlobal::asLOKKBDFILE = "keyboards\\" + mvControlled->TypeName + ".txt";
+            QGlobal::asLOKTUTFILE = "tutorials\\" + mvControlled->TypeName + ".txt";
             if (FEX(QGlobal::asLOKKBDFILE)) QGlobal::LOKKBD->LoadFromFile(QGlobal::asLOKKBDFILE);
+            if (FEX(QGlobal::asLOKTUTFILE)) QGlobal::LOKTUT->LoadFromFile(QGlobal::asLOKTUTFILE);
             //SwapBuffers(hDC); // Swap Buffers (Double Buffering)
         }
         else
@@ -883,6 +883,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
 
     CopyFile("log.txt", AnsiString("data/logs/" + logdate + ".txt").c_str(), false);
 
+
     if (DebugModeFlag) // w Debugmode automatyczne w³¹czenie AI
         if (Train)
             if (Train->Dynamic()->Mechanik)
@@ -905,38 +906,18 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
 
     if (mvControlled) Controlled->GetConsist_f(1, Controlled);
 
-    //if (!FOVSET) {SCR->FOVADD(0); FOVSET=true;}
     setprogressfile();
 
     Global::LOADMISSIONDESCRIPTION();
-
     QGlobal::bSCNLOADED = true;
     Global::iPause = true;
     RenderLoader(hDC, 77, "Done.");
     SetForegroundWindow(NhWnd);
     SetFocus(NhWnd);
 
-    g_DSMOKE = new CCCParticleSystem;
+    CopyFile("errors.txt", AnsiString("data/logs/lasterrors.txt").c_str(), false);
+    QGlobal::ERRORS->LoadFromFile(QGlobal::asAPPDIR + "data/logs/lasterrors.txt");
 
-    g_DSMOKE->Initialize(1150);
-    g_DSMOKE->m_iParticlesCreatedPerSec = 1450;
-    g_DSMOKE->m_fCreationVariance = 0.1f;
-    g_DSMOKE->m_fMinDieAge = 3.1f;
-    g_DSMOKE->m_fMaxDieAge = 10.5f;
-    g_DSMOKE->m_bRecreateWhenDied = true;
-    g_DSMOKE->m_bParticlesLeaveSystem = true;
-
-    g_DSMOKE->SetCreationColor(0.2f,0.2f,0.21f,	0.2f,0.2f,0.2f);
-    g_DSMOKE->SetDieColor(0.0f,0.0f,0.0f,  0.0f,0.0f,0.0f);
-    g_DSMOKE->SetAlphaValues(0.9f, 0.9f, 0.6f, 0.0f);
-    g_DSMOKE->SetEmitter(10.0f, 0.0f, -120.0f,	0.5f, 0.0f, 0.5f);
-    g_DSMOKE->SetAcceleration(F3dVector(0.0f,1.0f,0.0f),0.1f,0.2f);
-    g_DSMOKE->SetSizeValues(0.0f, 0.0f, 0.72f, 0.82f);
-    g_DSMOKE->m_fMaxEmitSpeed = 0.03f;
-    g_DSMOKE->m_fMinEmitSpeed = 0.07f;
-    g_DSMOKE->SetEmissionDirection(0.0f,1.0f,0.0f,  0.08f,0.5f,0.08f);
-    g_DSMOKE->m_iBillboarding = BILLBOARDING_PERPTOVIEWDIR;
-    g_DSMOKE->LoadTextureFromFile("data/particles/particle3.tga");
     return true;
 };
 
@@ -1001,7 +982,7 @@ void TWorld::OnKeyDown(int cKey)
         DeleteFile("myconsist.txt"); // usuniêcie starego
         DeleteFile(AnsiString(QGlobal::asAPPDIR + "models\\temp\\temp.e3d").c_str());
         char logfile[200];
-        sprintf(logfile,"%s%s", QGlobal::asAPPDIR.c_str() , QGlobal::logfilenm1.c_str());
+        sprintf(logfile, "%s%s", QGlobal::asAPPDIR.c_str() , QGlobal::logfilenm1.c_str());
         if (QGlobal::bOPENLOGONX) ShellExecute(0, "open", logfile, NULL, NULL, SW_MAXIMIZE);
         exit(0);
        } 
@@ -1058,8 +1039,8 @@ void TWorld::OnKeyDown(int cKey)
       if (Console::Pressed(VK_LBUTTON) && cKey == 'B') SETINFOTYPE(11);
       if (Console::Pressed(VK_LBUTTON) && cKey == 'C') SETINFOTYPE(12);
       if (Console::Pressed(VK_LBUTTON) && cKey == 'D') SETINFOTYPE(13);
-      if (Console::Pressed(VK_LBUTTON) && cKey == 'E') SETINFOTYPE(14);
-      if (Console::Pressed(VK_LBUTTON) && cKey == 'F') SETINFOTYPE(15);
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'T') SETINFOTYPE(14);
+      if (Console::Pressed(VK_LBUTTON) && cKey == 'K') SETINFOTYPE(15);
   //  if (Console::Pressed(VK_LBUTTON) && cKey  > '0') Global::iTextMode = -999;
 
     if ((cKey <= '9') ? (cKey >= '0') : false) // klawisze cyfrowe
@@ -1336,9 +1317,9 @@ void TWorld::OnKeyDown(int cKey)
 }
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // OBSLUGA PUSZCZENIA KLAWISZA
-// *****************************************************************************
+// ***********************************************************************************************************
 void TWorld::OnKeyUp(int cKey)
 { // zwolnienie klawisza; (cKey) to kod klawisza, cyfrowe i literowe siê zgadzaj¹
 
@@ -1350,10 +1331,10 @@ void TWorld::OnKeyUp(int cKey)
 };
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // W ten sposob rozgraniczylem klawisze F10 i lewy ALT - normalnie w WM_KEYDOWN
 // generuja ten sam kod a w WM_SYSKEYUP nie
-// *****************************************************************************
+// ***********************************************************************************************************
 void TWorld::OnSysKeyUp(int cKey)
 {
  if (QGlobal::bSIMSTARTED)
@@ -1373,9 +1354,9 @@ void TWorld::OnSysKeyUp(int cKey)
 };
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // OBSLUGA PORUSZANIA MYSZA
-// *****************************************************************************
+// ***********************************************************************************************************
 void TWorld::OnMouseMove(double x, double y)
 { // McZapkie:060503-definicja obracania myszy
     Camera.OnCursorMove(x * Global::fMouseXScale, -y * Global::fMouseYScale);
@@ -1383,29 +1364,41 @@ void TWorld::OnMouseMove(double x, double y)
 
 void TWorld::OnMouseLpush(double x, double y)
 {
-// if ( Console::Pressed(VK_SHIFT)) SCR->FOVADD();
+//
 }
 
 void TWorld::OnMouseRpush(double x, double y)
 {
-// if (Console::Pressed(VK_SHIFT)) SCR->FOVREM();
+//
 }
 
 void TWorld::OnMouseMpush(double x, double y)
 {
-// WriteLog("MOUSE M DOWN");
+// 
 }
 
 void TWorld::OnMouseWheel(int zDelta)
 {
- if (zDelta > 0 && QGlobal::GUITUTOPAC < 0.9) QGlobal::GUITUTOPAC += 0.05;
- if (zDelta < 0 && QGlobal::GUITUTOPAC > 0.2) QGlobal::GUITUTOPAC -= 0.05;
+
+if (Console::Pressed(VK_CONTROL))
+ {
+  if (!QGlobal::bscrfilter && zDelta > 0 && QGlobal::GUITUTOPAC < 0.95) QGlobal::GUITUTOPAC += 0.05;
+  if (!QGlobal::bscrfilter && zDelta < 0 && QGlobal::GUITUTOPAC > 0.10) QGlobal::GUITUTOPAC -= 0.05;
+
+  if ( QGlobal::bscrfilter && zDelta > 0 && QGlobal::SCRFILTER1A < 0.99) QGlobal::SCRFILTER1A += 0.05;
+  if ( QGlobal::bscrfilter && zDelta < 0 && QGlobal::SCRFILTER1A > 0.20) QGlobal::SCRFILTER1A -= 0.05;
+ }
+ else
+ {
+  if (zDelta > 0 && QGlobal::iTUTSTARTLINE > 0) QGlobal::iTUTSTARTLINE-=2;
+  if (zDelta < 0 && QGlobal::iTUTSTARTLINE < QGlobal::LOKTUT->Count-50) QGlobal::iTUTSTARTLINE+=2;
+ }
 }
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // OBSLUGA WEJSCIA/WYJSCIA DO/Z KABINY
-// *****************************************************************************
+// ***********************************************************************************************************
 void TWorld::InOutKey()
 { // prze³¹czenie widoku z kabiny na zewnêtrzny i odwrotnie
     FreeFlyModeFlag = !FreeFlyModeFlag; // zmiana widoku
@@ -1437,9 +1430,9 @@ void TWorld::InOutKey()
 };
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // TAKI SE WIDOK Z DYSTANSU NA POJAZDY
-// *****************************************************************************
+// ***********************************************************************************************************
 void TWorld::DistantView()
 { // ustawienie widoku pojazdu z zewn¹trz
     if (Controlled) // jest pojazd do prowadzenia?
@@ -1457,19 +1450,16 @@ void TWorld::DistantView()
     }
     else if (pDynamicNearest) // jeœli jest pojazd wykryty blisko
     { // patrzenie na najbli¿szy pojazd
-        Camera.Pos = pDynamicNearest->GetPosition() +
-                     (pDynamicNearest->MoverParameters->ActiveCab >= 0 ? 30 : -30) *
-                         pDynamicNearest->VectorFront() +
-                     vector3(0, 5, 0);
+        Camera.Pos = pDynamicNearest->GetPosition() + (pDynamicNearest->MoverParameters->ActiveCab >= 0 ? 30 : -30) * pDynamicNearest->VectorFront() + vector3(0, 5, 0);
         Camera.LookAt = pDynamicNearest->GetPosition();
         Camera.RaLook(); // jednorazowe przestawienie kamery
     }
 };
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // SLEDZENIE POJAZDU
-// *****************************************************************************
+// ***********************************************************************************************************
 void TWorld::FollowView(bool wycisz)
 { // ustawienie œledzenia pojazdu
     // ABu 180404 powrot mechanika na siedzenie albo w okolicê pojazdu
@@ -1523,9 +1513,9 @@ void TWorld::FollowView(bool wycisz)
 };
 
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // FUNKCJA AKTUALIZUJACA, FIZYKE, RUCH MODELI I NA KONIEC WYWOLANIE RENDERINGU
-// *****************************************************************************
+// ***********************************************************************************************************
 bool TWorld::Update()
 {
 #ifdef USE_SCENERY_MOVING
@@ -1540,9 +1530,6 @@ bool TWorld::Update()
         WriteLog("Scenery moved");
     };
 #endif
-
-
-
     if (iCheckFPS)
         --iCheckFPS;
     else
@@ -1551,19 +1538,18 @@ bool TWorld::Update()
 
         if (GetFPS() < Global::fFpsMin)
         {
-            Global::iSegmentsRendered -=
-                random(10); // floor(0.5+Global::iSegmentsRendered/Global::fRadiusFactor);
+            Global::iSegmentsRendered -= random(10); // floor(0.5+Global::iSegmentsRendered/Global::fRadiusFactor);
             if (Global::iSegmentsRendered < 10) // jeœli jest co zmniejszaæ
                 Global::iSegmentsRendered = 10; // 10=minimalny promieñ to 600m
         }
-        else if (GetFPS() > Global::fFpsMax) // jeœli jest du¿o FPS
-            if (Global::iSegmentsRendered < Global::iFpsRadiusMax) // jeœli jest co zwiêkszaæ
-            {
-                Global::iSegmentsRendered +=
-                    random(5); // floor(0.5+Global::iSegmentsRendered*Global::fRadiusFactor);
-                if (Global::iSegmentsRendered > Global::iFpsRadiusMax) // 5.6km (22*22*M_PI)
-                    Global::iSegmentsRendered = Global::iFpsRadiusMax;
-            }
+       else
+        if (GetFPS() > Global::fFpsMax) // jeœli jest du¿o FPS
+         if (Global::iSegmentsRendered < Global::iFpsRadiusMax) // jeœli jest co zwiêkszaæ
+        {
+            Global::iSegmentsRendered += random(5); // floor(0.5+Global::iSegmentsRendered*Global::fRadiusFactor);
+            if (Global::iSegmentsRendered > Global::iFpsRadiusMax) // 5.6km (22*22*M_PI)
+                Global::iSegmentsRendered = Global::iFpsRadiusMax;
+        }
         if ((GetFPS() < 12) && (Global::iSlowMotion < 7))
         {
             Global::iSlowMotion = (Global::iSlowMotion << 1) + 1; // zapalenie kolejnego bitu
@@ -1601,7 +1587,6 @@ bool TWorld::Update()
 
     UpdateTimers(Global::iPause);
 
-    //WriteLog("----------------------------------");
     QGlobal::currententrypoint = 0;
     
     if (!Global::iPause)
@@ -1738,7 +1723,7 @@ bool TWorld::Update()
             if (Controlled ? LengthSquared3(Controlled->GetPosition() - Camera.Pos) < 2250000 : false) // gdy bli¿ej ni¿ 1.5km
               {
                 Camera.LookAt = Controlled->GetPosition();
-                }
+              }
             else
             {
                 TDynamicObject *d = Ground.DynamicNearest(Camera.Pos, 300); // szukaj w promieniu 300m
@@ -1921,13 +1906,12 @@ bool TWorld::Update()
     // przy 0.25 smuga gaœnie o 6:37 w Quarku, a mog³aby ju¿ 5:40
     // Ra 2014-12: przy 0.15 siê skar¿yli, ¿e nie widaæ smug => zmieni³em na 0.25
     if (Train) // jeœli nie usuniêty
-        Global::bSmudge =
-          FreeFlyModeFlag ? false : ((Train->Dynamic()->fShade <= 0.0) ? (Global::fLuminance <= 0.25) : (Train->Dynamic()->fShade * Global::fLuminance <= 0.25));
+        Global::bSmudge = FreeFlyModeFlag ? false : ((Train->Dynamic()->fShade <= 0.0) ? (Global::fLuminance <= 0.25) : (Train->Dynamic()->fShade * Global::fLuminance <= 0.25));
 
-    manipsend(1);
+    manipsend(1);   // MWD I/O Controller // glColor3b(255, 255, 255);
 
-    glColor3b(255, 255, 255);
-          
+    QGlobal::iRENDEREDFRAMES++;
+
     if (!Render())
         return false;
 
@@ -2062,21 +2046,12 @@ if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
     glLoadIdentity();
     glTranslatef(0.0f, 0.0f, -0.50f);
 
-    if (Global::iTextMode == VK_F1)
-    { // tekst pokazywany po wciœniêciu [F1]
-
-    }
-    else if (Global::iTextMode == VK_F12)
+    if (Global::iTextMode == VK_F12)
     { // opcje w³¹czenia i wy³¹czenia logowania
         OutText01 = "[0] Debugmode " + AnsiString(DebugModeFlag ? "(on)" : "(off)");
         OutText02 = "[1] log.txt " + AnsiString((Global::iWriteLogEnabled & 1) ? "(on)" : "(off)");
         OutText03 = "[2] Console " + AnsiString((Global::iWriteLogEnabled & 2) ? "(on)" : "(off)");
     }
-    else if (Global::iTextMode == VK_F2)
-    { // ABu: info dla najblizszego pojazdu!
-
-
-    } // koniec treœci podstawowego ekranu FK_V2
     else if (Global::iTextMode == VK_F5)
     { // przesiadka do innego pojazdu
         if (FreeFlyModeFlag) // jeœli tryb latania
@@ -2112,29 +2087,15 @@ if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
             Global::iTextMode = 0; // tryb neutralny
         }
     }
-    else if (Global::iTextMode == VK_F10)
-    { // tu mozna dodac dopisywanie do logu przebiegu lokomotywy
-
-    }
     else if (Controlled && DebugModeFlag && !Global::iTextMode)
     {
  
     }
-
-    // ABu 150205: prosty help, zeby sie na forum nikt nie pytal, jak ma ruszyc :)
-
-    if (Global::iTextMode == VK_F9)
-    { // informacja o wersji, sposobie wyœwietlania i b³êdach OpenGL
-
-    }
-    if (Global::iTextMode == VK_F3)
-    { // wyœwietlenie rozk³adu jazdy, na razie jakkolwiek
-
-    }
     // Q: DO WYWALEINA
-  else  
-   if (OutText01 != "")
-    { // ABu: i od razu czyszczenie tego, co bylo napisane
+    /*
+    else
+     if (OutText01 != "")
+     { // ABu: i od razu czyszczenie tego, co bylo napisane
             // glTranslatef(0.0f,0.0f,-0.50f);
             if (Global::iViewMode == VK_F8)       glColor3f(1.0f, 0.8f, 0.1f);
             glRasterPos2f(-0.25f, 0.20f);
@@ -2207,7 +2168,7 @@ if(ctr) OutText03 = "TRACK NUMBER: " + Controlled->asTrackNum;
                 }
             }
     } // Outtext01
-
+   */
    
 /*
     { // stenogramy dŸwiêków (ukryæ, gdy tabelka skanowania lub rozk³ad?)
@@ -2243,16 +2204,16 @@ bool TWorld::Render2D()
         if (QGlobal::bWIREFRAMETRACK) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
         if (QGlobal::bEXITQUERY) RenderEXITQUERY(0.50f);
         if (QGlobal::bWATERMARK) RenderWATERMARK(0.30f);
-        if (QGlobal::bscrfilter) RenderFILTER(0.15f);
+        if (QGlobal::bscrfilter) RenderFILTER(QGlobal::SCRFILTER1A);
         if (QGlobal::bscrnoise) drawNoise(1, QGlobal::fnoisealpha);                                           // W efects2d.cpp
         if (QGlobal::infotype ) RenderINFOPANEL(QGlobal::infotype, QGlobal::GUITUTOPAC);
      }
 
 }
 
-// *****************************************************************************
+// ***********************************************************************************************************
 // PIERWSZA FUNKCJA NA DRODZE RENDERINGU SCENY - Wywolywana z TWorld::Update()
-// *****************************************************************************
+// ***********************************************************************************************************
 bool TWorld::Render()
 {
   //QGlobal::iRENDEREDTIES = 0;
@@ -2335,10 +2296,10 @@ bool TWorld::Render()
 // ***********************************************************************************************************
 // RenderCab()
 // ***********************************************************************************************************
-
 bool TWorld::RenderCab(bool colormode)
 {
-    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+    glEnable(GL_CULL_FACE);
+    glPolygonMode( GL_FRONT, GL_FILL );  // _AND_BACK
     if (Train)
     { // rendering kabiny gdy jest oddzielnym modelem i ma byc wyswietlana
         glPushMatrix();
@@ -2520,155 +2481,15 @@ bool TWorld::RenderCab(bool colormode)
             }
         } // koniec: if (Train->Dynamic()->mdKabina)
         glPopMatrix();
-        //**********************************************************************************************************
     } // koniec: if (Train)
     
   return true;
 }
 
 
-// *****************************************************************************
-// TAKI SE TUTORIAL DLA POCZATKUJACYCH
-// *****************************************************************************
-void TWorld::ShowHints(void)
-{ // Ra: nie u¿ywaæ tego, bo Ÿle dzia³a
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glColor4f(0.3f, 1.0f, 0.3f, 1.0f);
-    glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -0.50f);
-    // glRasterPos2f(-0.25f, 0.20f);
-    // OutText01="Uruchamianie lokomotywy - pomoc dla niezaawansowanych";
-    // glPrint(OutText01.c_str());
-
-    // if(TestFlag(Controlled->MoverParameters->SecuritySystem.Status,s_ebrake))
-    // hunter-091012
-    if (TestFlag(Controlled->MoverParameters->SecuritySystem.Status, s_SHPebrake) ||
-        TestFlag(Controlled->MoverParameters->SecuritySystem.Status, s_CAebrake))
-    {
-        OutText01 = "Gosciu, ale refleks to ty masz szachisty. Teraz zaczekaj.";
-        OutText02 = "W tej sytuacji czuwak mozesz zbic dopiero po zatrzymaniu pociagu. ";
-        if (Controlled->MoverParameters->Vel == 0)
-            OutText03 = "   (mozesz juz nacisnac spacje)";
-    }
-    else
-        // if(TestFlag(Controlled->MoverParameters->SecuritySystem.Status,s_alarm))
-        if (TestFlag(Controlled->MoverParameters->SecuritySystem.Status, s_CAalarm) ||
-            TestFlag(Controlled->MoverParameters->SecuritySystem.Status, s_SHPalarm))
-    {
-        OutText01 = "Natychmiast zbij czuwak, bo pociag sie zatrzyma!";
-        OutText02 = "   (szybko nacisnij spacje!)";
-    }
-    else if (TestFlag(Controlled->MoverParameters->SecuritySystem.Status, s_aware))
-    {
-        OutText01 = "Zbij czuwak, zeby udowodnic, ze nie spisz :) ";
-        OutText02 = "   (nacisnij spacje)";
-    }
-    else if (mvControlled->FuseFlag)
-    {
-        OutText01 = "Czlowieku, delikatniej troche! Gdzie sie spieszysz?";
-        OutText02 = "Wybilo Ci bezpiecznik nadmiarowy, teraz musisz wlaczyc go ponownie.";
-        OutText03 = "   ('N', wczesniej nastawnik i boczniki na zero -> '-' oraz '*' do oporu)";
-    }
-    else if (mvControlled->V == 0)
-    {
-        if ((mvControlled->PantFrontVolt == 0.0) || (mvControlled->PantRearVolt == 0.0))
-        {
-            OutText01 = "Jezdziles juz kiedys lokomotywa? Pierwszy raz? Dobra, to zaczynamy.";
-            OutText02 = "No to co, trzebaby chyba podniesc pantograf?";
-            OutText03 = "   (wcisnij 'shift+P' - przedni, 'shift+O' - tylny)";
-        }
-        else if (!mvControlled->Mains)
-        {
-            OutText01 = "Dobra, mozemy zalaczyc wylacznik szybki lokomotywy.";
-            OutText02 = "   (wcisnij 'shift+M')";
-        }
-        else if (!mvControlled->ConverterAllow)
-        {
-            OutText01 = "Teraz wlacz przetwornice.";
-            OutText02 = "   (wcisnij 'shift+X')";
-        }
-        else if (!mvControlled->CompressorAllow)
-        {
-            OutText01 = "Teraz wlacz sprezarke.";
-            OutText02 = "   (wcisnij 'shift+C')";
-        }
-        else if (mvControlled->ActiveDir == 0)
-        {
-            OutText01 = "Ustaw nastawnik kierunkowy na kierunek, w ktorym chcesz jechac.";
-            OutText02 = "   ('d' - do przodu, 'r' - do tylu)";
-        }
-        else if (Controlled->GetFirstDynamic(1)->MoverParameters->BrakePress > 0)
-        {
-            OutText01 = "Odhamuj sklad i zaczekaj az Ci powiem - to moze troche potrwac.";
-            OutText02 = "   ('.' na klawiaturze numerycznej)";
-        }
-        else if (Controlled->MoverParameters->BrakeCtrlPos != 0)
-        {
-            OutText01 = "Przelacz kran hamulca w pozycje 'jazda'.";
-            OutText02 = "   ('4' na klawiaturze numerycznej)";
-        }
-        else if (mvControlled->MainCtrlPos == 0)
-        {
-            OutText01 = "Teraz juz mozesz ruszyc ustawiajac pierwsza pozycje na nastawniku jazdy.";
-            OutText02 = "   (jeden raz '+' na klawiaturze numerycznej)";
-        }
-        else if ((mvControlled->MainCtrlPos > 0) && (mvControlled->ShowCurrent(1) != 0))
-        {
-            OutText01 = "Dobrze, mozesz teraz wlaczac kolejne pozycje nastawnika.";
-            OutText02 = "   ('+' na klawiaturze numerycznej, tylko z wyczuciem)";
-        }
-        if ((mvControlled->MainCtrlPos > 1) && (mvControlled->ShowCurrent(1) == 0))
-        {
-            OutText01 = "Spieszysz sie gdzies? Zejdz nastawnikiem na zero i probuj jeszcze raz!";
-            OutText02 = "   (teraz do oporu '-' na klawiaturze numerycznej)";
-        }
-    }
-    else
-    {
-        OutText01 = "Aby przyspieszyc mozesz wrzucac kolejne pozycje nastawnika.";
-        if (mvControlled->MainCtrlPos == 28)
-        {
-            OutText01 = "Przy tym ustawienu mozesz bocznikowac silniki - sprobuj: '/' i '*' ";
-        }
-        if (mvControlled->MainCtrlPos == 43)
-        {
-            OutText01 = "Przy tym ustawienu mozesz bocznikowac silniki - sprobuj: '/' i '*' ";
-        }
-
-        OutText02 = "Aby zahamowac zejdz nastawnikiem do 0 ('-' do oporu) i ustaw kran hamulca";
-        OutText03 =
-            "w zaleznosci od sily hamowania, jakiej potrzebujesz ('2', '5' lub '8' na kl. num.)";
-
-        // else
-        // if() OutText01="teraz mozesz ruszyc naciskajac jeden raz '+' na klawiaturze numerycznej";
-        // else
-        // if() OutText01="teraz mozesz ruszyc naciskajac jeden raz '+' na klawiaturze numerycznej";
-    }
-    // OutText03=FloatToStrF(Controlled->MoverParameters->SecuritySystem.Status,ffFixed,3,0);
-
-    if (OutText01 != "")
-    {
-        glRasterPos2f(-0.25f, 0.19f);
-        glPrint(OutText01.c_str());
-        OutText01 = "";
-    }
-    if (OutText02 != "")
-    {
-        glRasterPos2f(-0.25f, 0.18f);
-        glPrint(OutText02.c_str());
-        OutText02 = "";
-    }
-    if (OutText03 != "")
-    {
-        glRasterPos2f(-0.25f, 0.17f);
-        glPrint(OutText03.c_str());
-        OutText03 = "";
-    }
-};
-
-
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+// ***********************************************************************************************************
+//
+// ***********************************************************************************************************
 void TWorld::OnCommandGet(DaneRozkaz *pRozkaz)
 { // odebranie komunikatu z serwera
     if (pRozkaz->iSygn == 'EU07')
@@ -2778,124 +2599,13 @@ void TWorld::OnCommandGet(DaneRozkaz *pRozkaz)
 };
 
 
-//------------------------------------------------------------------------------
-void TWorld::ModifyTGA(const AnsiString &dir)
-{ // rekurencyjna modyfikacje plików TGA
-    TSearchRec sr;
-    if (FindFirst(dir + "*.*", faDirectory | faArchive, sr) == 0)
-    {
-        do
-        {
-            if (sr.Name[1] != '.')
-                if ((sr.Attr & faDirectory)) // jeœli katalog, to rekurencja
-                    ModifyTGA(dir + sr.Name + "/");
-                else if (sr.Name.LowerCase().SubString(sr.Name.Length() - 3, 4) == ".tga")
-                    TTexturesManager::GetTextureID(NULL, NULL, AnsiString(dir + sr.Name).c_str());
-        } while (FindNext(sr) == 0);
-        FindClose(sr);
-    }
-};
-
-
-//---------------------------------------------------------------------------
-AnsiString last; // zmienne u¿ywane w rekurencji
-double shift = 0;
-void TWorld::CreateE3D(const AnsiString &dir, bool dyn)
-{ // rekurencyjna generowanie plików E3D
-    TTrack *trk;
-    double at;
-    TSearchRec sr;
-    if (FindFirst(dir + "*.*", faDirectory | faArchive, sr) == 0)
-    {
-        do
-        {
-            if (sr.Name[1] != '.')
-                if ((sr.Attr & faDirectory)) // jeœli katalog, to rekurencja
-                    CreateE3D(dir + sr.Name + "\\", dyn);
-                else if (dyn)
-                {
-                    if (sr.Name.LowerCase().SubString(sr.Name.Length() - 3, 4) == ".mmd")
-                    {
-                        // konwersja pojazdów bêdzie u³omna, bo nie poustawiaj¹ siê animacje na
-                        // submodelach okreœlonych w MMD
-                        // TModelsManager::GetModel(AnsiString(dir+sr.Name).c_str(),true);
-                        if (last != dir)
-                        { // utworzenie toru dla danego pojazdu
-                            last = dir;
-                            trk = TTrack::Create400m(1, shift);
-                            shift += 10.0; // nastêpny tor bêdzie deczko dalej, aby nie zabiæ FPS
-                            at = 400.0;
-                            // if (shift>1000) break; //bezpiecznik
-                        }
-                        TGroundNode *tmp = new TGroundNode();
-                        tmp->DynamicObject = new TDynamicObject();
-                        // Global::asCurrentTexturePath=dir; //pojazdy maj¹ tekstury we w³asnych
-                        // katalogach
-                        at -= tmp->DynamicObject->Init(
-                            "", dir.SubString(9, dir.Length() - 9), "none",
-                            sr.Name.SubString(1, sr.Name.Length() - 4), trk, at, "nobody", 0.0,
-                            "none", 0.0, "", false, "");
-                        // po wczytaniu CHK zrobiæ pêtlê po ³adunkach, aby ka¿dy z nich skonwertowaæ
-                        AnsiString loads, load;
-                        loads = tmp->DynamicObject->MoverParameters->LoadAccepted; // typy ³adunków
-                        if (!loads.IsEmpty())
-                        {
-                            loads += ","; // przecinek na koñcu
-                            int i = loads.Pos(",");
-                            while (i > 1)
-                            { // wypada³o by sprawdziæ, czy T3D ³adunku jest
-                                load = loads.SubString(1, i - 1);
-                                if (FileExists(dir + load + ".t3d")) // o ile jest plik ³adunku, bo
-                                    // inaczej nie ma to sensu
-                                    if (!FileExists(
-                                            dir + load +
-                                            ".e3d")) // a nie ma jeszcze odpowiednika binarnego
-                                        at -= tmp->DynamicObject->Init(
-                                            "", dir.SubString(9, dir.Length() - 9), "none",
-                                            sr.Name.SubString(1, sr.Name.Length() - 4), trk, at,
-                                            "nobody", 0.0, "none", 1.0, load, false, "");
-                                loads.Delete(1, i); // usuniêcie z nastêpuj¹cym przecinkiem
-                                i = loads.Pos(",");
-                            }
-                        }
-                        if (tmp->DynamicObject->iCabs)
-                        { // jeœli ma jak¹kolwiek kabinê
-                            delete Train;
-                            Train = new TTrain();
-                            if (tmp->DynamicObject->iCabs & 1)
-                            {
-                                tmp->DynamicObject->MoverParameters->ActiveCab = 1;
-                                Train->Init(tmp->DynamicObject, true);
-                            }
-                            if (tmp->DynamicObject->iCabs & 4)
-                            {
-                                tmp->DynamicObject->MoverParameters->ActiveCab = -1;
-                                Train->Init(tmp->DynamicObject, true);
-                            }
-                            if (tmp->DynamicObject->iCabs & 2)
-                            {
-                                tmp->DynamicObject->MoverParameters->ActiveCab = 0;
-                                Train->Init(tmp->DynamicObject, true);
-                            }
-                        }
-                        Global::asCurrentTexturePath =
-                            AnsiString(szTexturePath); // z powrotem defaultowa sciezka do tekstur
-                    }
-                }
-                else if (sr.Name.LowerCase().SubString(sr.Name.Length() - 3, 4) == ".t3d")
-                { // z modelami jest proœciej
-                    Global::asCurrentTexturePath = dir;
-                    TModelsManager::GetModel(AnsiString(dir + sr.Name).c_str(), false);
-                }
-        } while (FindNext(sr) == 0);
-        FindClose(sr);
-    }
-};
-//---------------------------------------------------------------------------
+// ***********************************************************************************************************
+//
+// ***********************************************************************************************************
 void TWorld::CabChange(TDynamicObject *old, TDynamicObject *now)
 { // ewentualna zmiana kabiny u¿ytkownikowi
     if (Train)
         if (Train->Dynamic() == old)
             Global::changeDynObj = now; // uruchomienie protezy
 };
-//---------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------

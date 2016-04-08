@@ -425,6 +425,10 @@ public:
 	Byte BrakeCtrlPosNo;
 	Byte MainCtrlPosNo;
 	Byte ScndCtrlPosNo;
+	Byte LightsPosNo;
+	Byte LightsDefPos;
+	bool LightsWrap;
+	Byte Lights[2][16];
 	bool ScndInMain;
 	bool MBrake;
 	TSecuritySystem SecuritySystem;
@@ -559,6 +563,7 @@ public:
 	double LimPipePress;
 	double ActFlowSpeed;
 	Byte DamageFlag;
+        Byte EngDmgFlag;
 	Byte DerailReason;
 	TCommand CommandIn;
 	AnsiString CommandOut;
@@ -571,6 +576,7 @@ public:
 	bool Mains;
 	Byte MainCtrlPos;
 	Byte ScndCtrlPos;
+        Byte LightsPos;
 	int ActiveDir;
 	int CabNo;
 	int DirAbsolute;
@@ -735,7 +741,7 @@ public:
 	bool __fastcall ChangeOffsetH(double DeltaOffset);
 	__fastcall T_MoverParameters(double VelInitial, AnsiString TypeNameInit, AnsiString NameInit, int LoadInitial
 		, AnsiString LoadTypeInitial, int Cab);
-	bool __fastcall LoadChkFile(AnsiString chkpath);
+	bool __fastcall LoadChkFile(AnsiString chkpath, int unique);
 	bool __fastcall CheckLocomotiveParameters(bool ReadyFlag, int Dir);
 	AnsiString __fastcall EngineDescription(int what);
 	bool __fastcall DoorLeft(bool State);
@@ -867,6 +873,7 @@ static const Shortint eimv_Uzsmax = 0x10;
 static const Shortint eimv_Pmax = 0x11;
 static const Shortint eimv_Fzad = 0x12;
 static const Shortint eimv_Imax = 0x13;
+static const Shortint eimv_Fful = 0x14;
 extern PACKAGE double __fastcall Distance(const TLocation &Loc1, const TLocation &Loc2, const TDimension 
 	&Dim1, const TDimension &Dim2);
 

@@ -398,6 +398,21 @@ bool FEX(AnsiString filename)
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // KONWERSJE
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+AnsiString str(int i)
+{
+  return IntToStr(i);
+}
+
+string trim(string& str)
+{
+    size_t first = str.find_first_not_of(' ');
+    if (first == string::npos)
+        return "";
+    size_t last = str.find_last_not_of(' ');
+    return str.substr(first, (last-first+1));
+}
+
 char* stdstrtocharc(std::string var)
 {
 	char* ReturnString = new char[150];

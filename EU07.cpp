@@ -122,19 +122,14 @@ USEUNIT("rgbtexture.cpp");
 USEUNIT("particlesys1.cpp");
 USEUNIT("mwdevice.cpp");
 USEFORM("frm_debugger.cpp", DEBUGGER);
-
-USEUNIT("addons/fountain1/AirFountain.cpp");
-USEUNIT("addons/fountain1/poolvectors.cpp");
-USEUNIT("addons/fountain1/pool.cpp");
-USEUNIT("addons/texloader/textureloader.cpp");
-USEUNIT("addons/particle2/particles.cpp");
-USEUNIT("addons/particle2/textures.cpp");
-
-
-//USEUNIT("addons/lensflare/xvector.cpp");
-//USEUNIT("addons/lensflare/texture.cpp");
-//USEUNIT("addons/lensflare/flare.cpp");
-
+USEUNIT("addons\fountain1\AirFountain.cpp");
+USEUNIT("addons\fountain1\poolvectors.cpp");
+USEUNIT("addons\fountain1\pool.cpp");
+USEUNIT("addons\texloader\textureloader.cpp");
+USEUNIT("addons\particle2\particles.cpp");
+USEUNIT("addons\particle2\textures.cpp");
+USEUNIT("PyInt.cpp");
+USELIB("python\libs\omf_python27.lib");
 //---------------------------------------------------------------------------
 #include "World.h"
 
@@ -224,24 +219,6 @@ int InitGL(GLvoid) // All Setup For OpenGL Goes Here
     return World.Init(hWnd, hDC); // true jeœli wszystko pójdzie dobrze
 }
 
-
-//---------------------------------------------------------------------------
-GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // resize and initialize the GL Window
-{
-    WindowWidth = width;
-    WindowHeight = height;
-    if (height == 0) // prevent a divide by zero by
-        height = 1; // making height equal one
-    glViewport(0, 0, width, height); // Reset The Current Viewport
-    glMatrixMode(GL_PROJECTION); // select the Projection Matrix
-    glLoadIdentity(); // reset the Projection Matrix
-
- // calculate the aspect ratio of the window
-    gluPerspective(45.0f, (GLdouble)width / (GLdouble)height, 0.2f, 2500.0f);
-  //gluPerspective(45.0f, (GLdouble)width / (GLdouble)height, 2.2f, 1999950600.0f);  // Q 24.12.15: Nadpisuje
-    glMatrixMode(GL_MODELVIEW); // select the Modelview Matrix
-    glLoadIdentity(); // reset the Modelview Matrix
-}
 
 //---------------------------------------------------------------------------
 GLvoid KillGLWindow(GLvoid) // properly kill the window
@@ -527,13 +504,14 @@ BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscree
                 KillGLWindow(); // reset the display
                 return CreateGLWindow(title, width, height, bits, fullscreenflag); // rekurencja
             }
-
-    ShowWindow(hWnd, SW_SHOW); // show the window
-    ReSizeGLScene(width, height); // set up our perspective GL screen
-    SetForegroundWindow(hWnd); // slightly higher priority
-    SetFocus(hWnd); // sets keyboard focus to the window
-    Sleep(5);
-    Application->ProcessMessages();
+    WindowWidth = width;
+    WindowHeight = height;
+    //ShowWindow(hWnd, SW_SHOW); // show the window
+    Global::ReSizeGLScene(width, height); // set up our perspective GL screen
+    //SetForegroundWindow(hWnd); // slightly higher priority
+    //SetFocus(hWnd); // sets keyboard focus to the window
+    //Sleep(5);
+    //Application->ProcessMessages();
     if (!InitGL()) // initialize our newly created GL Window
     {
         KillGLWindow(); // reset the display
@@ -789,7 +767,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
     case WM_SIZE: // resize the OpenGL window
     {
-        ReSizeGLScene(LOWORD(lParam), HIWORD(lParam)); // LoWord=Width, HiWord=Height
+        WindowWidth = LOWORD(lParam);
+        WindowHeight = HIWORD(lParam);
+        Global::ReSizeGLScene(LOWORD(lParam), HIWORD(lParam)); // LoWord=Width, HiWord=Height
         if (GetWindowRect(hWnd, &rect))
         { // Ra: zmiana rozmiaru okna bez przesuwania myszy
             // mx=WindowWidth/2+rect.left;    // horizontal position
@@ -1150,7 +1130,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     if(FileCFG)
     {
         while(getline(FileCFG,line))
-		{
+	      {
 		AnsiString test,par1;
                 int pos1 = 0;
 		int pos2 = 0;
@@ -1215,7 +1195,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
                 if (test == "mwdfmax_zg") QGlobal::fmaxZG = StrToFloat(Trim(par1));
                 if (test == "mwdfmax_v1") QGlobal::fmaxV1 = StrToFloat(Trim(par1));
                 if (test == "mwdfmax_a1") QGlobal::fmaxA1 = StrToFloat(Trim(par1));
-                if (test == "mwdinputon") QGlobal::fMWDInEnable = atoi(par1.c_str());
+                if (test == "mwdinputon")  Global::bMWDInEnable = atoi(par1.c_str());
 
                 if (test == "font10file") QGlobal::font10file = Trim(par1);
                 if (test == "font11file") QGlobal::font11file = Trim(par1);
@@ -1410,8 +1390,8 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     if (!CreateGLWindow(Global::asHumanCtrlVehicle.c_str(), Global::iWindowWidth, Global::iWindowHeight, Bpp, fullscreen))// create our OpenGL window
      return 0; // quit if window was not created
 
-    SetForegroundWindow(hWnd);
-    SetFocus(hWnd);
+    //-SetForegroundWindow(hWnd);
+    //-SetFocus(hWnd);
 
     // CreateGLWindow() -> InitGL() - > World.Init() -> World.RenderMenu() -> (World.Load()
 
@@ -1464,8 +1444,8 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
 
     //delete DEBUGGER;
     DEBUGGER->Release();
-    SetForegroundWindow(hWnd);
-    SetFocus(hWnd);
+  //--SetForegroundWindow(hWnd);
+  //--SetFocus(hWnd);
     
     // McZapkie: proba przeplukania klawiatury
     Console *pConsole = new Console(); // Ra: nie wiem, czy ma to sens, ale jakoœ zainicjowac trzeba
@@ -1538,6 +1518,7 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     if (hRC) KillGLWindow(); // kill the window
     return (msg.wParam); // exit the program
 }
+
 
 
 

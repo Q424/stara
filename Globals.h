@@ -29,6 +29,7 @@ http://mozilla.org/MPL/2.0/.
 #include "particlesys1.h"
 #include "dllmwd/mwdevice.h"
 #include "addons.h"
+#include "PyInt.h"
 
 #define PI 3.1415926535897f
 #define DTOR (PI/180.0f)
@@ -105,9 +106,11 @@ int a::sort_by = 1;// default will be to sort by num1
 #define KEYBINDINGS 100
 typedef struct {
 	std::string bit;
-	std::string ifbit;
+	std::string ifbit1;
+        std::string ifbit0;
 	std::string bitid;
-        std::string command;
+        std::string command1;
+        std::string command2;
 } iosets;
 
 
@@ -453,6 +456,7 @@ class QGlobal
  static TStringList *CONFIG;
  static TStringList *LOKTUT;
  static TStringList *LOKKBD;
+ static TStringList *ERRORS;
  static TStringList *MBRIEF;
  static TStringList *MISSIO;
  static TStringList *CONSISTF;
@@ -507,6 +511,7 @@ class QGlobal
  static AnsiString font16file;
  static AnsiString font18file;
  static AnsiString asDEFAULTSLEEPER;
+
  
  static GLblendstate GLBLENDSTATE;
  static GLlightstate GLLIGHTSTATE;
@@ -600,6 +605,8 @@ class QGlobal
  static int iSPLASHTIME;
  static int iSNOWFLAKES;
  static int iSNOWSQUARE;
+ static int iRENDEREDFRAMES;
+ static int iTUTSTARTLINE;
 
  static double fscreenfade;
  static double fscreenfade2;
@@ -613,6 +620,8 @@ class QGlobal
  static int LDRREFRESH;
  static int   LDRBORDER;
  static float GUITUTOPAC;
+ static float SCRFILTER1A;
+ static float SCRFILTER2A;
  static float ffovblocktime;
  static float ftrwiresize;
  static float consistlen;
@@ -692,7 +701,7 @@ class QGlobal
  static float fanalog1max;
  static float fanalog2min;
  static float fanalog2max;
- static float fMWDInEnable;
+ static bool bMWDInEnable;
  static bool DEV_P01[9];
  static bool DEV_P02[9];
  static bool DEV_P03[9];
@@ -710,6 +719,7 @@ class QGlobal
  static iosets IOSET[KEYBINDINGS];
  static std::string IOCOMMAND;
  static bool portstate[5][64];
+ static AnsiString MWDCOMMAND;
 };
 
 class Global
@@ -743,6 +753,7 @@ class Global
     static bool bLiveTraction;
     static bool bManageNodes;
     static bool bDecompressDDS;
+    static bool bMWDInEnable;
     //    bool WFreeFly;
     static float Global::fMouseXScale;
     static float Global::fMouseYScale;
@@ -772,6 +783,7 @@ class Global
     static void SetCameraRotation(double Yaw);
     static int iWriteLogEnabled; // maska bitowa: 1-zapis do pliku, 2-okienko
     // McZapkie-221002: definicja swiatla dziennego
+    static float Background[3];
     static GLfloat AtmoColor[];
     static GLfloat FogColor[];
     // static bool bTimeChange;
@@ -854,6 +866,7 @@ class Global
     static TDynamicObject *pUserDynamic; // pojazd u¿ytkownika, renderowany bez trzêsienia
     static double fCalibrateIn[6][4]; // parametry kalibracyjne wejœæ z pulpitu
     static double fCalibrateOut[7][4]; // parametry kalibracyjne wyjœæ dla pulpitu
+    static double fCalibrateOutMax[7]; // wartoœci maksymalne wyjœæ dla pulpitu
     static double fBrakeStep; // krok zmiany hamulca dla klawiszy [Num3] i [Num9]
     static bool bJoinEvents; // czy grupowaæ eventy o tych samych nazwach
     static bool bSmudge; // czy wyœwietlaæ smugê, a pojazd u¿ytkownika na koñcu
@@ -873,6 +886,9 @@ class Global
     static bool DoEvents();
     static AnsiString Bezogonkow(AnsiString str, bool _ = false);
     static double Min0RSpeed(double vel1, double vel2);
+    static double CutValueToRange(double min, double value, double max);
+
+    // Queued's procs
     static AnsiString LoadStationsBase();
     static int findstationbyname(AnsiString name);
     static int findpassengerdynamic(vector3 PPos, AnsiString asName, AnsiString REL, AnsiString DST, TGroundNode *GN);
@@ -889,6 +905,8 @@ class Global
     static void renderfountainem(vector3 camera);
     static void renderobstructlights(vector3 camera, double dt);
     static void renderparticleeffect(vector3 camera);
+    static GLvoid ReSizeGLScene(GLsizei width, GLsizei height);
+
   //static bool pobstructlightscontainer::setsObstructLights(char* scriptfile);
 };
 

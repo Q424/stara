@@ -38,6 +38,9 @@ AnsiString BoolToStr(bool value);
 AnsiString BoolToYN(bool value);
 bool YNToBool(AnsiString value);
 AnsiString StrToPERON(AnsiString value);
+
+AnsiString str(int i);
+string trim(string& str);
 char* stdstrtocharc(std::string var);
 char* stdstrtochar(std::string var);
 std::string chartostdstr(char *var);

@@ -19,13 +19,14 @@
       pixmap.obj rgbtexture.obj particlesys1.obj mwdevice.obj frm_debugger.obj 
       addons\fountain1\AirFountain.obj addons\fountain1\poolvectors.obj 
       addons\fountain1\pool.obj addons\texloader\textureloader.obj 
-      addons\particle2\particles.obj addons\particle2\textures.obj"/>
+      addons\particle2\particles.obj addons\particle2\textures.obj PyInt.obj"/>
     <RESFILES value="EU07.res"/>
     <IDLFILES value=""/>
     <IDLGENFILES value=""/>
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) frm_debugger.dfm"/>
-    <LIBFILES value="opengl\glut32.lib DirectX\Dsound.lib freetype.lib"/>
+    <LIBFILES value="opengl\glut32.lib DirectX\Dsound.lib freetype.lib 
+      python\libs\omf_python27.lib"/>
     <LIBRARIES value="dclocx50.bpi bcbsmp50.bpi VCLX50.lib bcbsmp50.lib Vcl50.lib"/>
     <SPARELIBS value="Vcl50.lib bcbsmp50.lib VCLX50.lib bcbsmp50.bpi dclocx50.bpi"/>
     <PACKAGES value="Vcl50.bpi Vclx50.bpi"/>

@@ -369,6 +369,10 @@ class TSubModel
     {
         return *(fMatrix->TranslationGet()) + Child->Translation1Get();
     }
+    inline int GetTextureId()
+    {
+        return TextureID;
+    }
     void ParentMatrix(float4x4 *m);
     float MaxY(const float4x4 &m);
     void AdjustDist();

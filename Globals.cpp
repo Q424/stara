@@ -123,6 +123,7 @@ TStringList *QGlobal::SLTEMP;
 TStringList *QGlobal::CONFIG;
 TStringList *QGlobal::LOKTUT;
 TStringList *QGlobal::LOKKBD;
+TStringList *QGlobal::ERRORS;
 TStringList *QGlobal::MBRIEF;
 TStringList *QGlobal::MISSIO;
 TStringList *QGlobal::CONSISTF;
@@ -223,6 +224,8 @@ int QGlobal::iSWITCHDIRECT = 0;
 int QGlobal::iSPLASHTIME = 0;
 int QGlobal::iSNOWFLAKES = 40000;
 int QGlobal::iSNOWSQUARE = 300;
+int QGlobal::iRENDEREDFRAMES = 0;
+int QGlobal::iTUTSTARTLINE = 0;
 
 double QGlobal::fMoveLightS = -1.0f;
 double QGlobal::fps = 1.0f;
@@ -234,6 +237,8 @@ float QGlobal::ffov = 45.0f;
 int QGlobal::LDRREFRESH = 100;
 int   QGlobal::LDRBORDER = 1;
 float QGlobal::GUITUTOPAC = 0.1f;
+float QGlobal::SCRFILTER1A = 0.2f;
+float QGlobal::SCRFILTER2A = 0.2f;
 double QGlobal::fscreenfade = 1.0;
 double QGlobal::fscreenfade2 = 1.0;
 float QGlobal::ffovblocktime = 0.0;
@@ -315,8 +320,8 @@ std::string QGlobal::COM_port = "none";
  float QGlobal::fanalog1max = 255;
  float QGlobal::fanalog2min = 0;
  float QGlobal::fanalog2max = 255;
- float QGlobal::fMWDInEnable = 0;	//zablokowane prze³¹czniki i NEFy na pulpicie - nie blokuj¹ klawiatury
 
+ bool  Global::bMWDInEnable = false;	//zablokowane prze³¹czniki i NEFy na pulpicie - nie blokuj¹ klawiatury
  bool QGlobal::DEV_P01[9];
  bool QGlobal::DEV_P02[9];
  bool QGlobal::DEV_P03[9];
@@ -334,6 +339,7 @@ std::string QGlobal::COM_port = "none";
  iosets QGlobal::IOSET[KEYBINDINGS];
  std::string QGlobal::IOCOMMAND = "";
  bool QGlobal::portstate[5][64];
+ AnsiString QGlobal::MWDCOMMAND = "[NULL]";
 
 // parametry do u¿ytku wewnêtrznego
 // double Global::tSinceStart=0;
@@ -395,6 +401,7 @@ vector3 Global::pFreeCameraInit[10];
 vector3 Global::pFreeCameraInitAngle[10];
 double Global::fFogStart = 1700;
 double Global::fFogEnd = 2000;
+float Global::Background[3] = { 0.2, 0.4, 0.33 };
 GLfloat Global::AtmoColor[] = {0.423f, 0.702f, 1.0f};
 GLfloat Global::FogColor[] = {0.6f, 0.7f, 0.8f};
 GLfloat Global::ambientDayLight[] = {0.40f, 0.40f, 0.45f, 1.0f}; // robocze
@@ -479,7 +486,7 @@ double Global::fCalibrateOut[7][4] = {{0, 1, 0, 0},
                                       {0, 1, 0, 0},
                                       {0, 1, 0, 0},
                                       {0, 1, 0, 0}};
-
+double Global::fCalibrateOutMax[7] = {0, 0, 0, 0, 0, 0, 0};
 // parametry przejœciowe (do usuniêcia)
 // bool Global::bTimeChange=false; //Ra: ZiomalCl wy³¹czy³ star¹ wersjê nocy
 // bool Global::bRenderAlpha=true; //Ra: wywali³am tê flagê
@@ -1005,6 +1012,16 @@ void Global::ConfigParse(TQueryParserComp *qp, cParser *cp)
             asLang = GetNextSymbol(); // domyœlny jêzyk - http://tools.ietf.org/html/bcp47
         else if (str == AnsiString("opengl")) // deklarowana wersja OpenGL, ¿eby powstrzymaæ b³êdy
             fOpenGL = GetNextSymbol().ToDouble(); // wymuszenie wersji OpenGL
+        else if (str == AnsiString("pyscreenrendererpriority")) // priority of python screen renderer
+            TPythonInterpreter::getInstance()->setScreenRendererPriority(
+                GetNextSymbol().LowerCase().c_str());
+		else if (str == AnsiString("background"))
+		{
+			Background[0] = GetNextSymbol().ToDouble(); // r
+			Background[1] = GetNextSymbol().ToDouble(); // g
+			Background[2] = GetNextSymbol().ToDouble(); // b
+		}
+
     } while (str != "endconfig"); //(!Parser->EndOfFile)
 
     // na koniec trochê zale¿noœci
@@ -1387,6 +1404,12 @@ double Global::Min0RSpeed(double vel1, double vel2)
 	return Min0R(vel1, vel2);
 }
 
+double Global::CutValueToRange(double min, double value, double max)
+{ // przycinanie wartosci do podanych granic
+	value = Max0R(value, min);
+	value = Min0R(value, max);
+	return value;
+};
 
 // ***********************************************************************************************************
 // TWORZENIE LISTY PLIKOW Z WYBRANEGO KATALOGU
@@ -1857,5 +1880,22 @@ void Global::LOADMISSIONDESCRIPTION()
      }
  WriteLog("OK.");
 }
+
+
+//---------------------------------------------------------------------------
+GLvoid Global::ReSizeGLScene(GLsizei width, GLsizei height) // resize and initialize the GL Window
+{
+
+    if (height == 0) // prevent a divide by zero by
+        height = 1; // making height equal one
+    glViewport(0, 0, width, height); // Reset The Current Viewport
+    glMatrixMode(GL_PROJECTION); // select the Projection Matrix
+    glLoadIdentity(); // reset the Projection Matrix
+    gluPerspective(45.0f, (GLdouble)width / (GLdouble)height, 0.2f, 2500.0f);
+  //gluPerspective(45.0f, (GLdouble)width / (GLdouble)height, 1.2f, 1999950600.0f);  // Q 24.12.15: Nadpisuje
+  //glMatrixMode(GL_MODELVIEW); // select the Modelview Matrix
+  //glLoadIdentity(); // reset the Modelview Matrix
+}
+
 
 #pragma package(smart_init)

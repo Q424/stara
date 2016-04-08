@@ -27,6 +27,9 @@ http://mozilla.org/MPL/2.0/.
 #include "submodelsops.h"
 #include "world.h"
 #include "ground.h"
+#include "track.h"
+#include "dynobj.h"
+#include "train.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
@@ -63,6 +66,103 @@ float cdrt = 0;
 float cfps = 0;
 float emm1[] = {1, 1, 1, 0};
 float emm2[] = {0, 0, 0, 1};
+
+
+
+//---------------------------------------------------------------------------
+AnsiString last; // zmienne u¿ywane w rekurencji
+double shift = 0;
+void TWorld::CreateE3D(const AnsiString &dir, bool dyn)
+{ // rekurencyjna generowanie plików E3D
+    TTrack *trk;
+    double at;
+    TSearchRec sr;
+    if (FindFirst(dir + "*.*", faDirectory | faArchive, sr) == 0)
+    {
+        do
+        {
+            if (sr.Name[1] != '.')
+                if ((sr.Attr & faDirectory)) // jeœli katalog, to rekurencja
+                    CreateE3D(dir + sr.Name + "\\", dyn);
+                else if (dyn)
+                {
+                    if (sr.Name.LowerCase().SubString(sr.Name.Length() - 3, 4) == ".mmd")
+                    {
+                        // konwersja pojazdów bêdzie u³omna, bo nie poustawiaj¹ siê animacje na
+                        // submodelach okreœlonych w MMD
+                        // TModelsManager::GetModel(AnsiString(dir+sr.Name).c_str(),true);
+                        if (last != dir)
+                        { // utworzenie toru dla danego pojazdu
+                            last = dir;
+                            trk = TTrack::Create400m(1, shift);
+                            shift += 10.0; // nastêpny tor bêdzie deczko dalej, aby nie zabiæ FPS
+                            at = 400.0;
+                            // if (shift>1000) break; //bezpiecznik
+                        }
+                        TGroundNode *tmp = new TGroundNode();
+                        tmp->DynamicObject = new TDynamicObject();
+                        // Global::asCurrentTexturePath=dir; //pojazdy maj¹ tekstury we w³asnych
+                        // katalogach
+                        at -= tmp->DynamicObject->Init(
+                            "", dir.SubString(9, dir.Length() - 9), "none",
+                            sr.Name.SubString(1, sr.Name.Length() - 4), trk, at, "nobody", 0.0,
+                            "none", 0.0, "", false, "");
+                        // po wczytaniu CHK zrobiæ pêtlê po ³adunkach, aby ka¿dy z nich skonwertowaæ
+                        AnsiString loads, load;
+                        loads = tmp->DynamicObject->MoverParameters->LoadAccepted; // typy ³adunków
+                        if (!loads.IsEmpty())
+                        {
+                            loads += ","; // przecinek na koñcu
+                            int i = loads.Pos(",");
+                            while (i > 1)
+                            { // wypada³o by sprawdziæ, czy T3D ³adunku jest
+                                load = loads.SubString(1, i - 1);
+                                if (FileExists(dir + load + ".t3d")) // o ile jest plik ³adunku, bo
+                                    // inaczej nie ma to sensu
+                                    if (!FileExists(
+                                            dir + load +
+                                            ".e3d")) // a nie ma jeszcze odpowiednika binarnego
+                                        at -= tmp->DynamicObject->Init(
+                                            "", dir.SubString(9, dir.Length() - 9), "none",
+                                            sr.Name.SubString(1, sr.Name.Length() - 4), trk, at,
+                                            "nobody", 0.0, "none", 1.0, load, false, "");
+                                loads.Delete(1, i); // usuniêcie z nastêpuj¹cym przecinkiem
+                                i = loads.Pos(",");
+                            }
+                        }
+                        if (tmp->DynamicObject->iCabs)
+                        { // jeœli ma jak¹kolwiek kabinê
+                            delete Train;
+                            Train = new TTrain();
+                            if (tmp->DynamicObject->iCabs & 1)
+                            {
+                                tmp->DynamicObject->MoverParameters->ActiveCab = 1;
+                                Train->Init(tmp->DynamicObject, true);
+                            }
+                            if (tmp->DynamicObject->iCabs & 4)
+                            {
+                                tmp->DynamicObject->MoverParameters->ActiveCab = -1;
+                                Train->Init(tmp->DynamicObject, true);
+                            }
+                            if (tmp->DynamicObject->iCabs & 2)
+                            {
+                                tmp->DynamicObject->MoverParameters->ActiveCab = 0;
+                                Train->Init(tmp->DynamicObject, true);
+                            }
+                        }
+                        Global::asCurrentTexturePath =
+                            AnsiString(szTexturePath); // z powrotem defaultowa sciezka do tekstur
+                    }
+                }
+                else if (sr.Name.LowerCase().SubString(sr.Name.Length() - 3, 4) == ".t3d")
+                { // z modelami jest proœciej
+                    Global::asCurrentTexturePath = dir;
+                    TModelsManager::GetModel(AnsiString(dir + sr.Name).c_str(), false);
+                }
+        } while (FindNext(sr) == 0);
+        FindClose(sr);
+    }
+};
 
 
 // ***********************************************************************************************************

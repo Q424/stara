@@ -23,6 +23,7 @@ http://mozilla.org/MPL/2.0/.
 #include "AdvSound.h"
 #include "RealSound.h"
 #include "FadeSound.h"
+#include "PyInt.h"
 
 // typedef enum {st_Off, st_Starting, st_On, st_ShuttingDown} T4State;
 
@@ -80,7 +81,7 @@ class TTrain
     bool Init(TDynamicObject *NewDynamicObject, bool e3d = false);
     void OnKeyDown(int cKey);
     void OnKeyUp(int cKey);
-    void OnMWDCommand();
+    void OnMWDCommand(std::string cmd, bool state);
 
     //    bool SHP() { fShpTimer= 0; };
 
@@ -95,13 +96,16 @@ class TTrain
     void UpdateMechPosition(double dt);
     bool Update();
     void MechStop();
+    void SetLights();
     //    virtual bool RenderAlpha();
     // McZapkie-310302: ladowanie parametrow z pliku
     bool LoadMMediaFile(AnsiString asFileName);
+    PyObject *GetTrainState();
 
-  private: //¿eby go nic z zewn¹trz nie przestawia³o
+  protected: //¿eby go nic z zewn¹trz nie przestawia³o
     TDynamicObject *DynamicObject; // przestawia zmiana pojazdu [F5]
-  private: //¿eby go nic z zewn¹trz nie przestawia³o
+  public: //¿eby go nic z zewn¹trz nie przestawia³o
+
     TMoverParameters *mvControlled; // cz³on, w którym sterujemy silnikiem
     TMoverParameters *mvOccupied; // cz³on, w którym sterujemy hamulcem
     TMoverParameters *mvSecond; // drugi cz³on (ET40, ET41, ET42, ukrotnienia)
@@ -149,6 +153,7 @@ class TTrain
     TGauge ggMainButton; // EZT
     TGauge ggSecurityResetButton;
     TGauge ggReleaserButton;
+    TGauge ggSandButton; //guzik piasecznicy
     TGauge ggAntiSlipButton;
     TGauge ggFuseButton;
     TGauge ggConverterFuseButton; // hunter-261211: przycisk odblokowania nadmiarowego przetwornic i
@@ -160,6 +165,7 @@ class TTrain
     TGauge ggRightLightButton;
     TGauge ggLeftEndLightButton;
     TGauge ggRightEndLightButton;
+    TGauge ggLightsButton;  //przelacznik reflektorow (wszystkich)
 
     // hunter-230112: przelacznik swiatel tylnich
     TGauge ggRearUpperLightButton;
@@ -339,7 +345,7 @@ class TTrain
 
     vector3 pMechSittingPosition; // ABu 180404
     vector3 MirrorPosition(bool lewe);
-
+    int keybrakecount;
   private:
     // PSound dsbBuzzer;
     PSound dsbCouplerStretch;
@@ -355,7 +361,7 @@ class TTrain
     float fConverterTimer; // hunter-261211: dla przekaznika
     float fMainRelayTimer; // hunter-141211: zalaczanie WSa z opoznieniem
     float fCzuwakTestTimer; // hunter-091012: do testu czuwaka
-
+    float fLightsTimer; // yB 150617: timer do swiatel
     int CAflag; // hunter-131211: dla osobnego zbijania CA i SHP
 
     double fPoslizgTimer;
@@ -365,7 +371,7 @@ class TTrain
     // bool CabChange(int iDirection);
     // bool InitializeCab(int NewCabNo, AnsiString asFileName);
     TTrack *tor;
-    int keybrakecount;
+
     // McZapkie-240302 - przyda sie do tachometru
     float fTachoVelocity;
     float fTachoVelocityJump; // ze skakaniem
@@ -374,12 +380,30 @@ class TTrain
     float fHVoltage; // napiêcie dla dynamicznych ga³ek
     float fHCurrent[4]; // pr¹dy: suma i amperomierze 1,2,3
     float fEngine[4]; // obroty te?trzeba pobra?
+	int iCarNo, iPowerNo, iUnitNo; //liczba pojazdow, czlonow napednych i jednostek spiêtych ze sob¹
+	bool bDoors[20][3];     // drzwi dla wszystkich czlonow
+	int iUnits[20];     // numer jednostki
+	int iDoorNo[20];     // liczba drzwi
+	char cCode[20];     //kod pojazdu
+	AnsiString asCarName[20]; //nazwa czlonu
+	bool bMains[8]; //WSy
+	float fCntVol[8]; //napiecie NN
+	bool bPants[8][2]; //podniesienie pantografow
+	bool bFuse[8]; //nadmiarowe
+	bool bBatt[8]; //baterie
+	bool bConv[8]; //przetwornice
+	bool bComp[8][2]; //sprezarki
+	bool bHeat[8]; //grzanie
     // McZapkie: do syczenia
     float fPPress, fNPress;
     float fSPPress, fSNPress;
     int iSekunda; // Ra: sekunda aktualizacji prêdkoœci
     int iRadioChannel; // numer aktualnego kana³u radiowego
+    TPythonScreens pyScreens;
+
   public:
+	float fPress[20][3]; // cisnienia dla wszystkich czlonow  
+	float fEIMParams[9][10]; // parametry dla silnikow asynchronicznych
     int RadioChannel()
     {
         return iRadioChannel;
@@ -394,6 +418,59 @@ class TTrain
     };
     void DynamicSet(TDynamicObject *d);
     void Silence();
+
+
+// MWD ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  void _mwd_IncMainCtrl(bool sound);
+  void _mwd_RadioPowerSw(bool sound);
+  void _mwd_DecMainCtrl(bool sound);
+  void _mwd_IncScndCtrl(bool sound);
+  void _mwd_DecScndCtrl(bool sound);
+  void _mwd_IncLocalBrake(void);
+  void _mwd_DecLocalBrake(void);
+  void _mwd_IncTrainBrake(void);
+  void _mwd_DecTrainBrake(void);
+  void _mwd_EmergencyBrake(void);
+  void _mwd_Brake3(void);
+  void _mwd_Brake2(void);
+  void _mwd_Brake1(void);
+  void _mwd_Brake0(void);
+  void _mwd_WaveBrake(void);
+
+  void _mwd_BatterySw(bool state, bool sound);               //
+  void _mwd_StLinOffSw(bool state, bool sound);              //
+  void _mwd_SandSw(bool state, bool sound);                  //
+  void _mwd_MainSw(bool state, bool sound);                  //
+  void _mwd_BrakeProfileSw(bool state);                      //
+  void _mwd_ConverterSw(bool state, bool sound);             //
+  void _mwd_CompressorSw(bool state, bool sound);            //
+  void _mwd_SmallCompressorSw(bool state, bool sound);       //
+  void _mwd_MaxCurrentSw(bool state, bool sound);            //
+  void _mwd_CurrentAutoRelaySw(bool state, bool sound);      // PSR
+  void _mwd_FailedEngineCutOffSw(void);                      //
+  void _mwd_LeftDoor(bool state);
+  void _mwd_RightDoor(bool state);
+  void _mwd_PantFrontSw(bool state, bool sound);             //
+  void _mwd_PantRearSw(bool state, bool sound);              //
+  void _mwd_ActiveSw(void);
+  void _mwd_HeatingSw(bool state, bool sound);               //
+  void _mwd_LeftSignSw(bool state, bool sound);              //
+  void _mwd_UpperSignSw(bool state, bool sound);             //
+  void _mwd_RightSignSw(bool state, bool sound);             //
+  void _mwd_CzuwakSw(void);                                  //
+  void _mwd_AntiSlippingSw(void);                            //
+  void _mwd_FuseSw(void);                                    //
+  void _mwd_DirectionForwardSw(void);
+  void _mwd_DirectionBackwardSw(void);
+  void _mwd_ReleaserSw(void);                                //
+  void _mwd_CoupleSw(void);
+  void _mwd_DeCoupleSw(void);
+  void _mwd_RadioChDown(void);
+  void _mwd_RadioChUp(void);
+  void _mwd_HornH(void);                                     //
+  void _mwd_HornL(void);                                     //
+
 };
 //---------------------------------------------------------------------------
 #endif

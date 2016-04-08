@@ -72,16 +72,15 @@ class TWorld
     freetype::font_data font16;
     freetype::font_data font18;
     freetype::font_data font20;
-    // double Aspect;
 
     TDynamicObject *Controlled; // pojazd, który prowadzimy
 
-    bool __fastcall menuinitctrls();
-    bool __fastcall STARTSIMULATION();
-    bool __fastcall LOADLOADERFONTS();
-    bool __fastcall LOADLOADERCONFIG();
-    bool __fastcall LOADLOADERTEXTURES();
-    bool __fastcall LOADQCONFIG();
+    bool menuinitctrls();
+    bool STARTSIMULATION();
+    bool LOADLOADERFONTS();
+    bool LOADLOADERCONFIG();
+    bool LOADLOADERTEXTURES();
+    bool LOADQCONFIG();
 
     bool __fastcall RenderFPS(double alpha);
     bool __fastcall RenderFILTER(double alpha);
@@ -94,7 +93,6 @@ class TWorld
     bool __fastcall RenderConsole(double speed, double dt);
     bool __fastcall RenderConsoleText();
     bool __fastcall RenderIRCEU07Text();
-    bool __fastcall RenderDOC();
     bool __fastcall RenderSplash(HDC hDC);
     bool __fastcall RenderMenu(HDC hDC);
     bool __fastcall RenderMenuCheckBox(int w, int h, int x, int y, int ident, bool check, bool selected, AnsiString label);
@@ -121,9 +119,6 @@ class TWorld
     bool __fastcall rendertext(int x, int y, double scale, AnsiString astext);
     bool __fastcall renderpointerx(double sizepx, int sw, int sh);
     bool __fastcall RenderRain(float rf, float s, int d, int m);
-    bool __fastcall RenderSnow();
-    bool __fastcall SnowInit(int snowflakesnum, float size);
-    bool __fastcall setBR(int x, int y, int w, int h);
   private:
     AnsiString OutText01; // teksty na ekranie
     AnsiString OutText02;
@@ -137,13 +132,6 @@ class TWorld
     AnsiString OutText10;
     AnsiString OutText11;
     AnsiString OutText12;
-
-int BRx;
-int BRy;
-int BRw;
-int BRh;
-
-
 
 float LDR_COLOR_R;
 float LDR_COLOR_G;

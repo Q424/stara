@@ -58,8 +58,7 @@ void TAnimPant::AKP_4E()
     vPos = vector3(0, 0, 0); // przypisanie domyœnych wspó³czynników do pantografów
     fLenL1 = 1.22; // 1.176289 w modelach
     fLenU1 = 1.755; // 1.724482197 w modelach
-    fHoriz = 0.535; // 0.54555075 przesuniêcie œlizgu w d³ugoœci pojazdu wzglêdem osi obrotu dolnego
-    // ramienia
+    fHoriz = 0.535; // 0.54555075 przesuniêcie œlizgu w d³ugoœci pojazdu wzglêdem osi obrotu dolnego ramienia
     fHeight = 0.07; // wysokoœæ œlizgu ponad oœ obrotu
     fWidth = 0.635; // po³owa szerokoœci œlizgu, 0.635 dla AKP-1 i AKP-4E
     fAngleL0 = DegToRad(2.8547285515689267247882521833308);
@@ -140,7 +139,7 @@ void TAnim::Parovoz(){
     // animowanie t³oka i rozrz¹du parowozu
 };
 //---------------------------------------------------------------------------
-TDynamicObject *__fastcall TDynamicObject::FirstFind(int &coupler_nr)
+TDynamicObject * TDynamicObject::FirstFind(int &coupler_nr, int cf)
 { // szukanie skrajnego po³¹czonego pojazdu w pociagu
     // od strony sprzegu (coupler_nr) obiektu (start)
     TDynamicObject *temp = this;
@@ -148,8 +147,8 @@ TDynamicObject *__fastcall TDynamicObject::FirstFind(int &coupler_nr)
     {
         if (!temp)
             return NULL; // Ra: zabezpieczenie przed ewentaulnymi b³êdami sprzêgów
-        if (temp->MoverParameters->Couplers[coupler_nr].CouplingFlag == 0)
-            return temp; // nic nie ma ju¿ dalej pod³¹czone
+        if ((temp->MoverParameters->Couplers[coupler_nr].CouplingFlag & cf) != cf)
+            return temp; // nic nie ma ju¿ dalej pod³¹czone sprzêgiem cf
         if (coupler_nr == 0)
         { // je¿eli szukamy od sprzêgu 0
             if (temp->PrevConnected) // jeœli mamy coœ z przodu
@@ -176,10 +175,10 @@ TDynamicObject *__fastcall TDynamicObject::FirstFind(int &coupler_nr)
     return NULL; // to tylko po wyczerpaniu pêtli
 };
 
+
 //---------------------------------------------------------------------------
 float TDynamicObject::GetEPP()
-{ // szukanie skrajnego po³¹czonego pojazdu w pociagu
-    // od strony sprzegu (coupler_nr) obiektu (start)
+{ // szukanie skrajnego po³¹czonego pojazdu w pociagu od strony sprzegu (coupler_nr) obiektu (start)
     TDynamicObject *temp = this;
     int coupler_nr = 0;
     float eq = 0, am = 0;
@@ -255,11 +254,11 @@ float TDynamicObject::GetEPP()
 };
 
 //---------------------------------------------------------------------------
-TDynamicObject *__fastcall TDynamicObject::GetFirstDynamic(int cpl_type)
+TDynamicObject *TDynamicObject::GetFirstDynamic(int cpl_type, int cf)
 { // Szukanie skrajnego po³¹czonego pojazdu w pociagu
     // od strony sprzegu (cpl_type) obiektu szukajacego
     // Ra: wystarczy jedna funkcja do szukania w obu kierunkach
-    return FirstFind(cpl_type); // u¿ywa referencji
+    return FirstFind(cpl_type, cf); // u¿ywa referencji
 };
 
 int doorcount;
@@ -1081,9 +1080,7 @@ double ABuAcos(const vector3 &calc_temp)
     return atan2(-calc_temp.x, calc_temp.z); // Ra: tak proœciej
 }
 
-TDynamicObject *__fastcall TDynamicObject::ABuFindNearestObject(TTrack *Track,
-                                                                TDynamicObject *MyPointer,
-                                                                int &CouplNr)
+TDynamicObject *TDynamicObject::ABuFindNearestObject(TTrack *Track, TDynamicObject *MyPointer, int &CouplNr)
 { // zwraca wskaznik do obiektu znajdujacego sie na torze (Track), którego sprzêg jest najblizszy
     // kamerze
     // s³u¿y np. do ³¹czenia i rozpinania sprzêgów
@@ -1143,8 +1140,7 @@ TDynamicObject *__fastcall TDynamicObject::ABuFindNearestObject(TTrack *Track,
     return NULL;
 }
 
-TDynamicObject *__fastcall TDynamicObject::ABuScanNearestObject(TTrack *Track, double ScanDir,
-                                                                double ScanDist, int &CouplNr)
+TDynamicObject *TDynamicObject::ABuScanNearestObject(TTrack *Track, double ScanDir, double ScanDist, int &CouplNr)
 { // skanowanie toru w poszukiwaniu obiektu najblizszego kamerze
     // double MyScanDir=ScanDir;  //Moja orientacja na torze.  //Ra: nie u¿ywane
     if (ABuGetDirection() < 0)
@@ -1269,8 +1265,7 @@ void TDynamicObject::ABuCheckMyTrack()
 }
 
 // Ra: w poni¿szej funkcji jest problem ze sprzêgami
-TDynamicObject *__fastcall TDynamicObject::ABuFindObject(TTrack *Track, int ScanDir,
-                                                         Byte &CouplFound, double &dist)
+TDynamicObject *TDynamicObject::ABuFindObject(TTrack *Track, int ScanDir, Byte &CouplFound, double &dist)
 { // Zwraca wskaŸnik najbli¿szego obiektu znajduj¹cego siê
     // na torze w okreœlonym kierunku, ale tylko wtedy, kiedy
     // obiekty mog¹ siê zderzyæ, tzn. nie mijaj¹ siê.
@@ -5507,23 +5502,29 @@ int TDynamicObject::DirectionSet(int d)
     // nastêpnego
 };
 
-TDynamicObject *__fastcall TDynamicObject::PrevAny()
+TDynamicObject *TDynamicObject::PrevAny()
 { // wskaŸnik na poprzedni, nawet wirtualny
     return iDirection ? PrevConnected : NextConnected;
 };
-TDynamicObject *__fastcall TDynamicObject::Prev()
+TDynamicObject *TDynamicObject::Prev()
 {
     if (MoverParameters->Couplers[iDirection ^ 1].CouplingFlag)
         return iDirection ? PrevConnected : NextConnected;
     return NULL; // gdy sprzêg wirtualny, to jakby nic nie by³o
 };
-TDynamicObject *__fastcall TDynamicObject::Next()
+TDynamicObject *TDynamicObject::Next()
 {
     if (MoverParameters->Couplers[iDirection].CouplingFlag)
         return iDirection ? NextConnected : PrevConnected;
     return NULL; // gdy sprzêg wirtualny, to jakby nic nie by³o
 };
-TDynamicObject *__fastcall TDynamicObject::NextC(int C)
+TDynamicObject * TDynamicObject::PrevC(int C)
+{
+	if (MoverParameters->Couplers[iDirection ^ 1].CouplingFlag & C)
+		return iDirection ? PrevConnected : NextConnected;
+	return NULL; // gdy sprzêg wirtualny, to jakby nic nie by³o
+};
+TDynamicObject *TDynamicObject::NextC(int C)
 {
     if (MoverParameters->Couplers[iDirection].CouplingFlag & C)
         return iDirection ? NextConnected : PrevConnected;
@@ -5539,7 +5540,7 @@ double TDynamicObject::NextDistance(double d)
         return d;
 };
 
-TDynamicObject *__fastcall TDynamicObject::Neightbour(int &dir)
+TDynamicObject *TDynamicObject::Neightbour(int &dir)
 { // ustalenie nastêpnego (1) albo poprzedniego (0) w sk³adzie bez wzglêdu na prawid³owoœæ
     // iDirection
     int d = dir; // zapamiêtanie kierunku
@@ -5609,7 +5610,7 @@ void TDynamicObject::CoupleDist()
     }
 };
 
-TDynamicObject *__fastcall TDynamicObject::ControlledFind()
+TDynamicObject *TDynamicObject::ControlledFind()
 { // taka proteza: chcê pod³¹czyæ kabinê EN57 bezpoœrednio z silnikowym, aby nie robiæ tego przez
     // ukrotnienie
     // drugi silnikowy i tak musi byæ ukrotniony, podobnie jak kolejna jednostka

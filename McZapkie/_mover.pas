@@ -491,6 +491,9 @@ TYPE
                {nastawniki:}
                MainCtrlPosNo: byte;     {ilosc pozycji nastawnika}
                ScndCtrlPosNo: byte;
+               LightsPosNo, LightsDefPos: byte;
+               LightsWrap: boolean;
+               Lights: array [0..1] of array [1..16] of byte;
                ScndInMain: boolean;     {zaleznosc bocznika od nastawnika}
                MBrake: boolean;     {Czy jest hamulec reczny}
                SecuritySystem: TSecuritySystem;
@@ -636,6 +639,7 @@ TYPE
 
 
                 DamageFlag: byte;  //kombinacja bitowa stalych dtrain_* }
+                EngDmgFlag: byte;  //kombinacja bitowa stalych usterek}
                 DerailReason: byte; //przyczyna wykolejenia
 
                 //EndSignalsFlag: byte;  {ABu 060205: zmiany - koncowki: 1/16 - swiatla prz/tyl, 2/31 - blachy prz/tyl}
@@ -655,6 +659,7 @@ TYPE
                 Mains: boolean;    {polozenie glownego wylacznika}
                 MainCtrlPos: byte; {polozenie glownego nastawnika}
                 ScndCtrlPos: byte; {polozenie dodatkowego nastawnika}
+                LightsPos: byte;
                 ActiveDir: integer; //czy lok. jest wlaczona i w ktorym kierunku:
                 //wzglêdem wybranej kabiny: -1 - do tylu, +1 - do przodu, 0 - wylaczona
                 CabNo: integer; //numer kabiny, z której jest sterowanie: 1 lub -1; w przeciwnym razie brak sterowania - rozrzad
@@ -5544,6 +5549,8 @@ begin
    end;
   WheelDiameter:=1.0;
   BrakeCtrlPosNo:=0;
+  LightsPosNo:=0;
+  LightsDefPos:=1;
   for k:=-1 to MainBrakeMaxPos do
    with BrakePressureTable[k] do
     begin
@@ -5929,6 +5936,8 @@ case BrakeLocHandle of
    begin
     LocHandle := TFD1.Create;
     LocHandle.Init(MaxBrakePress[0]);
+    //if(TrainType=dt_EZT)then
+    //  (LocHandle as TFD1).SetSpeed(3.5);
    end;
   Knorr:
    begin
@@ -5949,6 +5958,8 @@ end;
   Pipe2:= TReservoir.Create;  //zabezpieczenie, bo sie PG wywala... :(
   Pipe.CreateCap((Max0R(Dim.L,14)+0.5)*Spg*1); //dlugosc x przekroj x odejscia i takie tam
   Pipe2.CreateCap((Max0R(Dim.L,14)+0.5)*Spg*1);
+
+   if LightsPosNo>0 then LightsPos:=LightsDefPos;
 
  {to dac potem do init}
   if ReadyFlag then     {gotowy do drogi}
@@ -7361,7 +7372,22 @@ begin
                 SST[k].Pmax:=Min0R(SST[k].Pmax,sqr(SST[k].Umax)/47.6);
               end;
             end;
+          end
+          else if (Pos('ffList:',lines)>0) then  {dla asynchronow}
+          begin
+            RListSize:=s2b(DUE(ExtractKeyWord(lines,'Size=')));
+            for k:=0 to RListSize do
+                readln(fin, DEList[k].rpm, DEList[k].genpower)
+          end
+          else if (Pos('LightsList:',lines)>0) then  {dla asynchronow}
+          begin
+            LightsPosNo:=s2b(DUE(ExtractKeyWord(lines,'Size=')));
+            LightsWrap:=('Yes')=(DUE(ExtractKeyWord(lines,'Wrap=')));
+            LightsDefPos:=s2b(DUE(ExtractKeyWord(lines,'Default=')));
+            for k:=1 to LightsPosNo do
+                readln(fin, Lights[0][k], Lights[1][k])
           end;
+          
         end;
       end; {koniec filtru importu parametrow}
      if ConversionError=0 then
