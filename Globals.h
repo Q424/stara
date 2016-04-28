@@ -87,6 +87,13 @@ struct semlightcontainer
   bool blink;
 };
 
+struct THides
+{
+  char *SMName;
+  bool SMVis;
+  bool SMhided;
+  bool SManim;
+};
 
 struct a
 {
@@ -440,6 +447,8 @@ class QModelInfo
  static bool bnearestobjengaged;
 };
 
+
+// ***********************************************************************************************************
 class QGlobal
 {
  public:
@@ -607,6 +616,7 @@ class QGlobal
  static int iSNOWSQUARE;
  static int iRENDEREDFRAMES;
  static int iTUTSTARTLINE;
+ static int iMODELTYPE;
 
  static double fscreenfade;
  static double fscreenfade2;
@@ -659,6 +669,7 @@ class QGlobal
  static stationscontainer station[MAXSTATIONS];     // POWODUJE KRZACZENIE PODCZAS WYCHODZENIA???
  static pentrypointscontainer PEP[MAXPASSENGERENTYPOINTS];
  static semlightcontainer slc[128];
+ static THides smhides[32];
  static int currententrypoint;
 
  static float rekrot3_rot;
@@ -670,6 +681,7 @@ class QGlobal
  static TModel3d *mdTIEh;
  static TModel3d *mdTIEl;
  static TTrack *pTrack;
+ static TDynamicObject *pDynObj;
 
  // SNOW GLOBAL VARS
  static  long snow_objt;

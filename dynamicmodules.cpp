@@ -115,7 +115,7 @@ bool TDynamicObject::LoadAdditionals(AnsiString ADDFILENAME, TDynamicObject *D, 
   AnsiString texture02="";
   AnsiString texture03="";
   AnsiString texture04="";
-  AnsiString test, strl;
+  AnsiString test, strl, mpos;
   TStringList *ADDFILE;
   AnsiString textur[] = { "0", "0", "0", "0", "0", "0", "0", "0"};
   AnsiString ReplacableSkin;
@@ -132,63 +132,125 @@ bool TDynamicObject::LoadAdditionals(AnsiString ADDFILENAME, TDynamicObject *D, 
      ADDFILE->LoadFromFile( ADDFILENAME );
      ADDFILELC = ADDFILE->Count;
      //WriteLog(AnsiString(DYNOBJBDIR + D->MoverParameters->Name + ".madd"));
-     AnsiString WHAT, T3D, TEX;
+     AnsiString WHAT, T3D, TEX, OBJ, TST, CTP;
+     vector3 POS;
+     bool good, hash, mdl, tex, hid;
+     int llen;
+
      for (int i=0; i<ADDFILELC; i++)
       {
-       strl = ADDFILE->Strings[i];
-       test = strl.SubString(1, 10);
+       llen = 0;
+       good = hash = mdl = tex = false;
+       strl = Trim(ADDFILE->Strings[i]);
+       llen = strl.Length();
 
-       if (test == "mdventil1:") mdventil1 = strl.SubString(12, 255);
-       if (test == "mdventil2:") mdventil2 = strl.SubString(12, 255);
-       if (test == "mdhaslerA:") mdhaslerA = strl.SubString(12, 255);
-       if (test == "mdhaslerB:") mdhaslerB = strl.SubString(12, 255);
-       if (test == "mdczuwakA:") mdczuwakA = strl.SubString(12, 255);
-       if (test == "mdczuwakB:") mdczuwakB = strl.SubString(12, 255);
-       if (test == "mdbogey_A:") mdbogey_A = strl.SubString(12, 255);
-       if (test == "mdbogey_B:") mdbogey_B = strl.SubString(12, 255);
-       if (test == "mdclock_1:") mdclock_1 = strl.SubString(12, 255);
-       if (test == "mdclock_2:") mdclock_2 = strl.SubString(12, 255);
-       if (test == "mdpanto1A:") mdpanto1A = strl.SubString(12, 255);
-       if (test == "mdpanto1B:") mdpanto1B = strl.SubString(12, 255);
-       if (test == "mdfotel1A:") mdfotel1A = strl.SubString(12, 255);
-       if (test == "mdfotel2A:") mdfotel2A = strl.SubString(12, 255);
-       if (test == "mdfotel1B:") mdfotel1B = strl.SubString(12, 255);
-       if (test == "mdfotel2B:") mdfotel2B = strl.SubString(12, 255);
-       if (test == "mddirtab1:") mddirtab1 = strl.SubString(12, 255);
-       if (test == "mddirtab2:") mddirtab2 = strl.SubString(12, 255);
-       if (test == "mdwindown:") mdwindowN = strl.SubString(12, 255);
-       if (test == "mdogszyb1:") mdogszyb1 = strl.SubString(12, 255);
-       if (test == "mdogszyb2:") mdogszyb2 = strl.SubString(12, 255);
-       if (test == "mdswsockA:") mdswsockA = strl.SubString(12, 255);
-       if (test == "mdswsockB:") mdswsockB = strl.SubString(12, 255);
-       if (test == "mdplog__A:") mdzgrnczA = strl.SubString(12, 255);
-       if (test == "mdplog__B:") mdzgrnczB = strl.SubString(12, 255);
-       if (test == "mdnastawA:") mdnastawA = strl.SubString(12, 255);
-       if (test == "mdnastawB:") mdnastawB = strl.SubString(12, 255);
-       if (test == "mdstolikA:") mdstolikA = strl.SubString(12, 255);
-       if (test == "mdstolikB:") mdstolikB = strl.SubString(12, 255);
-       if (test == "mdmirroAR:") mdmirrorAR = strl.SubString(12, 255);
-       if (test == "mdmirroAL:") mdmirrorAL = strl.SubString(12, 255);
-       if (test == "mdmirroBR:") mdmirrorBR = strl.SubString(12, 255);
-       if (test == "mdmirroBL:") mdmirrorBL = strl.SubString(12, 255);
-       if (test == "mdstatic1:") mdstatic1 = strl.SubString(12, 255);
-       if (test == "mdstatic2:") mdstatic2 = strl.SubString(12, 255);
-       if (test == "mdstatic3:") mdstatic3 = strl.SubString(12, 255);
-       if (test == "mdstatic4:") mdstatic4 = strl.SubString(12, 255);
-       if (test == "mdstatic5:") mdstatic5 = strl.SubString(12, 255);
-       if (test == "mdstatic6:") mdstatic6 = strl.SubString(12, 255);
-       if (test == "mdstatic7:") mdstatic7 = strl.SubString(12, 255);
-       if (test == "mdstatic8:") mdstatic8 = strl.SubString(12, 255);
-       if (test == "mdstatic9:") mdstatic9 = strl.SubString(12, 255);
-       if (test == "mdstatic0:") mdstatic0 = strl.SubString(12, 255);
+       if (llen > 0)
+       {
+        mpos = strl.SubString(1, 255);
+        hash = strl.Pos("#");
+        std::vector<std::string> P = split(mpos.c_str(), ' ');
 
-       if (test == "txkabinaA:") txkabinaA = strl.SubString(12, 255);
-       if (test == "txkabinaB:") txkabinaB = strl.SubString(12, 255);
-       if (test == "texture01:") textur[1] = strl.SubString(12, 255);
-       if (test == "texture02:") textur[2] = strl.SubString(12, 255);
-       if (test == "texture03:") textur[3] = strl.SubString(12, 255);
-       if (test == "texture04:") textur[4] = strl.SubString(12, 255);
+        WriteLog(AnsiString("[" + AS(P[0]) + "][" + AS(P[1]) + "][" + AS(P[2]) + "][" + AS(P[3]) + "][" + AS(P[4]) + "][" + AS(P[5]) + "]" ));
+
+        OBJ = P[0].c_str();
+        TST = P[1].c_str();
+
+
+     /*
+       if (TST == "mdventil1:") mdventil1 = T3D;
+       if (TST == "mdventil2:") mdventil2 = T3D;
+       if (TST == "mdhaslerA:") mdhaslerA = T3D;
+       if (TST == "mdhaslerB:") mdhaslerB = T3D;
+       if (TST == "mdczuwakA:") mdczuwakA = T3D;
+       if (TST == "mdczuwakB:") mdczuwakB = T3D;
+       if (TST == "mdbogey_A:") mdbogey_A = T3D;
+       if (TST == "mdbogey_B:") mdbogey_B = T3D;
+       if (TST == "mdclock_1:") mdclock_1 = T3D;
+       if (TST == "mdclock_2:") mdclock_2 = T3D;
+       if (TST == "mdpanto1A:") mdpanto1A = T3D;
+       if (TST == "mdpanto1B:") mdpanto1B = T3D;
+       if (TST == "mdfotel1A:") mdfotel1A = T3D;
+       if (TST == "mdfotel2A:") mdfotel2A = T3D;
+       if (TST == "mdfotel1B:") mdfotel1B = T3D;
+       if (TST == "mdfotel2B:") mdfotel2B = T3D;
+       if (TST == "mddirtab1:") mddirtab1 = T3D;
+       if (TST == "mddirtab2:") mddirtab2 = T3D;
+       if (TST == "mdwindown:") mdwindowN = T3D;
+       if (TST == "mdogszyb1:") mdogszyb1 = T3D;
+       if (TST == "mdogszyb2:") mdogszyb2 = T3D;
+       if (TST == "mdswsockA:") mdswsockA = T3D;
+       if (TST == "mdswsockB:") mdswsockB = T3D;
+       if (TST == "mdplog__A:") mdzgrnczA = T3D;
+       if (TST == "mdplog__B:") mdzgrnczB = T3D;
+       if (TST == "mdnastawA:") mdnastawA = T3D;
+       if (TST == "mdnastawB:") mdnastawB = T3D;
+       if (TST == "mdstolikA:") mdstolikA = T3D;
+       if (TST == "mdstolikB:") mdstolikB = T3D;
+       if (TST == "mdmirroAR:") mdmirrorAR = T3D;
+       if (TST == "mdmirroAL:") mdmirrorAL = T3D;
+       if (TST == "mdmirroBR:") mdmirrorBR = T3D;
+       if (TST == "mdmirroBL:") mdmirrorBL = T3D;
+       if (TST == "mdstatic1:") mdstatic1 = T3D;
+       if (TST == "mdstatic2:") mdstatic2 = T3D;
+       if (TST == "mdstatic3:") mdstatic3 = T3D;
+       if (TST == "mdstatic4:") mdstatic4 = T3D;
+       if (TST == "mdstatic5:") mdstatic5 = T3D;
+       if (TST == "mdstatic6:") mdstatic6 = T3D;
+       if (TST == "mdstatic7:") mdstatic7 = T3D;
+       if (TST == "mdstatic8:") mdstatic8 = T3D;
+       if (TST == "mdstatic9:") mdstatic9 = T3D;
+       if (TST == "mdstatic0:") mdstatic0 = T3D;
+       */
+       if (TST == "txkabinaA:") txkabinaA = Trim(P[2].c_str()); //strl.SubString(12, 255);
+       if (TST == "txkabinaB:") txkabinaB = Trim(P[2].c_str()); //strl.SubString(12, 255);
+       if (TST == "texture01:") textur[1] = Trim(P[2].c_str()); //strl.SubString(12, 255);
+       if (TST == "texture02:") textur[2] = Trim(P[2].c_str()); //strl.SubString(12, 255);
+       if (TST == "texture03:") textur[3] = Trim(P[2].c_str()); //strl.SubString(12, 255);
+       if (TST == "texture04:") textur[4] = Trim(P[2].c_str()); //strl.SubString(12, 255);
+
+       mdl = (OBJ == "mdl");
+       tex = (OBJ == "tex");
+       hid = (OBJ == "hid");
+       hash = strl.Pos("#") || strl.Pos("//");
+
+       if (hash == 0 && mdl && iItemNo < 20)
+         {
+            CTP = Global::asCurrentTexturePath;
+            Global::asCurrentTexturePath = asBaseDir;
+            WriteLog("Cab item " + IntToStr(iItemNo) + " init..");
+            T3D = Trim(P[2].c_str());
+            POS.x = StrToFloat(P[3].c_str());
+            POS.y = StrToFloat(P[5].c_str());
+            POS.z = StrToFloat(P[4].c_str());
+            CABITEM[iItemNo].POS = POS;
+            CABITEM[iItemNo].mdItem = TModelsManager::GetModel(AnsiString(D->asBaseDir  + T3D + ".t3d").c_str(), true);
+            CABITEM[iItemNo].mdItem->Init(0);
+        if (CABITEM[iItemNo].mdItem != NULL) CABITEM[iItemNo].exist = true;
+        if (CABITEM[iItemNo].mdItem != NULL) WriteLog("Ok.");
+        if (CABITEM[iItemNo].mdItem != NULL) iItemNo++;
+            Global::asCurrentTexturePath = CTP;
+
+         }
+       if (hash == 0 && hid)
+         {
+          bHIDEDSM = true;
+          SMHIDE[iHideNo].SMName = stdstrtocharc(P[1]);
+          SMHIDE[iHideNo].SMVis = false;
+          SMHIDE[iHideNo].SMhided = true;
+         //smHides[iHideNo] = mdModel->GetFromName(P[1].c_str());
+
+         //smHides[iHideNo]->iAnimOwner = ((int)this);
+         //WriteLog("AnimOwner: " + IntToStr(((int)this)));
+         //smHides[iHideNo]->iInstance = ((int)this);
+         //smHides[iHideNo]->b_Anim = at_Hide;
+         //smHides[iHideNo]->WillBeAnimated();
+
+         iHideNo++;
+         }
+        }
        }
+
+       //mdModel->SMList
 
       //D->SRJ1token = D->directtabletoken;                                     // SLUZBOWY ROZKLAD JAZDY, RELACJA 'DO'
       //D->SRJ2token = D->directtabletoken;                                     // SLUZBOWY ROZKLAD JAZDY, RELACJA 'Z'
@@ -198,13 +260,13 @@ bool TDynamicObject::LoadAdditionals(AnsiString ADDFILENAME, TDynamicObject *D, 
       //if (M != NULL) WriteLog("MECHANIK FOUND!");
        //else WriteLog("MECHANIK WHERE?");
 
-      if (textur[4] == "")                                                      // jezeli nie ma w pliku .madd...
+      if (textur[4] == "-")                                                      // jezeli nie ma w pliku .madd...
        if (M != NULL) textur[4] = RELATION;                                     // to bierze z rozkladu
        if (!FEX(QGlobal::asAPPDIR + D->asBaseDir + textur[4] +".tga")) textur[4] = "nowhere";
 
        //WriteLog("PTEXTURE: [" + D->asBaseDir + textur[4] + "]");
        for (int i = 1; i<=4; i++)
-        if (textur[i] != "") D->ReplacableSkinID[i] = TTexturesManager::GetTextureID(NULL, NULL, AnsiString(D->asBaseDir + textur[i]).c_str(), Global::iDynamicFiltering);
+        if (textur[i] != "-") D->ReplacableSkinID[i] = TTexturesManager::GetTextureID(NULL, NULL, AnsiString(D->asBaseDir + textur[i]).c_str(), Global::iDynamicFiltering);
 
       if (D->ReplacableSkinID[1]) if (TTexturesManager::GetAlpha(D->ReplacableSkinID[1])) D->iAlpha = 0x31310031; // tekstura -1
       if (D->ReplacableSkinID[2]) if (TTexturesManager::GetAlpha(D->ReplacableSkinID[2])) D->iAlpha |= 0x02020002; // tekstura -2
@@ -213,6 +275,7 @@ bool TDynamicObject::LoadAdditionals(AnsiString ADDFILENAME, TDynamicObject *D, 
 
 
       // DODATKOWE MODELE
+      /*
       if (mdventil1 != "") D->mdVentilator1 = TModelsManager::GetModel(AnsiString(D->asBaseDir  + mdventil1).c_str(),true);
       if (mdventil2 != "") D->mdVentilator2 = TModelsManager::GetModel(AnsiString(D->asBaseDir  + mdventil2).c_str(),true);
       if (mdfotel1A != "") D->mdFotel1      = TModelsManager::GetModel(AnsiString(D->asBaseDir  + mdfotel1A).c_str(),true);
@@ -255,7 +318,7 @@ bool TDynamicObject::LoadAdditionals(AnsiString ADDFILENAME, TDynamicObject *D, 
       if (mdstatic8 != "") D->mdSTATIC08->Init(0);
       if (mdstatic9 != "") D->mdSTATIC09->Init(0);
       if (mdstatic0 != "") D->mdSTATIC10->Init(0);
-      
+      */
       delete ADDFILE;
       }
 

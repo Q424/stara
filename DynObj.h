@@ -144,6 +144,19 @@ class TAnim
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 
+struct TItem
+{
+  AnsiString Name;
+  vector3 POS;
+  TModel3d *mdItem;
+  GLuint texture;
+  double ROT;
+  bool exist;
+  bool hide;
+};
+
+
+
 class TDynamicObject
 { // klasa pojazdu
   private: // po³o¿enie pojazdu w œwiecie oraz parametry ruchu
@@ -184,6 +197,14 @@ class TDynamicObject
     RGBApixmap SmokePix;
     GLuint SmokeTex;
 
+    TItem CABITEM[20];
+    THides SMHIDE[32];
+    THides SMLIST[600];
+    int iItemNo;
+    int iHideNo;
+    int iSMCount;
+
+    bool bHIDEDSM;
     bool bISLOCO;
     bool bBogieA;
     bool bBogieB;
@@ -192,6 +213,16 @@ class TDynamicObject
     bool bSmokeEm2;
     bool bVaporEm1;
     bool bVaporEm2;
+    vector3 pItem01;
+    vector3 pItem02;
+    vector3 pItem03;
+    vector3 pItem04;
+    vector3 pItem05;
+    vector3 pItem06;
+    vector3 pItem07;
+    vector3 pItem08;
+    vector3 pItem09;
+    vector3 pItem10;
     vector3 pDoorFA;
     vector3 pDoorFB;
     vector3 pDoorRA;
@@ -308,6 +339,7 @@ class TDynamicObject
     void UpdateDoorTranslate(TAnim *pAnim); // animacja drzwi - przesuw
     void UpdateDoorRotate(TAnim *pAnim); // animacja drzwi - obrót
     void UpdateDoorFold(TAnim *pAnim); // animacja drzwi - sk³adanie
+    void UpdateDoorPlug(TAnim *pAnim);      // animacja drzwi - odskokowo-przesuwne
     void UpdatePant(TAnim *pAnim); // animacja pantografu
     void UpdateLeverDouble(TAnim *pAnim); // animacja ga³ki zale¿na od double
     void UpdateLeverFloat(TAnim *pAnim); // animacja ga³ki zale¿na od float
@@ -320,6 +352,7 @@ class TDynamicObject
     TSubModel *smWahacze[4]; // wahacze (np. nogi, dŸwignia w drezynie)
     TSubModel *smBrakeMode; // Ra 15-01: nastawa hamulca te¿
     TSubModel *smLoadMode; // Ra 15-01: nastawa pró¿ny/³adowny
+    TSubModel *smHides[32];
     double fWahaczeAmp;
     // Winger 160204 - pantografy
     double pantspeedfactor;
@@ -434,6 +467,9 @@ class TDynamicObject
   public:
     void ABuScanObjects(int ScanDir, double ScanDist);
     void CreatePassengerEntryPoints();
+    void CreateSubmodelsStamp();
+    bool checkhideslist(char *SMName);
+    bool checisanimated(char *SMName);
 
   protected:
     TDynamicObject *ABuFindObject(TTrack *Track, int ScanDir, Byte &CouplFound, double &dist);

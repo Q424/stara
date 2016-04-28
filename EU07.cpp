@@ -46,6 +46,7 @@ http://mozilla.org/MPL/2.0/.
 #include "modelpreview.h"
 #include "frm_debugger.h"
 #include "screen.h"
+#include "addons.h"
 #pragma hdrstop
 #pragma comment (lib, "Wininet.lib");
 
@@ -1518,6 +1519,8 @@ if (QGlobal::bISDYNAMIC) WriteLog(QGlobal::asDynamicTexturePath.c_str());
     if (hRC) KillGLWindow(); // kill the window
     return (msg.wParam); // exit the program
 }
+
+
 
 
 

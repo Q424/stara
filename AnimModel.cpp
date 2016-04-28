@@ -664,21 +664,28 @@ void TAnimModel::RaPrepare()
 
 void TAnimModel::RenderVBO(vector3 pPosition, double fAngle)
 { // sprawdza œwiat³a i rekurencyjnie renderuje TModel3d
+    QGlobal::iMODELTYPE = 100;
     RaAnimate(); // jednorazowe przeliczenie animacji
     RaPrepare();
     if (pModel) // renderowanie rekurencyjne submodeli
+    {
         pModel->RaRender(pPosition, fAngle, ReplacableSkinId, iTexAlpha);
+    }
 }
 
 void TAnimModel::RenderAlphaVBO(vector3 pPosition, double fAngle)
 {
+    QGlobal::iMODELTYPE = 100;
     RaPrepare();
     if (pModel) // renderowanie rekurencyjne submodeli
+    {
         pModel->RaRenderAlpha(pPosition, fAngle, ReplacableSkinId, iTexAlpha);
+    }
 };
 
 void TAnimModel::RenderDL(vector3 pPosition, double fAngle)
 {
+    QGlobal::iMODELTYPE = 100;
     QGlobal::asPASSTRAINNUMBER = asTRAINNUMBER.c_str();
     QGlobal::asPASSDESTINATION = asDESTINATION.c_str();
     RaAnimate(); // jednorazowe przeliczenie animacji
@@ -691,6 +698,7 @@ void TAnimModel::RenderDL(vector3 pPosition, double fAngle)
 
 void TAnimModel::RenderAlphaDL(vector3 pPosition, double fAngle)
 {
+    QGlobal::iMODELTYPE = 100;
     QGlobal::asPASSTRAINNUMBER = asTRAINNUMBER.c_str();
     QGlobal::asPASSDESTINATION = asDESTINATION.c_str();
     RaPrepare();

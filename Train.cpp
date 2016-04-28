@@ -586,12 +586,12 @@ void TTrain::OnKeyDown(int cKey)
                 dsbSwitch->Play(0, 0, 0);
             }
         }
-        else
+        else if ((cKey == Global::Keys[k_Compressor]) &&
+                (mvControlled->CompressorPower < 2)) // hunter-091012: tak jest poprawnie
             // if
             // ((cKey==Global::Keys[k_Compressor])&&((mvControlled->EngineType==ElectricSeriesMotor)||(mvControlled->TrainType==dt_EZT)))
             // //hunter-110212: poprawka dla EZT
-            if ((cKey == Global::Keys[k_Compressor]) &&
-                (mvControlled->CompressorPower < 2)) // hunter-091012: tak jest poprawnie
+
         {
             if (ggCompressorButton.GetValue() == 0)
             {
@@ -601,12 +601,9 @@ void TTrain::OnKeyDown(int cKey)
         }
         else if (cKey == Global::Keys[k_SmallCompressor]) // Winger 160404: mala sprezarka wl
         { // Ra: dŸwiêk, gdy razem z [Shift]
-            if ((mvControlled->TrainType & dt_EZT) ? mvControlled == mvOccupied :
-                                                     !mvOccupied->ActiveCab) // tylko w maszynowym
+            if ((mvControlled->TrainType & dt_EZT) ? mvControlled == mvOccupied : !mvOccupied->ActiveCab) // tylko w maszynowym
                 if (Console::Pressed(VK_CONTROL)) // z [Ctrl]
-                    mvControlled->bPantKurek3 = true; // zbiornik pantografu po³¹czony jest ze
-                // zbiornikiem g³ównym (pompowanie nie ma
-                // sensu)
+                    mvControlled->bPantKurek3 = true; // zbiornik pantografu po³¹czony jest ze zbiornikiem g³ównym (pompowanie nie ma sensu)
                 else if (!mvControlled->PantCompFlag) // jeœli wy³¹czona
                     if (mvControlled->Battery) // jeszcze musi byæ za³¹czona bateria
                         if (mvControlled->PantPress < 4.8) // pisz¹, ¿e to tak nie dzia³a
@@ -621,9 +618,7 @@ void TTrain::OnKeyDown(int cKey)
             if (DynamicObject->Mechanik)
             {
                 if (DebugModeFlag)
-                    if (DynamicObject->Mechanik->AIControllFlag) //¿eby nie trzeba by³o roz³¹czaæ dla zresetowania
-						// roz³¹czaæ dla
-						// zresetowania
+                    if (DynamicObject->Mechanik->AIControllFlag) //¿eby nie trzeba by³o roz³¹czaæ dla zresetowania roz³¹czaæ dla zresetowania
                         DynamicObject->Mechanik->TakeControl(false);
                 DynamicObject->Mechanik->TakeControl(true);
             }
@@ -657,8 +652,7 @@ void TTrain::OnKeyDown(int cKey)
                 dsbSwitch->Play(0, 0, 0);
             }
         }
-        else if (cKey == Global::Keys[k_FailedEngineCutOff]) // McZapkie-060103: E - wylaczanie
-        // sekcji silnikow
+        else if (cKey == Global::Keys[k_FailedEngineCutOff]) // McZapkie-060103: E - wylaczanie sekcji silnikow
         {
             if (mvControlled->CutOffEngine())
             {
@@ -742,8 +736,7 @@ void TTrain::OnKeyDown(int cKey)
        //-----------
        else  if (cKey == Global::Keys[k_PantFrontUp])
         { // Winger 160204: podn. przedn. pantografu
-            if (mvOccupied->ActiveCab ==
-                1) //||((mvOccupied->ActiveCab<1)&&((mvControlled->TrainType&(dt_ET40|dt_ET41|dt_ET42|dt_EZT))==0)))
+            if (mvOccupied->ActiveCab == 1) //||((mvOccupied->ActiveCab<1)&&((mvControlled->TrainType&(dt_ET40|dt_ET41|dt_ET42|dt_EZT))==0)))
             { // przedni gdy w kabinie 1 lub (z wyj¹tkiem ET40, ET41, ET42 i EZT) gdy w kabinie -1
                 mvControlled->PantFrontSP = false;
                 if (mvControlled->PantFront(true))
@@ -768,8 +761,7 @@ void TTrain::OnKeyDown(int cKey)
         }
         else if (cKey == Global::Keys[k_PantRearUp])
         { // Winger 160204: podn. tyln. pantografu wzglêdem kierunku jazdy
-            if (mvOccupied->ActiveCab ==
-                1) //||((mvOccupied->ActiveCab<1)&&((mvControlled->TrainType&(dt_ET40|dt_ET41|dt_ET42|dt_EZT))==0)))
+            if (mvOccupied->ActiveCab == 1) //||((mvOccupied->ActiveCab<1)&&((mvControlled->TrainType&(dt_ET40|dt_ET41|dt_ET42|dt_EZT))==0)))
             { // tylny gdy w kabinie 1 lub (z wyj¹tkiem ET40, ET41, ET42 i EZT) gdy w kabinie -1
                 mvControlled->PantRearSP = false;
                 if (mvControlled->PantRear(true))
@@ -793,8 +785,7 @@ void TTrain::OnKeyDown(int cKey)
             }
         }
         else if (cKey == Global::Keys[k_Active]) // yB 300407: przelacznik rozrzadu
-        { // Ra 2014-06: uruchomi³em to, aby aktywowaæ czuwak w zajmowanym cz³onie, a wy³¹czyæ w
-            // innych
+        { // Ra 2014-06: uruchomi³em to, aby aktywowaæ czuwak w zajmowanym cz³onie, a wy³¹czyæ w innych
             // Ra 2014-03: aktywacja czuwaka przepiêta na ustawienie kierunku w mvOccupied
             // if (mvControlled->Battery) //jeœli bateria jest ju¿ za³¹czona
             // mvOccupied->BatterySwitch(true); //to w ten oto durny sposób aktywuje siê CA/SHP
@@ -1660,8 +1651,7 @@ void TTrain::OnKeyDown(int cKey)
                     false; // wyjœcie z maszynowego wy³¹cza sprê¿arkê pomocnicz¹
         }
         else if (cKey == Global::Keys[k_Couple])
-        { // ABu051104: male zmiany, zeby mozna bylo laczyc odlegle wagony
-            // da sie zoptymalizowac, ale nie ma na to czasu :(
+        { // ABu051104: male zmiany, zeby mozna bylo laczyc odlegle wagony da sie zoptymalizowac, ale nie ma na to czasu :(
             if (iCabn > 0)
             {
                 if (!FreeFlyModeFlag) // tryb 'kabinowy'
@@ -2299,16 +2289,14 @@ void TTrain::OnKeyDown(int cKey)
                     vMechMovement.x += fMechCroach;
                     if (DynamicObject->Mechanik)
                         if (!FreeFlyModeFlag) //¿eby nie mieszaæ obserwuj¹c z zewn¹trz
-                            DynamicObject->Mechanik->RouteSwitch(1); // na skrzy¿owaniu skrêci w
-                    // lewo
+                            DynamicObject->Mechanik->RouteSwitch(1); // na skrzy¿owaniu skrêci w lewo
                 }
                 else if (cKey == Global::Keys[k_MechRight])
                 {
                     vMechMovement.x -= fMechCroach;
                     if (DynamicObject->Mechanik)
                         if (!FreeFlyModeFlag) //¿eby nie mieszaæ obserwuj¹c z zewn¹trz
-                            DynamicObject->Mechanik->RouteSwitch(
-                                2); // na skrzy¿owaniu skrêci w prawo
+                            DynamicObject->Mechanik->RouteSwitch(2); // na skrzy¿owaniu skrêci w prawo
                 }
                 else if (cKey == Global::Keys[k_MechBackward])
                 {
@@ -2322,8 +2310,7 @@ void TTrain::OnKeyDown(int cKey)
                     vMechMovement.z += fMechCroach;
                     if (DynamicObject->Mechanik)
                         if (!FreeFlyModeFlag) //¿eby nie mieszaæ obserwuj¹c z zewn¹trz
-                            DynamicObject->Mechanik->RouteSwitch(
-                                3); // na skrzy¿owaniu pojedzie prosto
+                            DynamicObject->Mechanik->RouteSwitch(3); // na skrzy¿owaniu pojedzie prosto
                 }
                 else if (cKey == Global::Keys[k_MechUp])
                     pMechOffset.y += 0.05; // McZapkie-120302 - wstawanie        //Q 291215: ZWIEKSZAM DOKLADNOSC Z  0.20 NA 0.05
@@ -2699,9 +2686,9 @@ bool TTrain::Update()
             Console::ValueSet(2, mvOccupied->BrakePress); // Ra: sterowanie miernikiem: cylinder hamulcowy
             Console::ValueSet(3, fHVoltage); // woltomierz wysokiego napiêcia
             Console::ValueSet(4, fHCurrent[2]); // Ra: sterowanie miernikiem: drugi amperomierz
-            Console::ValueSet(5, fHCurrent[(mvControlled->TrainType & dt_EZT) ? 0 : 1]); // pierwszy amperomierz;
-            // dla EZT pr¹d ca³kowity
+            Console::ValueSet(5, fHCurrent[(mvControlled->TrainType & dt_EZT) ? 0 : 1]); // pierwszy amperomierz; dla EZT pr¹d ca³kowity
             Console::ValueSet(6, fTachoVelocity); ////Ra: prêdkoœæ na pin 43 - wyjœcie analogowe (to nie jest PWM); skakanie zapewnia mechanika napêdu
+            Console::ValueSet(7, mvControlled->MainCtrlActualPos + mvControlled->ScndCtrlActualPos);   //nbmx: Wal kulakowy
         }
 
         // hunter-080812: wyrzucanie szybkiego na elektrykach gdy nie ma napiecia przy dowolnym ustawieniu kierunkowego
@@ -5451,7 +5438,7 @@ bool TTrain::InitializeCab(int NewCabNo, AnsiString asFileName)
                 ggSignallingButton.Load(Parser, DynamicObject->mdKabina);
             else if (str == AnsiString("door_signalling_sw:")) // Sygnalizacja blokady drzwi
                 ggDoorSignallingButton.Load(Parser, DynamicObject->mdKabina);
-            else if (str == AnsiString("nextcurrent_sw:")) // grzanie skladu
+            else if (str == AnsiString("nextcurrent_sw:")) // pr¹d drugiego cz³onu
                 ggNextCurrentButton.Load(Parser, DynamicObject->mdKabina);
             else if (str == AnsiString("cablight_sw:")) // hunter-091012: swiatlo w kabinie
                 ggCabLightButton.Load(Parser, DynamicObject->mdKabina);
@@ -5754,7 +5741,7 @@ bool TTrain::InitializeCab(int NewCabNo, AnsiString asFileName)
     pyScreens.start();                       // Python start
     if (DynamicObject->mdKabina)
     {
-        DynamicObject->mdKabina ->Init(1); // obrócenie modelu oraz optymalizacja, równie¿ zapisanie binarnego
+        DynamicObject->mdKabina->Init(1); // obrócenie modelu oraz optymalizacja, równie¿ zapisanie binarnego
         return true;
     }
     return AnsiCompareStr(str, AnsiString("none"));

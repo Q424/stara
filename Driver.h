@@ -142,9 +142,11 @@ class TSpeedPos
   public:
     void Clear();
     bool Update(vector3 *p, vector3 *dir, double &len);
-    bool Set(TEvent *e, double d);
+    bool Set(TEvent *e, double d, TOrders order = Wait_for_orders);
     void Set(TTrack *t, double d, int f);
     AnsiString TableText();
+	AnsiString GetName();
+	bool IsProperSemaphor(TOrders order = Wait_for_orders);
 };
 
 //----------------------------------------------------------------------------
@@ -168,6 +170,8 @@ class TController
     double fLastVel; // prêdkoœæ na poprzednio sprawdzonym torze
     TTrack *tLast; // ostatni analizowany tor
     TEvent *eSignSkip; // mo¿na pomin¹æ ten SBL po zatrzymaniu
+	TSpeedPos *sSemNext; // nastêpny semafor na drodze zale¿ny od trybu jazdy
+	TSpeedPos *sSemNextStop; // nastêpny semafor na drodze zale¿ny od trybu jazdy i na stój
   private: // parametry aktualnego sk³adu
     double fLength; // d³ugoœæ sk³adu (do wyci¹gania z ograniczeñ)
     double fMass; // ca³kowita masa do liczenia stycznej sk³adowej grawitacji
@@ -204,6 +208,10 @@ class TController
     TAction eAction; // aktualny stan
     bool HelpMeFlag; // wystawiane True jesli cos niedobrego sie dzieje
   public:
+    inline TAction GetAction()
+    {
+        return eAction;
+    }
     bool AIControllFlag; // rzeczywisty/wirtualny maszynista
     int iRouteWanted; // oczekiwany kierunek jazdy (0-stop,1-lewo,2-prawo,3-prosto) np. odpala
     // migacz lub czeka na stan zwrotnicy
@@ -242,6 +250,7 @@ class TController
   private:
      double fProximityDist; //odleglosc podawana w SetProximityVelocity(); >0:przeliczaæ do
     // punktu, <0:podana wartoœæ
+	 double FirstSemaphorDist; // odleg³oœæ do pierwszego znalezionego semafora
   public:
     double
         ActualProximityDist; // odleg³oœæ brana pod uwagê przy wyliczaniu prêdkoœci i przyspieszenia
@@ -320,8 +329,8 @@ class TController
     void JumpToFirstOrder();
     void OrderPush(TOrders NewOrder);
     void OrderNext(TOrders NewOrder);
-    TOrders OrderCurrentGet();
-    TOrders OrderNextGet();
+    inline TOrders OrderCurrentGet();
+    inline TOrders OrderNextGet();
     bool CheckVehicles(TOrders user = Wait_for_orders);
 
   private:

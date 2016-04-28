@@ -40,8 +40,8 @@
     <USERDEFINES value="GLEW_STATIC;_DEBUG"/>
     <SYSDEFINES value="NO_STRICT;_RTLDLL"/>
     <MAINSOURCE value="EU07.cpp"/>
-    <INCLUDEPATH value="addons\particle3;addons\particle2;addons\particle;addons\particl;addons\partic;addons\parti;addons\part;addons\par;addons\pa;addons\p;addons\texloader;addons\joeforte;addons\joefort;addons\joefor;addons\joefo;addons\joef;addons\joe;addons\jo;addons\j;addons\lensflare;addon;addo;add;ad\;a\;shadow;addons\fountain1;addons;dll;menu;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl"/>
-    <LIBPATH value="addons\particle3;addons\particle2;addons\particle;addons\particl;addons\partic;addons\parti;addons\part;addons\par;addons\pa;addons\p;addons\texloader;addons\joeforte;addons\joefort;addons\joefor;addons\joefo;addons\joef;addons\joe;addons\jo;addons\j;addons\lensflare;addon;addo;add;ad\;a\;shadow;addons\fountain1;addons;dll;menu;$(BCB)\Projects\Lib;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="\\.;addons\cmdconsole;addons\particle3;addons\particle2;addons\particle;addons\particl;addons\partic;addons\parti;addons\part;addons\par;addons\pa;addons\p;addons\texloader;addons\joeforte;addons\joefort;addons\joefor;addons\joefo;addons\joef;addons\joe;addons\jo;addons\j;addons\lensflare;addon;addo;add;ad\;a\;shadow;addons\fountain1;addons;dll;menu;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\include;$(BCB)\include\vcl"/>
+    <LIBPATH value="\\.;addons\cmdconsole;addons\particle3;addons\particle2;addons\particle;addons\particl;addons\partic;addons\parti;addons\part;addons\par;addons\pa;addons\p;addons\texloader;addons\joeforte;addons\joefort;addons\joefor;addons\joefo;addons\joef;addons\joe;addons\jo;addons\j;addons\lensflare;addon;addo;add;ad\;a\;shadow;addons\fountain1;addons;dll;menu;$(BCB)\Projects\Lib;&quot;C:\Program Files (x86)\Borland\CBuilder5\Projects\&quot;;Console;opengl;McZapkie;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
   </MACROS>
   <OPTIONS>

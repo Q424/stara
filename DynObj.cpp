@@ -680,33 +680,38 @@ void __inline TDynamicObject::ABuLittleUpdate(double ObjSqrDist)
         {
             // ABu290105: rzucanie pudlem
             // te animacje wymagaj¹ bananów w modelach!
-            mdModel->GetSMRoot()->SetTranslate(modelShake);
+            if (mdModel) mdModel->GetSMRoot()->SetTranslate(modelShake);
             if (mdKabina) mdKabina->GetSMRoot()->SetTranslate(modelShake);
             if (mdLoad) mdLoad->GetSMRoot()->SetTranslate(modelShake + vFloor);
             if (mdLowPolyInt) mdLowPolyInt->GetSMRoot()->SetTranslate(modelShake);
             if (mdPrzedsionek) mdPrzedsionek->GetSMRoot()->SetTranslate(modelShake);
-        if (mdClock1) mdClock1->GetSMRoot()->SetTranslate(modelShake);
-        if (mdClock2) mdClock2->GetSMRoot()->SetTranslate(modelShake);
-        if (mdVentilator1) mdVentilator1->GetSMRoot()->SetTranslate(modelShake);
-        if (mdVentilator2) mdVentilator2->GetSMRoot()->SetTranslate(modelShake);
-        if (mdFotel1) mdFotel1->GetSMRoot()->SetTranslate(modelShake);
-        if (mdFotel2) mdFotel2->GetSMRoot()->SetTranslate(modelShake);
-        if (mdWycieraczkaAR) mdWycieraczkaAR->GetSMRoot()->SetTranslate(modelShake);
-        if (mdWycieraczkaAL) mdWycieraczkaAL->GetSMRoot()->SetTranslate(modelShake);
-        if (mdDIRTABLE1) mdDIRTABLE1->GetSMRoot()->SetTranslate(modelShake);
-        if (mdDIRTABLE2) mdDIRTABLE2->GetSMRoot()->SetTranslate(modelShake);
-        if (mdMirrorAR) mdMirrorAR->GetSMRoot()->SetTranslate(modelShake);
-        if (mdMirrorAL) mdMirrorAL->GetSMRoot()->SetTranslate(modelShake);
-        if (mdSTATIC01) mdSTATIC01->GetSMRoot()->SetTranslate(modelShake);
-        if (mdSTATIC02) mdSTATIC02->GetSMRoot()->SetTranslate(modelShake);
-        if (mdSTATIC03) mdSTATIC03->GetSMRoot()->SetTranslate(modelShake);
-        if (mdSTATIC04) mdSTATIC04->GetSMRoot()->SetTranslate(modelShake);
-        if (mdSTATIC05) mdSTATIC05->GetSMRoot()->SetTranslate(modelShake);
-        if (mdSTATIC06) mdSTATIC06->GetSMRoot()->SetTranslate(modelShake);
-        if (mdSTATIC07) mdSTATIC07->GetSMRoot()->SetTranslate(modelShake);
-        if (mdSTATIC08) mdSTATIC08->GetSMRoot()->SetTranslate(modelShake);
-        if (mdSTATIC09) mdSTATIC09->GetSMRoot()->SetTranslate(modelShake);
-        if (mdSTATIC10) mdSTATIC10->GetSMRoot()->SetTranslate(modelShake);
+
+            if (mdClock1) mdClock1->GetSMRoot()->SetTranslate(modelShake);
+            if (mdClock2) mdClock2->GetSMRoot()->SetTranslate(modelShake);
+            if (mdVentilator1) mdVentilator1->GetSMRoot()->SetTranslate(modelShake);
+            if (mdVentilator2) mdVentilator2->GetSMRoot()->SetTranslate(modelShake);
+            if (mdFotel1) mdFotel1->GetSMRoot()->SetTranslate(modelShake);
+            if (mdFotel2) mdFotel2->GetSMRoot()->SetTranslate(modelShake);
+            if (mdWycieraczkaAR) mdWycieraczkaAR->GetSMRoot()->SetTranslate(modelShake);
+            if (mdWycieraczkaAL) mdWycieraczkaAL->GetSMRoot()->SetTranslate(modelShake);
+            if (mdDIRTABLE1) mdDIRTABLE1->GetSMRoot()->SetTranslate(modelShake);
+            if (mdDIRTABLE2) mdDIRTABLE2->GetSMRoot()->SetTranslate(modelShake);
+            if (mdMirrorAR) mdMirrorAR->GetSMRoot()->SetTranslate(modelShake);
+            if (mdMirrorAL) mdMirrorAL->GetSMRoot()->SetTranslate(modelShake);
+            if (mdSTATIC01) mdSTATIC01->GetSMRoot()->SetTranslate(modelShake);
+            if (mdSTATIC02) mdSTATIC02->GetSMRoot()->SetTranslate(modelShake);
+            if (mdSTATIC03) mdSTATIC03->GetSMRoot()->SetTranslate(modelShake);
+            if (mdSTATIC04) mdSTATIC04->GetSMRoot()->SetTranslate(modelShake);
+            if (mdSTATIC05) mdSTATIC05->GetSMRoot()->SetTranslate(modelShake);
+            if (mdSTATIC06) mdSTATIC06->GetSMRoot()->SetTranslate(modelShake);
+            if (mdSTATIC07) mdSTATIC07->GetSMRoot()->SetTranslate(modelShake);
+            if (mdSTATIC08) mdSTATIC08->GetSMRoot()->SetTranslate(modelShake);
+            if (mdSTATIC09) mdSTATIC09->GetSMRoot()->SetTranslate(modelShake);
+            if (mdSTATIC10) mdSTATIC10->GetSMRoot()->SetTranslate(modelShake);
+
+            for (int i = 0; i < 20; i++)
+            if (CABITEM[i].mdItem) CABITEM[i].mdItem->GetSMRoot()->SetTranslate(modelShake+CABITEM[i].POS);
+
             // ABu: koniec rzucania
             // ABu011104: liczenie obrotow wozkow
             ABuBogies();
@@ -1226,6 +1231,9 @@ void TDynamicObject::ABuModelRoll()
   if (mdSTATIC08) mdSTATIC08->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
   if (mdSTATIC09) mdSTATIC09->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
   if (mdSTATIC10) mdSTATIC10->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
+
+  for (int i = 0; i < 20; i++)
+  if (CABITEM[i].mdItem) CABITEM[i].mdItem->GetSMRoot()->SetRotateXYZ(vector3(0,modelRoll,0));
  }
 }
 
@@ -1657,6 +1665,7 @@ TDynamicObject::TDynamicObject()
     vFront = vWorldFront;
     vLeft = vWorldLeft;
     iNumAxles = 0;
+
     MoverParameters = NULL;
     Mechanik = NULL;
     MechInside = false;
@@ -1692,6 +1701,9 @@ TDynamicObject::TDynamicObject()
     // DoorSpeedFactor[i]=random(150);
     // DoorSpeedFactor[i]=(DoorSpeedFactor[i]+100)/100;
     //}
+    iItemNo = 0;
+    iHideNo = 0;
+    iSMCount = 0;
     mdModel = NULL;
     mdKabina = NULL;
     ReplacableSkinID[0] = 0;
@@ -1733,7 +1745,12 @@ TDynamicObject::TDynamicObject()
     mdClock2=NULL;             //Q
     mdFotel1=NULL;             //Q
     mdFotel2=NULL;             //Q
-    
+
+    for (int l = 0; l < 20; l++) CABITEM[l].mdItem = NULL;
+    for (int l = 0; l < 32; l++) smHides[l] = NULL;
+    for (int i = 0; i < 600; i++) SMLIST[i].SMName = "--";
+    for (int i = 0; i < 600; i++) SMLIST[i].SMVis = true;
+
     bSmokeEm1 = false;
     bSmokeEm2 = false;
     bVaporEm1 = false;
@@ -1808,6 +1825,51 @@ TDynamicObject::~TDynamicObject()
     delete[] pAnimated; // lista animowanych submodeli
 }
 
+
+// ***********************************************************************************************************
+// Sprawdzanie czy submodel jest na liscie przeznaczonych do ukrycia
+// ***********************************************************************************************************
+bool TDynamicObject::checkhideslist(char *SMName)
+{
+ bool ret = false;
+ int cnt = 0;
+    for (int l = 0; l < 32; l++)
+    {
+     if (AnsiString(SMName) == AnsiString(SMHIDE[l].SMName))
+      {
+       //WriteLog(AnsiString(SMName) + " in hide list as " + IntToStr(cnt));
+       ret = true;
+       break;
+      }
+      cnt++;
+    }
+  return ret;  
+}
+
+
+// ***********************************************************************************************************
+// Generowanie kopii orginalnej listy submodeli przechowujacej stany ich widocznosci i oznaczanie submodeli ktore
+// maja byc ukryte
+// ***********************************************************************************************************
+void TDynamicObject::CreateSubmodelsStamp()
+{
+
+    for (int l =0; l < mdModel->iCurrentSubmodel; l++) // petla po liscie submodeli modelu pudla pojazdu...
+    {
+     AnsiString asname = AnsiString(mdModel->SMList[l].SMName);
+     int a = asname.Pos("off") || asname.Pos("on");
+     SMLIST[l].SMName = mdModel->SMList[l].SMName;  // przerzucenie listy nazw submodeli do kontenera  (lista generowana w TSubModel::BinInit())
+     SMLIST[l].SMVis = true;
+     SMLIST[l].SMhided = checkhideslist(SMLIST[l].SMName);   // sprawdzenie czy submodel jest na liscie ukrytych
+     SMLIST[l].SManim = (a > 0);
+     //WriteLog(AnsiString(SMLIST[l].SMName) + ": " + IntToStr(SMLIST[l].SMhided));
+    }
+}
+
+
+// ***********************************************************************************************************
+//
+// ***********************************************************************************************************
 double TDynamicObject::Init(
     AnsiString Name, // nazwa pojazdu, np. "EU07-424"
     AnsiString BaseDir, // z którego katalogu wczytany, np. "PKP/EU07"
@@ -2078,12 +2140,15 @@ double TDynamicObject::Init(
     }
     // McZapkie-250202
     iAxles = (MaxAxles < MoverParameters->NAxles) ? MaxAxles : MoverParameters->NAxles; // iloœæ osi
-    // wczytywanie z pliku nazwatypu.mmd, w tym model
-    LoadMMediaFile(asBaseDir, Type_Name, asReplacableSkin);
-    LoadUniqueSpecs(asName);
-    LoadAdditionals("", this, Mechanik);  // WCZYTUJE TABLICE TYLKO GDY NIE headdriver LUB reardriver, czemu?
+    LoadMMediaFile(asBaseDir, Type_Name, asReplacableSkin);  // wczytywanie z pliku nazwatypu.mmd, w tym model
+    LoadUniqueSpecs(asName);                                 // wczytywanie indywidualnej charakterystyki dla konkretnego egzemplarza serii
+    LoadAdditionals("", this, Mechanik);                     // WCZYTUJE TABLICE TYLKO GDY NIE headdriver LUB reardriver, czemu?
+    CreateSmokeEmitters();                                   //Q: 220316 - Utworzenie emiterow dymu, pary
+    CreateSubmodelsStamp();                                  //Q: 230416 - lista submodeli z orginalnymi stanami widocznosci
 
-    CreateSmokeEmitters(); //Q: 220316 - Utworzenie emiterow dymu, pary
+
+
+
 
     // McZapkie-100402: wyszukiwanie submodeli sprzegów
     btCoupler1.Init("coupler1", mdModel, false); // false - ma byæ wy³¹czony
@@ -3522,6 +3587,8 @@ void TDynamicObject::TurnOff()
 void TDynamicObject::Render()
 { // rysowanie elementów nieprzezroczystych
     // youBy - sprawdzamy, czy jest sens renderowac
+    QGlobal::pDynObj = this;
+    QGlobal::iMODELTYPE = 717;
     double modelrotate;
     vector3 tempangle;
     // zmienne
@@ -3700,14 +3767,14 @@ void TDynamicObject::Render()
             if (mdMirrorAL != NULL) mdMirrorAL->Render(ObjSqrDist, ReplacableSkinID,iAlpha);
 
             // Renderowanie wozkow z oddzielnych modeli
-            if (mdBogieA)
+            if (mdBogieA != NULL)
                {
                 glPushMatrix();
                 glTranslatef(pBogieA.x, pBogieA.y, pBogieA.z);
                 mdBogieA->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
                 glPopMatrix();
                 }
-            if (mdBogieB)
+            if (mdBogieB != NULL)
                {
                 glPushMatrix();
                 glTranslatef(pBogieB.x, pBogieB.y, pBogieB.z);
@@ -3715,7 +3782,15 @@ void TDynamicObject::Render()
                 glPopMatrix();
                 }
 
+            for (int i = 0; i <20; i++)
+             if (CABITEM[i].mdItem)
+                {
+                 CABITEM[i].mdItem->Render(ObjSqrDist, ReplacableSkinID, iAlpha);
+                }
 
+
+            //for (int i = 0; i < 32; i++) QGlobal::smhides[i].SMName = SMLIST[i].SMName;
+            //for (int i = 0; i < 32; i++) QGlobal::smhides[i].hide = SMLIST[i].SMVis;
         }
 
         // Ra: czy ta kabina tu ma sens?
@@ -4126,6 +4201,8 @@ void TDynamicObject::RenderSounds()
 
 void TDynamicObject::RenderAlpha()
 { // rysowanie elementów pó³przezroczystych
+    QGlobal::pDynObj = this;
+    QGlobal::iMODELTYPE = 717;
     if (renderme)
     {
         TSubModel::iInstance = (int)this; //¿eby nie robiæ cudzych animacji
@@ -4143,14 +4220,15 @@ void TDynamicObject::RenderAlpha()
             Global::pCamera->SetCabMatrix(vPosition); // specjalne ustawienie kamery
         }
         else
-            glTranslated(vPosition.x, vPosition.y,
-                         vPosition.z); // standardowe przesuniêcie wzglêdem pocz¹tku scenerii
+            glTranslated(vPosition.x, vPosition.y, vPosition.z); // standardowe przesuniêcie wzglêdem pocz¹tku scenerii
         glMultMatrixd(mMatrix.getArray());
+
         if (fShade > 0.0)
         { // Ra: zmiana oswietlenia w tunelu, wykopie
             GLfloat ambientLight[4] = {0.5f, 0.5f, 0.5f, 1.0f};
             GLfloat diffuseLight[4] = {0.5f, 0.5f, 0.5f, 1.0f};
             GLfloat specularLight[4] = {0.5f, 0.5f, 0.5f, 1.0f};
+            
             // trochê problem z ambientem w wykopie...
             for (int li = 0; li < 3; li++)
             {
@@ -4207,19 +4285,28 @@ void TDynamicObject::RenderAlpha()
             if (mdMirrorAR != NULL) mdMirrorAR->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
             if (mdMirrorAL != NULL) mdMirrorAL->RenderAlpha(ObjSqrDist, ReplacableSkinID,iAlpha);
 
-    glPushMatrix();
-    glTranslatef(pBogieA.x, pBogieA.y, pBogieA.z);
+           glPushMatrix();
+           glTranslatef(pBogieA.x, pBogieA.y, pBogieA.z);
             if (mdBogieA)
                 mdBogieA->RenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
-    glPopMatrix();
-    glPushMatrix();
-    glTranslatef(pBogieB.x, pBogieB.y, pBogieB.z);
+           glPopMatrix();
+           glPushMatrix();
+           glTranslatef(pBogieB.x, pBogieB.y, pBogieB.z);
             if (mdBogieB)
                 mdBogieB->RenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
-    glPopMatrix();
-            // if (mdPrzedsionek) //Ra: przedsionków tu wczeœniej nie by³o - w³¹czyæ?
-            // mdPrzedsionek->RenderAlpha(ObjSqrDist,ReplacableSkinID,iAlpha);
-        }
+           glPopMatrix();
+
+           for (int i = 0; i <20; i++)
+            if (CABITEM[i].mdItem)
+                 CABITEM[i].mdItem->RenderAlpha(ObjSqrDist, ReplacableSkinID, iAlpha);
+
+
+           //for (int i = 0; i < 32; i++) QGlobal::smhides[i].SMName = SUBHIDE[i].SMName;
+           //for (int i = 0; i < 32; i++) QGlobal::smhides[i].hide = SUBHIDE[i].SMVis;
+
+
+        } // end of if DisplaLists
+        
         /* skoro false to mo¿na wyci¹c
             //ABu: Tylko w trybie freefly
             if (false)//((mdKabina!=mdModel) && bDisplayCab && FreeFlyModeFlag)
@@ -4365,11 +4452,13 @@ void TDynamicObject::LoadMMediaFile(AnsiString BaseDir, AnsiString TypeName,
                 else if (iMultiTex > 1)
                     iMultiTex = 1; // na razie ustawiamy na 1
             }
-            asModel = BaseDir +
-                      asModel; // McZapkie 2002-07-20: dynamics maja swoje modele w dynamics/basedir
+            asModel = BaseDir + asModel; // McZapkie 2002-07-20: dynamics maja swoje modele w dynamics/basedir
             Global::asCurrentTexturePath = BaseDir; // biezaca sciezka do tekstur to dynamic/...
 
+            QGlobal::pDynObj = this;
             mdModel = TModelsManager::GetModel(asModel.c_str(), true);
+            mdModel->iTYPE = 717;
+
             if (ReplacableSkin != AnsiString("none"))
             { // tekstura wymienna jest raczej jedynie w "dynamic\"
                 ReplacableSkin =

@@ -351,7 +351,6 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     WriteLog("WCZYTYWANIE DEVICE.DLL...");
     manipinit(1);                           // wywplywane z hardware.cpp
 
-
  //WriteLog("USTAWIANIE KATALOGU DLA ZRZUTOW EKRANU...");
     CreateDir(QGlobal::asAPPDIR + QGlobal::asSSHOTDIR);
     CreateDir(QGlobal::asAPPDIR + QGlobal::asSSHOTDIR + QGlobal::asSSHOTSUB); // SCREENSHOTS DIRECTORY CONTAINER
@@ -376,9 +375,6 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
     LOADLOADERFONTS();
     LOADLOADERCONFIG();
     LOADLOADERTEXTURES();
-    //ShowWindow(NhWnd,SW_SHOW);
-    //SetForegroundWindow(NhWnd);                                                    // slightly higher priority
-    //SetFocus(NhWnd);
 
     timex = (double)Now();
     Global::hWnd = NhWnd; // do WM_COPYDATA
@@ -656,18 +652,11 @@ bool TWorld::Init(HWND NhWnd, HDC hDC)
 bool TWorld::Load(HWND NhWnd, HDC hDC)
 {
     Timer::ResetTimers();
-    RenderLoader(hDC, 77, "...");
+  //RenderLoader(hDC, 77, "...");
     ShowWindow(NhWnd, SW_SHOW);
     SetFocus(NhWnd);
     SetForegroundWindow(hWnd);
 
-    if (QGlobal::bSPLASHSCR) RenderSPLASHSCR(hDC, 77, "SS", 1);  // Pierwsza czesc splasha (7s)
-  //if (QGlobal::bSPLASHSCR) RenderLoaderU(hDC, 77, "SS");     // Zaraz po splashu stopniowe wylonienie sie z czerni ekranu wczytywania
-
-    RenderLoader(hDC, 77, "...");
-    RenderLoader(hDC, 77, "...");
-
-   // SetFocus(NhWnd);
 
     QGlobal::mousepoint = TTexturesManager::GetTextureID("data/menu/", Global::asCurrentTexturePath.c_str(), AnsiString("data/menu/menu_point.bmp").c_str());
     QGlobal::mousesymbol = TTexturesManager::GetTextureID("data/gfxs/", Global::asCurrentTexturePath.c_str(), AnsiString("data/gfxs/ismouse.bmp").c_str());
@@ -677,6 +666,13 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     QGlobal::texturetab[3] = TTexturesManager::GetTextureID("../data/", Global::asCurrentTexturePath.c_str(),AnsiString("data/gfxs/waterc.tga").c_str());
   //QGlobal::texturetab[4] = TTexturesManager::LoadJPG4("c:\\MaSzyna_15_04\\aaa.jpg");
 
+    if (QGlobal::bSPLASHSCR) RenderSPLASHSCR(hDC, 77, "SS", 1);  // Pierwsza czesc splasha (7s)
+  //if (QGlobal::bSPLASHSCR) RenderLoaderU(hDC, 77, "SS");     // Zaraz po splashu stopniowe wylonienie sie z czerni ekranu wczytywania
+
+    RenderLoader(hDC, 77, "...");
+    RenderLoader(hDC, 77, "...");
+
+    //SetFocus(NhWnd);
 
 /*
     TextureLoader *TL = new TextureLoader;
@@ -714,7 +710,7 @@ bool TWorld::Load(HWND NhWnd, HDC hDC)
     //--SetCurrentDirectory(QGlobal::asAPPDIR.c_str());
     RenderLoader(hDC, 77, "SOUND INITIALIZATION...");
     WriteLog("Sound Init");
-    TSoundsManager::Init(hWnd);
+    TSoundsManager::Init(NhWnd);
     WriteLog("Sound Init OK");
     WriteLog("");
 
@@ -963,7 +959,9 @@ void TWorld::OnKeyDown(int cKey)
  if (Console::Pressed(VK_LAUNCH_APP1)) WriteLog("VK_LAUNCH_APP1");
  if (Console::Pressed(VK_LAUNCH_APP2)) WriteLog("VK_LAUNCH_APP2");
  if (Console::Pressed(VK_RMENU)) WriteLog("R ALT");                             // PRAWY ALT
- 
+
+ if (Console::Pressed(VK_CONTROL) && Console::Pressed(VkKeyScan('='))) GlobalTime->UpdateMTableTime(60);
+ if (Console::Pressed(VK_CONTROL) && Console::Pressed(VkKeyScan('-'))) GlobalTime->UpdateMTableTime(5);
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('f'))) QGlobal::bscrfilter = !QGlobal::bscrfilter;
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('n'))) QGlobal::bscrnoise = !QGlobal::bscrnoise;
  if (Console::Pressed(VK_CONTROL) && Console::Pressed(VK_SHIFT) && Console::Pressed(VkKeyScan('w'))) QGlobal::bWATERMARK = !QGlobal::bWATERMARK;
@@ -2233,7 +2231,7 @@ bool TWorld::Render()
 
     FOG.Render();
 
-    SKY.Render(1);
+    SKY.Render(0);
     /*
     float yp = 0.2;
     drawcube(1.0, 1, 1, 1, true, vector3(-93.0, yp+=0.0f, 0), xxx.TextureID);

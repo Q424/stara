@@ -173,7 +173,14 @@ enum TAnimType // rodzaj animacji
     at_IK22 = 0x103, // odwrotna kinematyka - submodel nadrzêdny do nadrzêdnego sterowango (np. udo)
     at_Digital = 0x200, // dziesiêciocyfrowy licznik mechaniczny (z cylindrami)
     at_DigiClk = 0x201, // zegar cyfrowy jako licznik na dziesiêcioœcianach
-    at_Undefined = 0x800000FF // animacja chwilowo nieokreœlona
+    at_Undefined = 0x800000FF, // animacja chwilowo nieokreœlona
+    at_Hide = 0x202
+};
+
+struct TSubmodelsList
+{
+  char *SMName;
+  bool SMVis;
 };
 
 class TModel3d;
@@ -342,8 +349,7 @@ class TSubModel
     void DisplayLists();
     void Info();
     void InfoSet(TSubModelInfo *info);
-    void BinInit(TSubModel *s, float4x4 *m, float8 *v, TStringPack *t, TStringPack *n = NULL,
-                 bool dynamic = false);
+    void BinInit(TModel3d *m3d, TSubModel *s, int SMNo, float4x4 *m, float8 *v, TStringPack *t, TStringPack *n = NULL, bool dynamic = false);
     void ReplacableSet(GLuint *r, int a)
     {
         ReplacableSkinId = r;
@@ -410,21 +416,20 @@ class TSubModelInfo
 class TModel3d : public CMesh
 {
   private:
-    // TMaterial *Materials;
-    // int MaterialsCount; //Ra: nie u¿ywane
-    // bool TractionPart; //Ra: nie u¿ywane
     TSubModel *Root; // drzewo submodeli
     int iFlags; // Ra: czy submodele maj¹ przezroczyste tekstury
   public: // Ra: tymczasowo
     int iNumVerts; // iloœæ wierzcho³ków (gdy nie ma VBO, to m_nVertexCount=0)
     int iNumFaces;
-
+    int iCurrentSubmodel;
     int iTYPE; //Q 311215: w przyszlosci do ulatwienia klasyfikacji modeli w edytorze, typ modelu bedzie brany z pierwszego parametru wpisu incfile
     AnsiString asFile;
     AnsiString asType;
     AnsiString asName;
     AnsiString asNodeName;
     AnsiString asFileInc;
+
+    TSubmodelsList SMList[600];
 
    // double posx;
    // double posy;
@@ -434,6 +439,7 @@ class TModel3d : public CMesh
     TStringPack Names; // nazwy submodeli
     int *iModel; // zawartoœæ pliku binarnego
     int iSubModelsCount; // Ra: u¿ywane do tworzenia binarnych
+
     AnsiString asBinary; // nazwa pod któr¹ zapisaæ model binarny
   public:
     inline TSubModel *__fastcall GetSMRoot()

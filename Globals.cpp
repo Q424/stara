@@ -226,6 +226,7 @@ int QGlobal::iSNOWFLAKES = 40000;
 int QGlobal::iSNOWSQUARE = 300;
 int QGlobal::iRENDEREDFRAMES = 0;
 int QGlobal::iTUTSTARTLINE = 0;
+int QGlobal::iMODELTYPE = 0;
 
 double QGlobal::fMoveLightS = -1.0f;
 double QGlobal::fps = 1.0f;
@@ -278,6 +279,7 @@ a QGlobal::array[MAXPASSENGERENTYPOINTS];
 stationscontainer QGlobal::station[MAXSTATIONS];
 pentrypointscontainer QGlobal::PEP[MAXPASSENGERENTYPOINTS];
 semlightcontainer QGlobal::slc[128];
+THides QGlobal::smhides[32];
 int QGlobal::currententrypoint = 0;
 
 float QGlobal::rekrot3_rot = 0.0;
@@ -289,6 +291,7 @@ Color4 QGlobal::lfipc;
 TModel3d *QGlobal::mdTIEh = NULL;
 TModel3d *QGlobal::mdTIEl = NULL;
 TTrack *QGlobal::pTrack = NULL;
+TDynamicObject *QGlobal::pDynObj = NULL;
 
 // SNOW GLOBAL VARS
   long QGlobal::snow_objt = 1;

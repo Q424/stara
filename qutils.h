@@ -39,6 +39,7 @@ AnsiString BoolToYN(bool value);
 bool YNToBool(AnsiString value);
 AnsiString StrToPERON(AnsiString value);
 
+AnsiString AS(std::string str);
 AnsiString str(int i);
 string trim(string& str);
 char* stdstrtocharc(std::string var);

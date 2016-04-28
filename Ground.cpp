@@ -590,6 +590,7 @@ void TGroundNode::RenderDL()
     case TP_TRACK:
         return pTrack->Render();
     case TP_MODEL:
+        QGlobal::iMODELTYPE = 100;
         if (QGlobal::bWIREFRAMETRACK) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
         if (!bINTRAIN) return Model->RenderDL(&pCenter);  // Q 070116: !bINTRAIN bo model moze byc pasazerem ktory moze wejsc do wagonu - wtedy nie renderujemy
     }
@@ -654,6 +655,7 @@ void TGroundNode::RenderAlphaDL()
             hvTraction->RenderDL(mgn);
         return;
     case TP_MODEL:
+        QGlobal::iMODELTYPE = 100;
         Model->RenderAlphaDL(&pCenter);
         return;
     case TP_TRACK:
@@ -2083,26 +2085,32 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
 
         if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "dynamic: " + QGlobal::asNODENAME);
         // tmp->DynamicObject->Load(Parser);
+
         parser->getTokens();
         *parser >> token;
-        str1 = AnsiString(token.c_str()); // katalog
-        // McZapkie: doszedl parametr ze zmienialna skora
+        str1 = AnsiString(token.c_str());                   // katalog
+                                                            // McZapkie: doszedl parametr ze zmienialna skora
+
         parser->getTokens();
         *parser >> token;
-        Skin = AnsiString(token.c_str()); // tekstura wymienna
+        Skin = AnsiString(token.c_str());                   // tekstura wymienna
+
         parser->getTokens();
         *parser >> token;
-        str3 = AnsiString(token.c_str()); // McZapkie-131102: model w MMD
+        str3 = AnsiString(token.c_str());                   // McZapkie-131102: model w MMD
+
         if (bTrainSet)
-        { // jeœli pojazd jest umieszczony w sk³adzie
+        { // jeœli pojazd jest umieszczony w sk³adzie       // TRACK
             str = asTrainSetTrack;
+
             parser->getTokens();
-            *parser >> tf1; // Ra: -1 oznacza odwrotne wstawienie, normalnie w sk³adzie 0
+            *parser >> tf1;                                 // DISTANCE //Ra: -1 oznacza odwrotne wstawienie, normalnie w sk³adzie 0
+
             parser->getTokens();
             *parser >> token;
-            DriverType = AnsiString(token.c_str()); // McZapkie:010303 - w przyszlosci rozne
-            // konfiguracje mechanik/pomocnik itp
+            DriverType = AnsiString(token.c_str());         // BODY //McZapkie:010303 - w przyszlosci rozne konfiguracje mechanik/pomocnik itp
             tf3 = fTrainSetVel; // prêdkoœæ
+
             parser->getTokens();
             *parser >> token;
             str4 = AnsiString(token.c_str());
@@ -2131,31 +2139,34 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
         }
         else
         { // pojazd wstawiony luzem
-            fTrainSetDist = 0; // zerowanie dodatkowego przesuniêcia
-            asTrainName = ""; // puste oznacza jazdê pojedynczego bez rozk³adu, "none" jest dla
-            // sk³adu (trainset)
+            fTrainSetDist = 0;                              // zerowanie dodatkowego przesuniêcia
+            asTrainName = "";                               // puste oznacza jazdê pojedynczego bez rozk³adu, "none" jest dla sk³adu (trainset)
+
             parser->getTokens();
             *parser >> token;
-            str = AnsiString(token.c_str()); // track
+            str = AnsiString(token.c_str());                // track
+
             parser->getTokens();
-            *parser >> tf1; // Ra: -1 oznacza odwrotne wstawienie
+            *parser >> tf1;                                 // Ra: -1 oznacza odwrotne wstawienie
+
             parser->getTokens();
             *parser >> token;
-            DriverType = AnsiString(token.c_str()); // McZapkie:010303: obsada
+            DriverType = AnsiString(token.c_str());         // McZapkie:010303: obsada
+
             parser->getTokens();
-            *parser >>
-                tf3; // prêdkoœæ, niektórzy wpisuj¹ tu "3" jako sprzêg, ¿eby nie by³o tabliczki
+            *parser >> tf3;                                 // prêdkoœæ, niektórzy wpisuj¹ tu "3" jako sprzêg, ¿eby nie by³o tabliczki
             iTrainSetWehicleNumber = 0;
             TempConnectionType[iTrainSetWehicleNumber] = 3; // likwidacja tabliczki na koñcu?
         }
         parser->getTokens();
-        *parser >> int2; // iloœæ ³adunku
+        *parser >> int2;                                    // iloœæ ³adunku
         if (int2 > 0)
         { // je¿eli ³adunku jest wiêcej ni¿ 0, to rozpoznajemy jego typ
+
             parser->getTokens();
             *parser >> token;
-            str2 = AnsiString(token.c_str()); // LoadType
-            if (str2 == AnsiString("enddynamic")) // idiotoodpornoœæ: ³adunek bez podanego typu
+            str2 = AnsiString(token.c_str());               // LoadType
+            if (str2 == AnsiString("enddynamic"))           // idiotoodpornoœæ: ³adunek bez podanego typu
             {
                 str2 = "";
                 int2 = 0; // iloœæ bez typu siê nie liczy jako ³adunek
@@ -2164,7 +2175,8 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
         else
             str2 = ""; // brak ladunku
 
-        tmp1 = FindGroundNode(str, TP_TRACK); // poszukiwanie toru
+        tmp1 = FindGroundNode(str, TP_TRACK);               // poszukiwanie toru
+
         if (tmp1 ? tmp1->pTrack != NULL : false)
         { // jeœli tor znaleziony
             Track = tmp1->pTrack;
@@ -2173,8 +2185,8 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
                     if (fabs(fTrainSetVel) <= 1.0) // a sk³ad stoi
                         if (fTrainSetDist >= 0.0) // ale mo¿e nie siêgaæ na owy tor
                             if (fTrainSetDist < 8.0) // i raczej nie siêga
-                                fTrainSetDist =
-                                    8.0; // przesuwamy oko³o pó³ EU07 dla wstecznej zgodnoœci
+                                fTrainSetDist = 8.0; // przesuwamy oko³o pó³ EU07 dla wstecznej zgodnoœci
+
             // WriteLog("Dynamic shift: "+AnsiString(fTrainSetDist));
             /* //Ra: to jednak robi du¿e problemy - przesuniêcie w dynamic jest przesuniêciem do
                ty³u, odwrotnie ni¿ w trainset
@@ -2184,8 +2196,7 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
                   tf1=-tf1; //a dla kolejnych odleg³oœæ miêdzy sprzêgami (ujemne = wbite)
             */
             tf3 = tmp->DynamicObject->Init(asNodeName, str1, Skin, str3, Track,
-                                           (tf1 == -1.0 ? fTrainSetDist : fTrainSetDist - tf1),
-                                           DriverType, tf3, asTrainName, int2, str2, (tf1 == -1.0), str4);
+                                           (tf1 == -1.0 ? fTrainSetDist : fTrainSetDist - tf1), DriverType, tf3, asTrainName, int2, str2, (tf1 == -1.0), str4);
             if (tf3 != 0.0) // zero oznacza b³¹d
             {
                 fTrainSetDist -= tf3; // przesuniêcie dla kolejnego, minus bo idziemy w stronê punktu 1
@@ -2203,6 +2214,13 @@ TGroundNode *__fastcall TGround::AddGroundNode(cParser *parser)
                 delete tmp;
                 tmp = NULL; // nie mo¿e byæ tu return, bo trzeba pomin¹æ jeszcze enddynamic
             }
+
+          //TDynamicObject *DYNOBJ;
+          //DYNOBJ = tmp->DynamicObject;
+          //Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "PRZETWARZANIE PLIKU .ADD POJAZDU");
+          //AnsiString ADDFILENAME = "0";
+          //DYNOBJ->LoadAdditionals(ADDFILENAME, DYNOBJ, NULL);
+
         }
         else
         { // gdy tor nie znaleziony
@@ -3210,8 +3228,8 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
             }
         }
         else if (str == AnsiString("obstructlights"))
-        { // youBy - niebo z pliku
-            if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "SKY...");
+        { //Oswietlenie przeszkodowe
+            if (rls) Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Obstruct lights...");
             WriteLog("Obstruct lights definition");
             parser.getTokens();
             parser >> token;
@@ -3223,7 +3241,7 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
                 parser.getTokens();
                 parser >> token;
             } while (token.compare("end") != 0);
-            WriteLog(Global::asSky.c_str());
+          //WriteLog(Global::asSky.c_str());
         }
         else if (str == AnsiString("time"))
         {
@@ -3371,7 +3389,10 @@ bool TGround::Init(AnsiString asFile, HDC hDC)
             AnsiString SkyTemp;
             SkyTemp = AnsiString(token.c_str());
             if (Global::asSky == "1")
+              {
                 Global::asSky = SkyTemp;
+                WriteLog(Global::asSky);
+               }
             do
             { // po¿arcie dodatkowych parametrów
                 parser.getTokens();

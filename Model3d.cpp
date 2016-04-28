@@ -1329,12 +1329,18 @@ TSubModel *__fastcall TSubModel::GetFromName(char *search, bool i)
 
 void TSubModel::RaAnimation(TAnimType a)
 { // wykonanie animacji niezale¿nie od renderowania
+
     switch (a)
     { // korekcja po³o¿enia, jeœli submodel jest animowany
     case at_Translate: // Ra: by³o "true"
         if (iAnimOwner != iInstance)
             break; // cudza animacja
         glTranslatef(v_TransVector.x, v_TransVector.y, v_TransVector.z);
+        break;
+    case at_Hide: // Ra: by³o "true"
+        if (iAnimOwner != iInstance) 
+            break; // cudza animacja
+        Hide();
         break;
     case at_Rotate: // Ra: by³o "true"
         if (iAnimOwner != iInstance)
@@ -1423,14 +1429,28 @@ void TSubModel::RaAnimation(TAnimType a)
     }
 };
 
-float tmpcolor[4];
+
+// ***********************************************************************************************************
+// g³ówna procedura renderowania przez DL
+// ***********************************************************************************************************
 void TSubModel::RenderDL()
-{ // g³ówna procedura renderowania przez DL
+{
+    if (QGlobal::iMODELTYPE == 717)     // 717 - identyfikator modelu typu dynamic
+    {
+     if (QGlobal::pDynObj->bHIDEDSM)    // jezeli byla lista submodeli pudla do ukrycia...
+      for (int l = 0; l < 600; l++)   // QGlobal::pDynObj->iSMCount
+       if (pName == QGlobal::pDynObj->SMLIST[l].SMName && !QGlobal::pDynObj->SMLIST[l].SManim)
+        {
+          iVisible = !QGlobal::pDynObj->SMLIST[l].SMhided;
+          break;
+        }
+       }
+
+    
     if (iVisible && (fSquareDist >= fSquareMinDist) && (fSquareDist < fSquareMaxDist))
     {
         if (iFlags & 0xC000)
         {
-
             glPushMatrix();
             if (fMatrix)
                 glMultMatrixf(fMatrix->readArray());
@@ -1535,8 +1555,13 @@ void TSubModel::RenderDL()
             Next->RenderDL(); // dalsze rekurencyjnie
 };
 
+
+// ***********************************************************************************************************
+// g³ówna procedura renderowanie przezroczystych przez DL
+// ***********************************************************************************************************
 void TSubModel::RenderAlphaDL()
-{ // renderowanie przezroczystych przez DL
+{
+
 
     if ( (iVisible) && ((fSquareDist >= fSquareMinDist) && (fSquareDist < fSquareMaxDist)))
     {
@@ -1984,8 +2009,7 @@ void TSubModel::InfoSet(TSubModelInfo *info)
     pTexture = pName = NULL;
 };
 
-void TSubModel::BinInit(TSubModel *s, float4x4 *m, float8 *v, TStringPack *t, TStringPack *n,
-                        bool dynamic)
+void TSubModel::BinInit(TModel3d *m3d, TSubModel *s, int SMNo, float4x4 *m, float8 *v, TStringPack *t, TStringPack *n, bool dynamic)
 { // ustawienie wskaŸników w submodelu
     iVisible = 1; // tymczasowo u¿ywane
     Child = ((int)Child > 0) ? s + (int)Child : NULL; // zerowy nie mo¿e byæ potomnym
@@ -1999,6 +2023,12 @@ void TSubModel::BinInit(TSubModel *s, float4x4 *m, float8 *v, TStringPack *t, TS
 
         SETIDS(s);
 
+        m3d->SMList[SMNo].SMName = pName;
+        m3d->SMList[SMNo].SMVis = true;
+      //m3d->SMList[SMNo].SMhided = false;
+        m3d->iCurrentSubmodel++;
+
+
         if (!s.IsEmpty())
         { // jeœli dany submodel jest zgaszonym œwiat³em, to domyœlnie go ukrywamy
             if (s.SubString(1, 8) == "Light_On") // jeœli jest œwiat³em numerowanym
@@ -2011,7 +2041,12 @@ void TSubModel::BinInit(TSubModel *s, float4x4 *m, float8 *v, TStringPack *t, TS
         }
     }
     else
+     {
         pName = NULL;
+        m3d->SMList[SMNo].SMName = "unnamed";
+        m3d->iCurrentSubmodel++;
+      }
+
     if (iTexture > 0)
     { // obs³uga sta³ej tekstury
         // TextureID=TTexturesManager::GetTextureID(t->String(TextureID));
@@ -2109,6 +2144,7 @@ TModel3d::TModel3d()
     Root = NULL;
     iFlags = 0;
     iSubModelsCount = 0;
+    iCurrentSubmodel = 0;
     asName = QGlobal::asNODENAME;
     asFile = "?";
     asType = "?";
@@ -2300,22 +2336,26 @@ void TModel3d::LoadFromBinFile(char *FileName, bool dynamic)
         }
         i = j;
     }
+
+    if (QGlobal::bCABLOADING)  Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Cab loading...");
     for (i = 0; i < iSubModelsCount; ++i)
     { // aktualizacja wskaŸników w submodelach
-     if (QGlobal::bfirstinitok) QGlobal::iNODESPASSED+=10;
-     if (QGlobal::bCABLOADING)  Global::pWorld->RenderLoader(QGlobal::glHDC, 77, "Cab loading...");
+     if (QGlobal::bfirstinitok) QGlobal::iNODESPASSED += 10;
 
-        Root[i].BinInit(Root, m, (float8 *)m_pVNT, &Textures, &Names, dynamic);
+        Root[i].BinInit(this, Root, i,  m, (float8 *)m_pVNT, &Textures, &Names, dynamic);
+
         if (Root[i].ChildGet())
             Root[i].ChildGet()->Parent = Root + i; // wpisanie wskaŸnika nadrzêdnego do potmnego
         if (Root[i].NextGet())
-            Root[i].NextGet()->Parent =
-                Root[i].Parent; // skopiowanie wskaŸnika nadrzêdnego do kolejnego
+            Root[i].NextGet()->Parent = Root[i].Parent; // skopiowanie wskaŸnika nadrzêdnego do kolejnego
     }
+
+    //for (i = 0; i < iSubModelsCount-1; ++i)  WriteLog(SMList[i].SMName);
+
     iFlags &= ~0x0200;
 
 
-    WriteLog(AnsiString("sm/tris: ") + IntToStr(iSubModelsCount) + "/" + IntToStr(iTotalFaces));
+    WriteLog(AnsiString("sm/tris: ") + IntToStr(iSubModelsCount) + "/" + IntToStr(iCurrentSubmodel) + "/" + IntToStr(iTotalFaces));
   //WriteLog(AnsiString("sizebytes ") + IntToStr(size));
     WriteLog(AnsiString(" "));
 
@@ -2349,8 +2389,7 @@ void TModel3d::LoadFromTextFile(char *FileName, bool dynamic)
         
         SubModel = new TSubModel();
         iNumVerts += SubModel->Load(parser, this, iNumVerts, dynamic);
-        SubModel->Parent = AddToNamed(
-            parent.c_str(), SubModel); // bêdzie potrzebne do wyliczenia pozycji, np. pantografu
+        SubModel->Parent = AddToNamed( parent.c_str(), SubModel); // bêdzie potrzebne do wyliczenia pozycji, np. pantografu
         // iSubModelsCount++;
         iTotalObjs++;
         parser.getToken(token);

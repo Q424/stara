@@ -449,6 +449,11 @@ strFromChar.append(var);
 return strFromChar;
 }
 
+AnsiString AS(std::string str)
+{
+  return str.c_str();
+}
+
 std::string ToLowerCase(std::string text)
 {
 
